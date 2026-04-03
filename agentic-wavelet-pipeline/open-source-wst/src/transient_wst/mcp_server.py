@@ -33,14 +33,7 @@ from transient_wst.utils import detect_outlier_paths
 logger = logging.getLogger(__name__)
 
 # ── MCP Server instance ───────────────────────────────────────────────────
-mcp = FastMCP(
-    "transient-wst",
-    description=(
-        "Wavelet Scattering Transform engine for non-stationary "
-        "time-series preprocessing. Domain-agnostic: EEG, FRB, or any "
-        "high-noise 1-D signal."
-    ),
-)
+mcp = FastMCP("transient-wst")
 
 
 @mcp.tool()
@@ -108,7 +101,9 @@ def execute_wst(
         reducer = PCAReducer(variance_threshold=pca_variance)
         reduced_outputs: dict[str, np.ndarray] = {}
         for name, coeffs in outputs.items():
-            reduced = reducer.fit_transform(coeffs)
+            # Sanitize NaNs and Infs so PCA doesn't crash on extreme anomalies
+            clean_coeffs = np.nan_to_num(coeffs, nan=0.0, posinf=0.0, neginf=0.0)
+            reduced = reducer.fit_transform(clean_coeffs)
             reduced_outputs[f"{name}_pca"] = reduced
             pca_components = reducer.n_components
         outputs.update(reduced_outputs)
@@ -117,7 +112,13 @@ def execute_wst(
     save_arrays(outputs, output_directory)
 
     # ── 6. Compute aggregate diagnostics ────────────────────────────────
-    mean_variance = np.mean(all_variance, axis=0).tolist() if all_variance else []
+    if all_variance:
+        # nanmean avoids NaN poisoning the entire array
+        mean_variance = np.nanmean(all_variance, axis=0).tolist()
+        mean_variance = [0.0 if np.isnan(v) else v for v in mean_variance]
+    else:
+        mean_variance = []
+
     outlier_paths = detect_outlier_paths(
         np.array(mean_variance, dtype=np.float32)
     ) if mean_variance else []
@@ -126,8 +127,12 @@ def execute_wst(
     first_key = next(iter(outputs), None)
     output_shape = list(outputs[first_key].shape) if first_key else []
 
+    snr_val = float(np.nanmean(all_snr)) if all_snr else 0.0
+    if np.isnan(snr_val):
+        snr_val = 0.0
+
     diagnostics = {
-        "snr_db": float(np.mean(all_snr)) if all_snr else 0.0,
+        "snr_db": snr_val,
         "variance": mean_variance,
         "null_count": sum(all_null),
         "n_files_processed": len(file_pairs),
