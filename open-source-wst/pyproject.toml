@@ -24,6 +24,11 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Information Analysis",
 ]
 
+[project.urls]
+Homepage = "https://samvardhan03.github.io/OmniPulse/"
+Repository = "https://github.com/samvardhan03/OmniPulse"
+Documentation = "https://samvardhan03.github.io/OmniPulse/"
+
 # ── Runtime dependencies ───────────────────────────────────────────────────────
 dependencies = [
     "numpy>=1.26,<3",
