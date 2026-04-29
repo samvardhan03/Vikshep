@@ -49,8 +49,8 @@ pip install vikshep
 ### From Source (with C++ compilation)
 
 ```bash
-git clone https://github.com/samvardhan03/OmniPulse.git
-cd OmniPulse/open-source-wst
+git clone https://github.com/samvardhan03/Viskshep.git
+cd Viskshep/open-source-wst
 pip install -e ".[dev]"
 ```
 
@@ -127,4 +127,4 @@ The test suite rigorously validates:
 
 Apache 2.0 — see [LICENSE](LICENSE) for details.
 
-Part of the [OmniPulse](https://github.com/samvardhan03/OmniPulse) monorepo.
+Part of the [Viskshep](https://github.com/samvardhan03/Viskshep) monorepo.

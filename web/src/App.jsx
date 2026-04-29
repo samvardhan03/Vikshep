@@ -78,7 +78,7 @@ function App() {
               <Terminal size={18} className="text-teal-400" />
               <code className="text-sm font-mono">pip install vikshep</code>
             </div>
-            <a href="https://github.com/samvardhan03/OmniPulse" target="_blank" rel="noreferrer" className="h-14 px-8 rounded-full bg-white border-2 border-slate-200 text-slate-700 font-bold flex items-center gap-2 hover:bg-slate-50 hover:border-teal-200 shadow-sm transition-all w-full sm:w-auto justify-center">
+            <a href="https://github.com/samvardhan03/Viskshep" target="_blank" rel="noreferrer" className="h-14 px-8 rounded-full bg-white border-2 border-slate-200 text-slate-700 font-bold flex items-center gap-2 hover:bg-slate-50 hover:border-teal-200 shadow-sm transition-all w-full sm:w-auto justify-center">
               <Github size={18} /> Source on GitHub
             </a>
           </div>
@@ -303,7 +303,7 @@ function App() {
             <div>
               <h4 className="text-white font-bold mb-4">Resources</h4>
               <ul className="space-y-2 text-sm">
-                <li><a href="https://github.com/samvardhan03/OmniPulse" className="text-slate-400 hover:text-teal-400 transition-colors font-medium flex items-center gap-2"><Github size={14}/> GitHub Repository</a></li>
+                <li><a href="https://github.com/samvardhan03/Viskshep" className="text-slate-400 hover:text-teal-400 transition-colors font-medium flex items-center gap-2"><Github size={14}/> GitHub Repository</a></li>
                 <li><a href="https://pypi.org/project/vikshep/" className="text-slate-400 hover:text-teal-400 transition-colors font-medium flex items-center gap-2"><Package size={14}/> PyPI Package</a></li>
               </ul>
             </div>

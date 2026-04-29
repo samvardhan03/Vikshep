@@ -35,8 +35,8 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://samvardhan03.github.io/OmniPulse"
-Repository = "https://github.com/samvardhan03/OmniPulse"
+Homepage = "https://samvardhan03.github.io/Viskshep"
+Repository = "https://github.com/samvardhan03/Viskshep"
 
 # ── Optional / development extras ─────────────────────────────────────────────
 [project.optional-dependencies]
