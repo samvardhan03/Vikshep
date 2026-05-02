@@ -33,11 +33,9 @@ jobs:
       run: python -m build --sdist
       
     - name: Build manylinux wheels
-      uses: pypa/cibuildwheel@v2
+      uses: pypa/cibuildwheel@v3.4.1  # <-- Pinned to exact version
       with:
-        # Tell cibuildwheel where the package is
         package-dir: ./open-source-wst
-        # Drop the finished wheels right next to the sdist
         output-dir: ./open-source-wst/dist
         
     - name: Publish package distributions to PyPI
