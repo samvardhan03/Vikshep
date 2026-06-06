@@ -1,0 +1,9 @@
+name: vikshep CI
+on:
+  workflow_dispatch: {}
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "lint/test/build run locally; this workflow never auto-fires"

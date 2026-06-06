@@ -37,6 +37,7 @@
         "exactOptionalPropertyTypes": true,
         // ── Emit ────────────────────────────────────────────────────────────────
         "noEmit": true, // Bun handles transpilation; tsc is type-check only
+        "skipLibCheck": true, // suppress type errors inside node_modules .d.ts files
         "declaration": false,
         "sourceMap": true,
         // ── Interop ─────────────────────────────────────────────────────────────

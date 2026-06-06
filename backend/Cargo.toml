@@ -1,0 +1,16 @@
+[package]
+name = "vikshep-backend"
+version = "0.1.0"
+edition = "2021"
+description = "Vikshep thin launcher: ensures POSIX shm dir, then execs omnipulse-mcp."
+
+[dependencies]
+omnipulse-mcp = "0.1"
+
+# ---------------------------------------------------------------------------
+# Local-monorepo override — for development inside the OmniPulse monorepo.
+# Uncomment when building from /Users/.../omnipulse/ and comment out before
+# pushing Vikshep to its own repo.
+# ---------------------------------------------------------------------------
+# [patch.crates-io]
+# omnipulse-mcp = { path = "../../omnipulse-rs/crates/omnipulse-mcp" }

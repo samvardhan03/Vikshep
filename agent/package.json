@@ -1,7 +1,7 @@
 {
-    "name": "agentic-wavelet-orchestrator",
-    "version": "0.1.0",
-    "description": "Terminal-native autonomous MLOps agent for the Agentic-Wavelet Foundation Pipeline. Orchestrates EEG signal preprocessing via MCP-connected Python tools.",
+    "name": "vikshep-agent",
+    "version": "0.3.0",
+    "description": "Vikshep control-plane agent — speaks OIDs and previews, backend-agnostic.",
     "module": "src/main.ts",
     "type": "module",
     "private": true,

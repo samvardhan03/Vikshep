@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "vikshep-ingest"
+version = "0.1.0"
+description = "Vikshep ingest service — loader plugins + POSIX shm staging."
+requires-python = ">=3.10"
+dependencies = [
+    "omnipulse-agent",
+    "uproot>=5",
+    "awkward>=2",
+    "numpy>=1.26",
+    "fastapi",
+    "uvicorn",
+    "h5py>=3",
+]
+
+[project.entry-points."vikshep.loaders"]
+root-uproot = "vikshep_ingest.loaders.root_uproot:RootUprootLoader"
+hdf5        = "vikshep_ingest.loaders.hdf5_loader:Hdf5Loader"
+
+[tool.setuptools.packages.find]
+where = ["src"]

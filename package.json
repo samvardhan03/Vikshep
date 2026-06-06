@@ -1,0 +1,5 @@
+{
+  "name": "vikshep",
+  "private": true,
+  "workspaces": ["agent", "web"]
+}
