@@ -33,11 +33,33 @@ export interface McpBridgeConfig {
 
 // ── Default configuration ─────────────────────────────────────────────────────
 
+// Resolution order (no machine-specific fallback):
+//   1. $OMNIPULSE_MCP_BIN env var
+//   2. PATH lookup via `which omnipulse-mcp`
+//   3. throw with install instructions
+function resolveMcpBin(): string {
+  if (process.env.OMNIPULSE_MCP_BIN) {
+    return process.env.OMNIPULSE_MCP_BIN;
+  }
+  try {
+    const { execSync } = require("child_process") as typeof import("child_process");
+    const found = execSync("which omnipulse-mcp", { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }).trim();
+    if (found) return found;
+  } catch {
+    // `which` not found or omnipulse-mcp not on PATH — fall through to error
+  }
+  throw new Error(
+    "[McpBridge] omnipulse-mcp not found.\n" +
+    "  Install: cargo install omnipulse-mcp\n" +
+    "  Or set:  export OMNIPULSE_MCP_BIN=/path/to/omnipulse-mcp"
+  );
+}
+
 const DEFAULT_CONFIG: Required<McpBridgeConfig> = {
-  pythonCommand: "python3",
-  serverArgs: ["-m", "transient_wst.mcp_server"],
-  clientName: "agentic-wavelet-orchestrator",
-  clientVersion: "0.1.0",
+  pythonCommand: resolveMcpBin(), // field name retained; now points to the Rust bin
+  serverArgs: [],
+  clientName: "vikshep-agent",
+  clientVersion: "0.3.0",
 };
 
 // ── MCP Bridge ────────────────────────────────────────────────────────────────
@@ -131,7 +153,7 @@ export class McpBridge {
 
     return {
       content: textContent,
-      isError: result.isError ?? false,
+      isError: result.isError === true,
     };
   }
 
@@ -144,10 +166,11 @@ export class McpBridge {
     }
 
     const response = await this.client.listTools();
-    return response.tools.map((t) => ({
-      name: t.name,
-      description: t.description,
-    }));
+    return response.tools.map((t) => {
+      const entry: { name: string; description?: string } = { name: t.name };
+      if (t.description !== undefined) entry.description = t.description;
+      return entry;
+    });
   }
 
   /**
