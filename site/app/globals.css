@@ -1,0 +1,77 @@
+@import "katex/dist/katex.min.css";
+@import "tailwindcss";
+
+/* ── omnipulseid design tokens ───────────────────────────── */
+:root {
+  --bg:          #FBF1E6;
+  --bg-elev:     #F9F6F0;
+  --ink:         #1B1B1F;
+  --ink-mute:    #4A4A52;
+  --rule:        rgba(27, 27, 31, 0.12);
+  --accent:      #1B1B1F;
+  --signal-warm: #C2461F;
+  --accent-cyan: transparent;
+  --glow:        none;
+}
+
+@theme inline {
+  --color-bg:          var(--bg);
+  --color-bg-elev:     var(--bg-elev);
+  --color-ink:         var(--ink);
+  --color-ink-mute:    var(--ink-mute);
+  --color-accent:      var(--accent);
+  --color-signal-warm: var(--signal-warm);
+
+  --font-sans:  var(--font-inter), system-ui, sans-serif;
+  --font-serif: var(--font-source-serif), Georgia, serif;
+  --font-mono:  var(--font-jetbrains), monospace;
+
+  --max-width-grid: 1280px;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-inter), system-ui, sans-serif;
+}
+
+.hairline {
+  border-color: var(--rule);
+}
+
+.grid-12 {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 24px;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+@media (max-width: 768px) {
+  .grid-12 {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    padding: 0 16px;
+  }
+}
+
+section {
+  padding: 96px 0;
+}
+
+@media (max-width: 768px) {
+  section {
+    padding: 56px 0;
+  }
+}
