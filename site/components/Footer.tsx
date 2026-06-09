@@ -16,7 +16,6 @@ const NAV_COLS = [
     title: "Resources",
     links: [
       { label: "GitHub ↗", href: "https://github.com/samvardhan03/Vikshep", external: true },
-      { label: "JOSS Paper", href: "#" },
       { label: "Changelog", href: "#" },
       { label: "OmniPulse — Media IP plane ↗", href: "https://omnipulseid.vercel.app", external: true },
     ],
@@ -129,7 +128,7 @@ export default function Footer({ onFeedback }: FooterProps) {
         >
           <div className="flex flex-wrap gap-6">
             {[
-              { label: "License (Apache 2.0)", href: "https://www.apache.org/licenses/LICENSE-2.0" },
+              { label: "License: AGPL-3.0 + Commercial", href: "https://github.com/samvardhan03/Vikshep/blob/main/LICENSING.md" },
               { label: "vikshep on PyPI", href: "https://pypi.org/project/vikshep/" },
               { label: "omni-wst-core on PyPI", href: "https://pypi.org/project/omni-wst-core/" },
               { label: "omnipulse-mcp on crates.io", href: "https://crates.io/crates/omnipulse-mcp" },
@@ -150,7 +149,7 @@ export default function Footer({ onFeedback }: FooterProps) {
             className="font-mono text-[11px]"
             style={{ color: "var(--ink-mute)" }}
           >
-            © 2026 Vikshep · Companion to OmniPulse
+            © 2026 Vikshep · AGPL-3.0 + Commercial · Companion to OmniPulse
           </span>
         </div>
       </div>

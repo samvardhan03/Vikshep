@@ -1,82 +1,99 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import * as d3 from "d3";
 import { generateAnomalyData } from "@/lib/synthetic";
 
-const W = 320, H = 320;
-const CX = W / 2, CY = H / 2;
-const SCALE = 52; // pixels per unit
+// Compact card viewport (no overflow)
+const VW = 280, VH = 200;
+const CX = VW / 2, CY = VH / 2;
+const SCALE = 36; // reduced so max-dist≈3 → 108px < CX-12=128 margin
 
-export default function AnomalyEmbedding() {
+// Full interactive viewport
+const FW = 320, FH = 320;
+const FCX = FW / 2, FCY = FH / 2;
+const FSCALE = 52;
+
+function clamp(v: number, lo: number, hi: number) {
+  return Math.max(lo, Math.min(hi, v));
+}
+
+interface AnomalyEmbeddingProps {
+  compact?: boolean;
+}
+
+export default function AnomalyEmbedding({ compact = false }: AnomalyEmbeddingProps) {
   const [threshold, setThreshold] = useState(2.5);
   const { background, signal } = useMemo(() => generateAnomalyData(), []);
 
-  const ringR = threshold * SCALE;
+  // Subsample for compact in-card version
+  const bgPoints = compact ? background.slice(0, 40) : background;
+  const sigPoints = compact ? signal.slice(0, 12) : signal;
 
   const bgFlagged = background.filter((p) => p.dist > threshold);
   const sigFlagged = signal.filter((p) => p.dist > threshold);
   const fpr = bgFlagged.length / background.length;
 
-  return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-      {/* SVG */}
+  if (compact) {
+    const ringR = clamp(threshold * SCALE, 8, CX - 12);
+    const labelX = clamp(CX + ringR * 0.68, 8, VW - 40);
+    const labelY = clamp(CY - ringR * 0.68, 12, VH - 8);
+    return (
       <svg
-        width={W} height={H}
-        style={{ display: "block", backgroundColor: "#F9F6F0", border: "1px solid var(--rule)" }}
+        viewBox={`0 0 ${VW} ${VH}`}
+        width="100%"
+        style={{ display: "block", maxWidth: "100%", backgroundColor: "#F9F6F0", border: "1px solid var(--rule)" }}
+        aria-label="BSM anomaly embedding scatter"
       >
-        {/* Background SM cloud */}
-        {background.map((p, i) => {
-          const cx = CX + p.x * SCALE;
-          const cy = CY + p.y * SCALE;
-          const flagged = p.dist > threshold;
-          return (
-            <circle key={`bg-${i}`}
-              cx={cx} cy={cy} r="2.5"
-              fill={flagged ? "#C2461F" : "#1B1B1F"}
-              opacity={flagged ? 0.55 : 0.18}
-            />
-          );
+        {bgPoints.map((p, i) => {
+          const cx = clamp(CX + p.x * SCALE, 4, VW - 4);
+          const cy = clamp(CY + p.y * SCALE, 4, VH - 4);
+          return <circle key={`bg-${i}`} cx={cx} cy={cy} r="2" fill={p.dist > threshold ? "#C2461F" : "#1B1B1F"} opacity={p.dist > threshold ? 0.55 : 0.18} />;
         })}
-
-        {/* Signal anomaly points */}
-        {signal.map((p, i) => {
-          const cx = CX + p.x * SCALE;
-          const cy = CY + p.y * SCALE;
-          const flagged = p.dist > threshold;
-          return (
-            <circle key={`sig-${i}`}
-              cx={cx} cy={cy} r="3"
-              fill="#C2461F"
-              opacity={flagged ? 0.85 : 0.3}
-              stroke={flagged ? "#C2461F" : "none"}
-              strokeWidth="1"
-            />
-          );
+        {sigPoints.map((p, i) => {
+          const cx = clamp(CX + p.x * SCALE, 4, VW - 4);
+          const cy = clamp(CY + p.y * SCALE, 4, VH - 4);
+          return <circle key={`sig-${i}`} cx={cx} cy={cy} r="2.5" fill="#C2461F" opacity={p.dist > threshold ? 0.85 : 0.3} />;
         })}
-
-        {/* Threshold ring */}
-        <circle
-          cx={CX} cy={CY} r={ringR}
-          fill="none"
-          stroke="#C2461F"
-          strokeWidth="1.5"
-          strokeDasharray="6 4"
-          opacity="0.7"
-        />
-        <circle cx={CX} cy={CY} r={4} fill="#1B1B1F" opacity={0.3} />
-
-        {/* Ring label */}
-        <text
-          x={CX + ringR * 0.68} y={CY - ringR * 0.68}
-          fontSize="9" fill="#C2461F"
-          fontFamily="var(--font-jetbrains), monospace"
-        >
+        <circle cx={CX} cy={CY} r={ringR} fill="none" stroke="#C2461F" strokeWidth="1.5" strokeDasharray="5 3" opacity="0.7" />
+        <circle cx={CX} cy={CY} r="3" fill="#1B1B1F" opacity={0.3} />
+        <text x={labelX} y={labelY} fontSize="9" fill="#C2461F" fontFamily="var(--font-jetbrains), monospace">
           τ = {threshold.toFixed(1)}
         </text>
       </svg>
+    );
+  }
 
-      {/* Slider */}
+  // Full interactive version
+  const ringR = threshold * FSCALE;
+  const labelX = clamp(FCX + ringR * 0.68, 8, FW - 48);
+  const labelY = clamp(FCY - ringR * 0.68, 12, FH - 8);
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+      <div style={{ overflowX: "auto" }}>
+        <svg
+          viewBox={`0 0 ${FW} ${FH}`}
+          width="100%"
+          style={{ display: "block", maxWidth: FW, backgroundColor: "#F9F6F0", border: "1px solid var(--rule)" }}
+        >
+          {bgPoints.map((p, i) => {
+            const cx = clamp(FCX + p.x * FSCALE, 4, FW - 4);
+            const cy = clamp(FCY + p.y * FSCALE, 4, FH - 4);
+            return <circle key={`bg-${i}`} cx={cx} cy={cy} r="2.5" fill={p.dist > threshold ? "#C2461F" : "#1B1B1F"} opacity={p.dist > threshold ? 0.55 : 0.18} />;
+          })}
+          {sigPoints.map((p, i) => {
+            const cx = clamp(FCX + p.x * FSCALE, 4, FW - 4);
+            const cy = clamp(FCY + p.y * FSCALE, 4, FH - 4);
+            return <circle key={`sig-${i}`} cx={cx} cy={cy} r="3" fill="#C2461F" opacity={p.dist > threshold ? 0.85 : 0.3} stroke={p.dist > threshold ? "#C2461F" : "none"} strokeWidth="1" />;
+          })}
+          <circle cx={FCX} cy={FCY} r={ringR} fill="none" stroke="#C2461F" strokeWidth="1.5" strokeDasharray="6 4" opacity="0.7" />
+          <circle cx={FCX} cy={FCY} r="4" fill="#1B1B1F" opacity={0.3} />
+          <text x={labelX} y={labelY} fontSize="9" fill="#C2461F" fontFamily="var(--font-jetbrains), monospace">
+            τ = {threshold.toFixed(1)}
+          </text>
+        </svg>
+      </div>
+
       <div style={{ display: "flex", alignItems: "center", gap: 12, maxWidth: 360 }}>
         <span style={{ fontFamily: "var(--font-jetbrains)", fontSize: 12, color: "var(--ink-mute)", width: 24 }}>τ</span>
         <input
@@ -90,7 +107,6 @@ export default function AnomalyEmbedding() {
         </span>
       </div>
 
-      {/* Metrics */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
         {[
           { label: "bkg flagged", value: bgFlagged.length, unit: `/ ${background.length}` },
@@ -108,8 +124,7 @@ export default function AnomalyEmbedding() {
 
       <p style={{ fontFamily: "var(--font-jetbrains)", fontSize: 11, color: "var(--ink-mute)", lineHeight: 1.6 }}>
         No signal model. The SM cloud is built from background-only events; anything beyond a
-        calibrated SW₁ distance from the cloud is anomalous by construction. Drag the threshold
-        and watch the candidate set respond.
+        calibrated SW₁ distance from the cloud is anomalous by construction.
       </p>
     </div>
   );

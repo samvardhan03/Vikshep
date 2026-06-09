@@ -49,6 +49,13 @@ body {
   border-color: var(--rule);
 }
 
+/* Recipe card CTA — always visible on touch/mobile */
+@media (hover: none) {
+  .recipe-cta {
+    opacity: 0.7 !important;
+  }
+}
+
 .grid-12 {
   display: grid;
   grid-template-columns: repeat(12, 1fr);
