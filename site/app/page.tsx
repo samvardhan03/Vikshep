@@ -2,14 +2,12 @@ import CodeBlock from "@/components/CodeBlock";
 import ArchitectureDiagram from "@/components/ArchitectureDiagram";
 import ModuleStackBadges from "@/components/ModuleStackBadges";
 import RecipeCard from "@/components/RecipeCard";
-import UseCaseCard from "@/components/UseCaseCard";
-import MathBlock from "@/components/MathBlock";
+import MathAccordion from "@/components/MathAccordion";
 import MassSculptingKiller from "@/components/visualizations/MassSculptingKiller";
 import ProblemSection from "@/components/ProblemSection";
 import ScatteringCascade from "@/components/visualizations/ScatteringCascade";
 import R2Invariance from "@/components/visualizations/R2Invariance";
 import WaveletFilterBank from "@/components/visualizations/WaveletFilterBank";
-import DeformationStability from "@/components/visualizations/DeformationStability";
 import AnomalyEmbedding from "@/components/visualizations/AnomalyEmbedding";
 
 // ── shared style helpers ──────────────────────────────────────────
@@ -31,7 +29,7 @@ const sectionH2: React.CSSProperties = {
 };
 
 const wrapper = (border = true): React.CSSProperties => ({
-  padding: "96px 0",
+  padding: "72px 0",
   borderBottom: border ? "1px solid var(--rule)" : "none",
 });
 
@@ -107,50 +105,28 @@ export default function Home() {
       {/* 2.1 — Hero */}
       <section style={{ ...wrapper(), paddingTop: 112 }}>
         <div style={inner}>
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(12,1fr)",
-              gap: 24,
-              alignItems: "start",
-            }}
-          >
-            <div
-              style={{
-                gridColumn: "span 12",
-                display: "flex",
-                flexDirection: "column",
-                gap: 24,
-              }}
-              className="md:col-span-8"
-            >
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(12,1fr)", gap: 24, alignItems: "start" }}>
+            <div style={{ gridColumn: "span 12", display: "flex", flexDirection: "column", gap: 24 }} className="md:col-span-8">
               <p style={eyebrow}>Scientific compute infrastructure</p>
               <h1
                 style={{
                   fontFamily: "var(--font-source-serif), Georgia, serif",
                   fontWeight: 300,
-                  fontSize: "clamp(48px,6.4vw,100px)",
-                  lineHeight: 1.02,
+                  fontSize: "clamp(40px,5.6vw,88px)",
+                  lineHeight: 1.05,
                   letterSpacing: "-0.02em",
                   color: "var(--ink)",
                 }}
               >
-                Black-box ML sculpts the backgrounds it measures.{" "}
+                Deterministic features for physics.{" "}
                 <span style={{ color: "var(--ink-mute)", fontStyle: "italic" }}>
-                  We rebuilt the substrate.
+                  Nothing learned, nothing leaked.
                 </span>
               </h1>
-              <p
-                style={{
-                  fontSize: 19,
-                  lineHeight: 1.55,
-                  color: "var(--ink-mute)",
-                  maxWidth: 640,
-                }}
-              >
-                Vikshep is a deterministic, deformation-stable feature-extraction plane for physics
-                analyses. Mass-decorrelated jet tagging, template-free BSM anomaly detection, and
-                rotation-invariant field inference — on-prem, GPU-accelerated, MCP-native.
+              <p style={{ fontSize: 18, lineHeight: 1.55, color: "var(--ink-mute)", maxWidth: 600 }}>
+                Wavelet scattering features for physics analyses — mass-decorrelated jet tagging,
+                template-free anomaly detection, rotation-invariant field inference.
+                On-prem, GPU-native, MCP-native.
               </p>
               <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 12 }}>
                 <CodeBlock copyable>pip install vikshep</CodeBlock>
@@ -158,23 +134,13 @@ export default function Home() {
                   href="https://github.com/samvardhan03/Vikshep"
                   target="_blank"
                   rel="noopener noreferrer"
-                  style={{
-                    fontFamily: "var(--font-jetbrains), monospace",
-                    fontSize: 13,
-                    color: "var(--ink)",
-                    textDecoration: "none",
-                  }}
+                  style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 13, color: "var(--ink)", textDecoration: "none" }}
                 >
                   View on GitHub ↗
                 </a>
                 <a
                   href="/math"
-                  style={{
-                    fontFamily: "var(--font-jetbrains), monospace",
-                    fontSize: 13,
-                    color: "var(--ink)",
-                    textDecoration: "none",
-                  }}
+                  style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 13, color: "var(--ink)", textDecoration: "none" }}
                 >
                   Read the math ↗
                 </a>
@@ -212,54 +178,37 @@ export default function Home() {
           <h2 style={{ ...sectionH2, maxWidth: 760, marginBottom: 40 }}>
             Deterministic features. Closed-form decorrelation. Reusable across every scientific domain.
           </h2>
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit,minmax(280px,1fr))",
-              gap: 1,
-              backgroundColor: "var(--rule)",
-            }}
-          >
-            {/* Card A — Deterministic feature extraction + ScatteringCascade */}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(280px,1fr))", gap: 1, backgroundColor: "var(--rule)" }}>
             <div style={{ padding: 28, backgroundColor: "var(--bg)", display: "flex", flexDirection: "column", gap: 12 }}>
               <span style={{ fontSize: 28, color: "var(--accent)", fontFamily: "var(--font-serif), Georgia, serif" }}>ψ</span>
               <h3 style={{ fontFamily: "var(--font-serif), Georgia, serif", fontWeight: 300, fontSize: 20, color: "var(--ink)", lineHeight: 1.25 }}>
                 Deterministic feature extraction
               </h3>
               <p style={{ fontSize: 14, lineHeight: 1.65, color: "var(--ink-mute)" }}>
-                The wavelet scattering transform produces a complete, multiscale, oriented description of the radiation
-                pattern inside a jet (or any signal). Filters are fixed analytic Morlets; the cascade structure provides
-                translation invariance and Lipschitz-bounded stability to deformation. No learned weights means no mass
-                leakage by construction. r₂ = S₂ / S₁ is dimensionless and scale-invariant — the substructure observable, generalized.
+                Fixed analytic Morlet wavelets cascade through the data — translate, modulate, pool. No learned weights means
+                no mass leakage by construction. r₂ = S₂/S₁ is dimensionless and scale-invariant.
               </p>
               <ScatteringCascade />
             </div>
-
-            {/* Card B — Mathematical decorrelation + R2Invariance */}
             <div style={{ padding: 28, backgroundColor: "var(--bg)", display: "flex", flexDirection: "column", gap: 12 }}>
               <span style={{ fontSize: 28, color: "var(--accent)", fontFamily: "var(--font-serif), Georgia, serif" }}>⟂</span>
               <h3 style={{ fontFamily: "var(--font-serif), Georgia, serif", fontWeight: 300, fontSize: 20, color: "var(--ink)", lineHeight: 1.25 }}>
                 Mathematical decorrelation
               </h3>
               <p style={{ fontSize: 14, lineHeight: 1.65, color: "var(--ink-mute)" }}>
-                A weighted distance-correlation penalty enforces statistical independence between the tagger output and
-                the resonance mass on background events. dCorr(ŷ, m | bkg) = 0 ⟺ the score cut removes background
-                uniformly in mass ⟺ the background shape is preserved exactly. Not a heuristic. A closed-form guarantee.
+                A weighted distance-correlation penalty enforces statistical independence between the tagger output
+                and the resonance mass. dCorr = 0 is a closed-form guarantee — not a heuristic.
               </p>
               <R2Invariance />
             </div>
-
-            {/* Card C — One engine, every dimension */}
             <div style={{ padding: 28, backgroundColor: "var(--bg)", display: "flex", flexDirection: "column", gap: 12 }}>
               <span style={{ fontSize: 28, color: "var(--accent)", fontFamily: "var(--font-serif), Georgia, serif" }}>⊗</span>
               <h3 style={{ fontFamily: "var(--font-serif), Georgia, serif", fontWeight: 300, fontSize: 20, color: "var(--ink)", lineHeight: 1.25 }}>
                 One engine, every dimension
               </h3>
               <p style={{ fontSize: 14, lineHeight: 1.65, color: "var(--ink-mute)" }}>
-                The same templated kernel handles 1-D time series, 2-D detector images, and 3-D volumes. Oriented Morlet
-                wavelets for SE(2) roto-translation. Solid-harmonic wavelets for SO(3) rotation. The (Dim, Group, J, Q, L)
-                parameters are runtime config in the MCP tool schema — not a rebuild. ATLAS jet tagging, weak-lensing maps,
-                plasma simulation fields: same binary.
+                SE(2) for 2-D jet images. SO(3) for 3-D density fields. 1-D Morlets for GW strain.
+                The (Dim, Group, J, Q, L) parameters are runtime config — not a rebuild.
               </p>
             </div>
           </div>
@@ -274,8 +223,8 @@ export default function Home() {
             J scales, L orientations — fixed by design.
           </h2>
           <p style={{ fontSize: 15, lineHeight: 1.6, color: "var(--ink-mute)", maxWidth: 560, marginBottom: 32 }}>
-            Each cell shows the energy of one Morlet wavelet basis function in (scale j, orientation θ) space.
-            The bank is computed once at startup; no learning, no adaptation. Toggle J and L to explore the coverage.
+            Each cell shows the energy of one Morlet wavelet in (scale j, orientation θ) space.
+            Toggle J and L to explore coverage — no recompilation needed.
           </p>
           <WaveletFilterBank />
         </div>
@@ -285,13 +234,10 @@ export default function Home() {
       <section id="mass-sculpting" style={wrapper()}>
         <div style={inner}>
           <p style={eyebrow}>The mass-sculpting problem</p>
-          <h2 style={{ ...sectionH2, marginBottom: 12 }}>
-            NN taggers sculpt. r₂ doesn't.
-          </h2>
+          <h2 style={{ ...sectionH2, marginBottom: 12 }}>NN taggers sculpt. r₂ doesn't.</h2>
           <p style={{ fontSize: 16, lineHeight: 1.6, color: "var(--ink-mute)", maxWidth: 580, marginBottom: 32 }}>
-            Every standard jet classifier correlates with m_jj — cutting on it deforms the
-            background mass spectrum, creating fake bumps. The scattering ratio r₂ = S₂/S₁ is
-            dimensionless and mass-decorrelated by construction. DisCo makes it rigorous.
+            Every standard jet classifier correlates with m_jj — cutting on it deforms the background mass spectrum.
+            The scattering ratio r₂ = S₂/S₁ is mass-decorrelated by construction. DisCo makes it rigorous.
           </p>
           <MassSculptingKiller />
         </div>
@@ -302,13 +248,7 @@ export default function Home() {
         <div style={inner}>
           <p style={{ ...eyebrow, marginBottom: 16 }}>Three recipes, one engine</p>
           <h2 style={{ ...sectionH2, marginBottom: 40 }}>Drop in a pipeline. Or write your own.</h2>
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit,minmax(280px,1fr))",
-              gap: 16,
-            }}
-          >
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(280px,1fr))", gap: 16 }}>
             <RecipeCard
               number="01"
               title="HEP Tagging (DisCo)"
@@ -321,10 +261,10 @@ export default function Home() {
               number="02"
               title="BSM Anomaly Detection"
               tagline="Template-free new-physics search."
-              body="Embed every event in the scattering feature space; index the Standard-Model background in an HNSW graph with Sliced-Wasserstein distance; flag events beyond a calibrated distance from the SM manifold. No signal model, no retraining for each hypothesis."
+              body="Embed every event in the scattering feature space; index the SM background in an HNSW graph with Sliced-Wasserstein distance; flag events beyond a calibrated distance from the SM manifold. No signal model, no retraining."
               command={`bun run main.ts process --request "find events that don't look like SM"`}
               href="/recipes/bsm-anomaly"
-              visualization={<AnomalyEmbedding />}
+              visualization={<AnomalyEmbedding compact />}
             />
             <RecipeCard
               number="03"
@@ -338,7 +278,7 @@ export default function Home() {
               number="04"
               title="Fast-Sim Validation"
               tagline="Preview · Q3 2026"
-              body="A principled fidelity metric for ML-generated Geant4 surrogates. The Wasserstein distance between scattering distributions of generated vs full-simulation showers — interpretable, decomposable by scale and orientation. The CaloChallenge community has been hand-rolling metrics; this is the one that doesn't move when the binning changes."
+              body="A principled fidelity metric for ML-generated Geant4 surrogates — Wasserstein distance between scattering distributions of generated vs full-simulation showers. Decomposable by scale and orientation."
               command="Coming Q3 — Talk to founders →"
               href="mailto:shekhawatsamvardhan@gmail.com?subject=Fast-sim%20validation"
               preview
@@ -358,40 +298,53 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 2.7 — Built for */}
+      {/* 2.7 — Built for (compact 3-column strip) */}
       <section style={wrapper()}>
         <div style={inner}>
           <p style={{ ...eyebrow, marginBottom: 16 }}>Where this earns its license</p>
-          <h2 style={{ ...sectionH2, maxWidth: 760, marginBottom: 40 }}>
+          <h2 style={{ ...sectionH2, maxWidth: 760, marginBottom: 32 }}>
             Built for analyses where the statistical guarantee is the publishable result.
           </h2>
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "repeat(auto-fit,minmax(280px,1fr))",
-              gap: 16,
-              marginBottom: 40,
+              gridTemplateColumns: "repeat(auto-fit,minmax(240px,1fr))",
+              gap: 1,
+              backgroundColor: "var(--rule)",
+              marginBottom: 32,
             }}
           >
-            <UseCaseCard
-              category="Particle physics — boosted-object discovery"
-              body="Mass-decorrelated jet tagging for ATLAS, CMS, and HL-LHC-era analyses. The two numbers that matter — significance gain and background-shape distortion — are validated against your existing pipeline. Currently in pilot with the University of Edinburgh."
-              footer="Wilks Δχ² · JSD-preserved background · on-prem · zero data egress"
-            />
-            <UseCaseCard
-              category="Cosmology & astrophysics — field-level inference"
-              body="Rotation-invariant, deformation-stable features for weak-lensing maps, CMB patches, and 3-D density fields. First-order coefficients recover power-spectrum-like information; second-order recovers non-Gaussian bispectrum-like structure where the power spectrum is blind."
-              footer="SE(2) and SO(3) invariance · GPU-accelerated · facility-scale throughput"
-            />
-            <UseCaseCard
-              category="Simulation-heavy science — plasma, nuclear, hydrodynamics"
-              body="Multiscale feature extraction over volumetric simulation data. Solid-harmonic scattering for SO(3)-covariant features of fluid and plasma fields. The same engine that tags jets describes turbulent flow."
-              footer="Runtime (Dim, Group) config · ROOT, HDF5, VTK loaders · no model retraining per domain"
-            />
+            {[
+              {
+                category: "Particle physics",
+                body: "Mass-decorrelated jet tagging for ATLAS, CMS, and HL-LHC-era analyses. Validated against your own Wilks Δχ² significance pipeline.",
+                footer: "Wilks Δχ² · JSD-preserved background · zero data egress",
+              },
+              {
+                category: "Cosmology & astrophysics",
+                body: "Rotation-invariant features for weak-lensing maps, CMB patches, and 3-D density fields. Second-order coefficients capture non-Gaussian structure the power spectrum misses.",
+                footer: "SE(2) and SO(3) invariance · GPU-accelerated",
+              },
+              {
+                category: "Simulation science",
+                body: "Solid-harmonic scattering for SO(3)-covariant features of plasma, nuclear, and hydrodynamics fields. Runtime (Dim, Group) config — no rebuild per domain.",
+                footer: "ROOT, HDF5, VTK loaders · no model retraining",
+              },
+            ].map((c) => (
+              <div key={c.category} style={{ padding: "24px 20px", backgroundColor: "var(--bg)", display: "flex", flexDirection: "column", gap: 10 }}>
+                <p style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 11, textTransform: "uppercase", letterSpacing: "0.16em", color: "var(--accent)" }}>
+                  {c.category}
+                </p>
+                <p style={{ fontSize: 14, lineHeight: 1.6, color: "var(--ink-mute)" }}>{c.body}</p>
+                <p style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 10, color: "var(--ink-mute)", paddingTop: 10, borderTop: "1px solid var(--rule)" }}>
+                  {c.footer}
+                </p>
+              </div>
+            ))}
           </div>
           <div
             style={{
-              padding: 32,
+              padding: 28,
               border: "1px solid var(--rule)",
               display: "flex",
               flexWrap: "wrap",
@@ -400,26 +353,12 @@ export default function Home() {
               gap: 16,
             }}
           >
-            <h3
-              style={{
-                fontFamily: "var(--font-serif), Georgia, serif",
-                fontWeight: 300,
-                fontSize: 20,
-                color: "var(--ink)",
-              }}
-            >
+            <h3 style={{ fontFamily: "var(--font-serif), Georgia, serif", fontWeight: 300, fontSize: 20, color: "var(--ink)" }}>
               Custom deployment · Contract-based · SLA committed
             </h3>
             <a
               href="mailto:shekhawatsamvardhan@gmail.com?subject=Vikshep%20deployment"
-              style={{
-                fontFamily: "var(--font-jetbrains), monospace",
-                fontSize: 13,
-                color: "var(--bg)",
-                backgroundColor: "var(--ink)",
-                padding: "10px 20px",
-                textDecoration: "none",
-              }}
+              style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 13, color: "var(--bg)", backgroundColor: "var(--ink)", padding: "10px 20px", textDecoration: "none" }}
             >
               Talk to founders →
             </a>
@@ -427,53 +366,14 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 2.8 — Math teaser */}
+      {/* 2.8 — Math teaser (collapsed accordion) */}
       <section style={wrapper()}>
         <div style={inner}>
           <p style={{ ...eyebrow, marginBottom: 16 }}>No black box</p>
-          <h2 style={{ ...sectionH2, maxWidth: 760, marginBottom: 40 }}>
+          <h2 style={{ ...sectionH2, maxWidth: 760, marginBottom: 32 }}>
             Every coefficient is derivable from the input. Every guarantee is provable.
           </h2>
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit,minmax(280px,1fr))",
-              gap: 16,
-              marginBottom: 32,
-            }}
-          >
-            <MathBlock
-              title="The cascade"
-              latex={String.raw`S_2[\lambda_1,\lambda_2]\,x \;=\; \big|\,|x \star \psi_{\lambda_1}|\,\star\,\psi_{\lambda_2}\big| \,\star\, \phi_J`}
-              caption="Modulus, convolve, modulus, low-pass. Non-expansive. Lipschitz-stable to deformation."
-              href="/math#s1"
-            />
-            <MathBlock
-              title="The invariance"
-              latex={String.raw`\|S(\mathcal{L}_\tau x) - Sx\| \;\le\; C\!\left(\|\nabla\tau\|_\infty + \tfrac{\|\tau\|_\infty}{2^J} + \|H\tau\|_\infty\right)\|x\|`}
-              caption="Small deformations produce small changes in features. Detector smearing is bounded, not amplified."
-              href="/math#s2"
-            >
-              <DeformationStability />
-            </MathBlock>
-            <MathBlock
-              title="The decorrelation"
-              latex={String.raw`\mathcal{L} \;=\; \mathrm{wBCE}(\hat y, y) \;+\; \lambda\,\mathrm{dCorr}^2_w(\hat y,\, m \mid \text{bkg})`}
-              caption="Distance correlation is zero iff the tagger output is statistically independent of the mass. The cut preserves the spectrum by construction."
-              href="/math#s6"
-            />
-          </div>
-          <a
-            href="/math"
-            style={{
-              fontFamily: "var(--font-jetbrains), monospace",
-              fontSize: 13,
-              color: "var(--ink)",
-              textDecoration: "none",
-            }}
-          >
-            Read the substrate, end to end →
-          </a>
+          <MathAccordion />
         </div>
       </section>
 
@@ -487,19 +387,10 @@ export default function Home() {
           <p style={{ fontSize: 16, lineHeight: 1.65, color: "var(--ink-mute)", marginBottom: 24 }}>
             In partnership with a nuclear-physics researcher at the University of Edinburgh, Vikshep is
             running on Geant4-simulated ATLAS data, replacing a neural-network tagger trained on eight
-            high-level kinematic variables. The benchmark is the analysis&#39;s own Wilks Δχ² significance
-            pipeline. Two numbers will be reported: the significance gain (Δσ) over the NN baseline, and
-            the reduction in background mass-shape distortion (ΔJSD). Results: Q1 2026.
+            high-level kinematic variables. Two numbers will be reported: the significance gain (Δσ) over
+            the NN baseline, and the reduction in background mass-shape distortion (ΔJSD). Results: Q1 2026.
           </p>
-          <a
-            href="/pilot"
-            style={{
-              fontFamily: "var(--font-jetbrains), monospace",
-              fontSize: 13,
-              color: "var(--ink)",
-              textDecoration: "none",
-            }}
-          >
+          <a href="/pilot" style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 13, color: "var(--ink)", textDecoration: "none" }}>
             Pilot details →
           </a>
         </div>
@@ -509,28 +400,9 @@ export default function Home() {
       <section style={wrapper()}>
         <div style={inner}>
           <p style={{ ...eyebrow, marginBottom: 16 }}>Get started in three steps</p>
-          <h2 style={{ ...sectionH2, maxWidth: 640, marginBottom: 40 }}>
-            Try it in 90 seconds.
-          </h2>
-          <div
-            style={{
-              maxWidth: 640,
-              padding: 24,
-              backgroundColor: "var(--bg-elev)",
-              border: "1px solid var(--rule)",
-              marginBottom: 24,
-            }}
-          >
-            <pre
-              style={{
-                fontFamily: "var(--font-jetbrains), monospace",
-                fontSize: 13,
-                lineHeight: 1.7,
-                color: "var(--ink)",
-                overflowX: "auto",
-                margin: 0,
-              }}
-            >
+          <h2 style={{ ...sectionH2, maxWidth: 640, marginBottom: 40 }}>Try it in 90 seconds.</h2>
+          <div style={{ maxWidth: 640, padding: 24, backgroundColor: "var(--bg-elev)", border: "1px solid var(--rule)", marginBottom: 24 }}>
+            <pre style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 13, lineHeight: 1.7, color: "var(--ink)", overflowX: "auto", margin: 0 }}>
               {QUICKSTART}
             </pre>
           </div>
@@ -539,87 +411,47 @@ export default function Home() {
               href="https://github.com/samvardhan03/Vikshep"
               target="_blank"
               rel="noopener noreferrer"
-              style={{
-                fontFamily: "var(--font-jetbrains), monospace",
-                fontSize: 13,
-                color: "var(--bg)",
-                backgroundColor: "var(--ink)",
-                padding: "10px 20px",
-                textDecoration: "none",
-              }}
+              style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 13, color: "var(--bg)", backgroundColor: "var(--ink)", padding: "10px 20px", textDecoration: "none" }}
             >
               View the GitHub repo →
             </a>
-            <a
-              href="#"
-              style={{
-                fontFamily: "var(--font-jetbrains), monospace",
-                fontSize: 13,
-                color: "var(--ink)",
-                border: "1px solid var(--rule)",
-                padding: "10px 20px",
-                textDecoration: "none",
-              }}
-            >
-              Read the JOSS paper →
-            </a>
           </div>
+          <p style={{ marginTop: 24, fontFamily: "var(--font-jetbrains), monospace", fontSize: 12, color: "var(--ink-mute)", lineHeight: 1.6, maxWidth: 560 }}>
+            Free for research and open-source use under AGPL-3.0. Commercial or proprietary deployment requires a
+            commercial license —{" "}
+            <a href="mailto:shekhawatsamvardhan@gmail.com?subject=Vikshep%20commercial" style={{ color: "var(--ink)", textDecoration: "none" }}>
+              talk to founders
+            </a>.
+          </p>
         </div>
       </section>
 
       {/* Pre-footer CTA band */}
       <section style={wrapper()}>
         <div style={inner}>
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit,minmax(280px,1fr))",
-              gap: 1,
-              backgroundColor: "var(--rule)",
-            }}
-          >
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(280px,1fr))", gap: 1, backgroundColor: "var(--rule)" }}>
             <div style={{ padding: "40px 32px", backgroundColor: "var(--bg)", display: "flex", flexDirection: "column", gap: 16 }}>
-              <h3 style={{ fontFamily: "var(--font-serif), Georgia, serif", fontWeight: 300, fontSize: 22, color: "var(--ink)", lineHeight: 1.2 }}>
-                Run it yourself
-              </h3>
+              <h3 style={{ fontFamily: "var(--font-serif), Georgia, serif", fontWeight: 300, fontSize: 22, color: "var(--ink)", lineHeight: 1.2 }}>Run it yourself</h3>
               <p style={{ fontSize: 14, lineHeight: 1.6, color: "var(--ink-mute)" }}>
-                Apache-2.0. Open-source. GPU-accelerated binary wheels on PyPI. Works on your hardware, in your facility.
+                AGPL-3.0. Open-source. GPU-accelerated binary wheels on PyPI. Works on your hardware, in your facility.
               </p>
               <a
                 href="https://github.com/samvardhan03/Vikshep"
                 target="_blank"
                 rel="noopener noreferrer"
-                style={{
-                  alignSelf: "flex-start",
-                  fontFamily: "var(--font-jetbrains), monospace",
-                  fontSize: 13,
-                  color: "var(--ink)",
-                  border: "1px solid var(--rule)",
-                  padding: "8px 16px",
-                  textDecoration: "none",
-                }}
+                style={{ alignSelf: "flex-start", fontFamily: "var(--font-jetbrains), monospace", fontSize: 13, color: "var(--ink)", border: "1px solid var(--rule)", padding: "8px 16px", textDecoration: "none" }}
               >
                 GitHub →
               </a>
             </div>
             <div style={{ padding: "40px 32px", backgroundColor: "var(--bg-elev)", display: "flex", flexDirection: "column", gap: 16 }}>
-              <h3 style={{ fontFamily: "var(--font-serif), Georgia, serif", fontWeight: 300, fontSize: 22, color: "var(--ink)", lineHeight: 1.2 }}>
-                Or have us run it with you
-              </h3>
+              <h3 style={{ fontFamily: "var(--font-serif), Georgia, serif", fontWeight: 300, fontSize: 22, color: "var(--ink)", lineHeight: 1.2 }}>Or have us run it with you</h3>
               <p style={{ fontSize: 14, lineHeight: 1.6, color: "var(--ink-mute)" }}>
                 We integrate into your existing analysis pipeline, validate against your significance benchmark, and deliver the two numbers that matter.
               </p>
               <a
                 href="mailto:shekhawatsamvardhan@gmail.com?subject=Vikshep%20collaboration"
-                style={{
-                  alignSelf: "flex-start",
-                  fontFamily: "var(--font-jetbrains), monospace",
-                  fontSize: 13,
-                  color: "var(--bg)",
-                  backgroundColor: "var(--ink)",
-                  padding: "8px 16px",
-                  textDecoration: "none",
-                }}
+                style={{ alignSelf: "flex-start", fontFamily: "var(--font-jetbrains), monospace", fontSize: 13, color: "var(--bg)", backgroundColor: "var(--ink)", padding: "8px 16px", textDecoration: "none" }}
               >
                 Talk to founders →
               </a>
@@ -633,48 +465,14 @@ export default function Home() {
         <div style={inner}>
           <p style={{ ...eyebrow, marginBottom: 16 }}>Founders &amp; creators</p>
           <h2 style={{ ...sectionH2, marginBottom: 40 }}>The people behind the plane</h2>
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit,minmax(280px,1fr))",
-              gap: 16,
-              marginBottom: 24,
-            }}
-          >
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(280px,1fr))", gap: 16, marginBottom: 24 }}>
             {FOUNDERS.map((f) => (
-              <div
-                key={f.name}
-                style={{
-                  border: "1px solid var(--rule)",
-                  padding: 32,
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 16,
-                }}
-              >
+              <div key={f.name} style={{ border: "1px solid var(--rule)", padding: 32, display: "flex", flexDirection: "column", gap: 16 }}>
                 <div>
-                  <p
-                    style={{
-                      fontFamily: "var(--font-jetbrains), monospace",
-                      fontSize: 11,
-                      textTransform: "uppercase",
-                      letterSpacing: "0.18em",
-                      color: "var(--accent)",
-                      marginBottom: 6,
-                    }}
-                  >
+                  <p style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 11, textTransform: "uppercase", letterSpacing: "0.18em", color: "var(--accent)", marginBottom: 6 }}>
                     {f.eyebrow}
                   </p>
-                  <h3
-                    style={{
-                      fontFamily: "var(--font-serif), Georgia, serif",
-                      fontWeight: 300,
-                      fontSize: 28,
-                      lineHeight: 1.1,
-                      color: "var(--ink)",
-                      marginBottom: 4,
-                    }}
-                  >
+                  <h3 style={{ fontFamily: "var(--font-serif), Georgia, serif", fontWeight: 300, fontSize: 28, lineHeight: 1.1, color: "var(--ink)", marginBottom: 4 }}>
                     {f.name}
                   </h3>
                   <p style={{ fontSize: 14, color: "var(--ink-mute)" }}>{f.role}</p>
@@ -682,81 +480,36 @@ export default function Home() {
                 <p style={{ fontSize: 15, lineHeight: 1.6, color: "var(--ink-mute)" }}>{f.focus}</p>
                 <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
                   {f.portfolio && (
-                    <a
-                      href={f.portfolio}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 12, color: "var(--ink)", textDecoration: "none" }}
-                    >
+                    <a href={f.portfolio} target="_blank" rel="noopener noreferrer" style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 12, color: "var(--ink)", textDecoration: "none" }}>
                       ↗ {f.portfolio.replace("https://", "")}
                     </a>
                   )}
                   {f.linkedin && (
-                    <a
-                      href={f.linkedin}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 12, color: "var(--ink)", textDecoration: "none" }}
-                    >
+                    <a href={f.linkedin} target="_blank" rel="noopener noreferrer" style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 12, color: "var(--ink)", textDecoration: "none" }}>
                       ↗ {f.linkedin.replace("https://", "")}
                     </a>
                   )}
-                  <a
-                    href={`mailto:${f.email}`}
-                    style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 12, color: "var(--ink)", textDecoration: "none" }}
-                  >
+                  <a href={`mailto:${f.email}`} style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 12, color: "var(--ink)", textDecoration: "none" }}>
                     ✉ {f.email}
                   </a>
                 </div>
                 <div style={{ paddingTop: 16, borderTop: "1px solid var(--rule)", display: "flex", flexDirection: "column", gap: 8 }}>
-                  <p
-                    style={{
-                      fontFamily: "var(--font-jetbrains), monospace",
-                      fontSize: 11,
-                      textTransform: "uppercase",
-                      letterSpacing: "0.12em",
-                      color: "var(--ink-mute)",
-                    }}
-                  >
+                  <p style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 11, textTransform: "uppercase", letterSpacing: "0.12em", color: "var(--ink-mute)" }}>
                     {f.sectionLabel}
                   </p>
                   {f.items.map((m) => (
-                    <a
-                      key={m.label}
-                      href={m.href}
-                      target={m.href.startsWith("http") ? "_blank" : undefined}
-                      rel={m.href.startsWith("http") ? "noopener noreferrer" : undefined}
-                      style={{ display: "flex", alignItems: "baseline", gap: 10, textDecoration: "none" }}
-                    >
-                      <code style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 13, color: "var(--ink)" }}>
-                        {m.label}
-                      </code>
-                      <span style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 11, color: "var(--ink-mute)" }}>
-                        — {m.note}
-                      </span>
+                    <a key={m.label} href={m.href} target={m.href.startsWith("http") ? "_blank" : undefined} rel={m.href.startsWith("http") ? "noopener noreferrer" : undefined} style={{ display: "flex", alignItems: "baseline", gap: 10, textDecoration: "none" }}>
+                      <code style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 13, color: "var(--ink)" }}>{m.label}</code>
+                      <span style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 11, color: "var(--ink-mute)" }}>— {m.note}</span>
                     </a>
                   ))}
                 </div>
               </div>
             ))}
           </div>
-          <aside
-            style={{
-              borderTop: "1px solid var(--rule)",
-              paddingTop: 24,
-              fontFamily: "var(--font-jetbrains), monospace",
-              fontSize: 13,
-              color: "var(--ink-mute)",
-            }}
-          >
-            Vikshep is the scientific-compute companion to OmniPulse. Same engine, same maintainers,
-            distinct product surfaces.{" "}
-            <a
-              href="https://omnipulseid.vercel.app"
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{ color: "var(--ink)", textDecoration: "none" }}
-            >
+          <aside style={{ borderTop: "1px solid var(--rule)", paddingTop: 24, fontFamily: "var(--font-jetbrains), monospace", fontSize: 13, color: "var(--ink-mute)" }}>
+            Vikshep is the scientific-compute companion to OmniPulse. Same engine, same maintainers, distinct product surfaces.{" "}
+            <a href="https://omnipulseid.vercel.app" target="_blank" rel="noopener noreferrer" style={{ color: "var(--ink)", textDecoration: "none" }}>
               → OmniPulse for media IP
             </a>
           </aside>

@@ -1,0 +1,24 @@
+# Licensing
+
+Vikshep is dual-licensed.
+
+## Open-source license: GNU AGPL-3.0
+
+The source code in this repository is licensed under the GNU Affero General Public License v3.0
+(see [LICENSE](LICENSE)). You are free to use, modify, and distribute it under the AGPL-3.0,
+including for research, academic, and open-source work. The AGPL requires that if you modify
+this software and provide it to others over a network, you release the complete corresponding
+source of your modified version under the same license.
+
+## Commercial license
+
+If you cannot or do not wish to comply with the AGPL-3.0 — for example, to deploy this software
+inside a proprietary product or service without releasing your own source — a separate commercial
+license is available. It also covers production support, SLA, and the proprietary premium
+components (3-D SO(3) / solid-harmonic kernels, high-throughput batch scatter, the on-premise
+appliance).
+
+For commercial terms, contact shekhawatsamvardhan@gmail.com.
+
+This document describes the licensing model; it is not the commercial license agreement itself.
+Commercial terms are provided separately on request.

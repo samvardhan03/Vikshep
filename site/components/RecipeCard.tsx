@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 
 interface RecipeCardProps {
@@ -23,25 +24,24 @@ export default function RecipeCard({
   preview,
   visualization,
 }: RecipeCardProps) {
+  const [hovered, setHovered] = useState(false);
   const isExternal = href.startsWith("mailto") || href.startsWith("http");
 
   const inner = (
     <div
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
       style={{
-        border: "1px solid var(--rule)",
+        border: `1px solid ${hovered ? "var(--ink)" : "var(--rule)"}`,
         padding: 28,
         display: "flex",
         flexDirection: "column",
         gap: 16,
         height: "100%",
-        transition: "border-color 150ms ease",
         opacity: preview ? 0.72 : 1,
-      }}
-      onMouseEnter={(e) => {
-        (e.currentTarget as HTMLDivElement).style.borderColor = "var(--ink)";
-      }}
-      onMouseLeave={(e) => {
-        (e.currentTarget as HTMLDivElement).style.borderColor = "var(--rule)";
+        transform: hovered ? "translateY(-2px)" : "translateY(0)",
+        transition: "border-color 150ms, transform 150ms",
+        boxShadow: hovered ? "0 4px 16px rgba(27,27,31,0.07)" : "none",
       }}
     >
       <div style={{ display: "flex", alignItems: "baseline", gap: 12 }}>
@@ -118,6 +118,21 @@ export default function RecipeCard({
         >
           {command}
         </code>
+      </div>
+      {/* Hover CTA — always visible on mobile, appears on hover on desktop */}
+      <div
+        style={{
+          fontFamily: "var(--font-jetbrains), monospace",
+          fontSize: 12,
+          color: "var(--signal-warm)",
+          letterSpacing: "0.06em",
+          opacity: hovered ? 1 : 0,
+          transition: "opacity 150ms",
+          // Always visible on touch devices via media query handled via inline conditional
+        }}
+        className="recipe-cta"
+      >
+        Click to know more →
       </div>
     </div>
   );

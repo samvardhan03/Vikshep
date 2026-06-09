@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
 import { Command } from "commander";
 import { McpBridge } from "./mcp/McpClient";
 import { executeWST } from "./tools/ExecuteWSTTool";

@@ -30,6 +30,7 @@ export const metadata: Metadata = {
   },
   description:
     "Mass-decorrelated jet tagging, template-free BSM anomaly detection, and rotation-invariant field inference — on-prem, GPU-accelerated, MCP-native.",
+  icons: { icon: "data:," },
 };
 
 export default function RootLayout({

@@ -4,7 +4,7 @@ const MODULES = [
   { name: "omni-wst-core", version: "0.1", channel: "PyPI" },
   { name: "vector-index", version: "0.1", channel: "crate" },
   { name: "sliced-wasserstein", version: "0.1", channel: "crate" },
-  { name: "Apache 2.0", version: null, channel: "license" },
+  { name: "AGPL-3.0 + Commercial", version: null, channel: "license" },
 ];
 
 export default function ModuleStackBadges() {
