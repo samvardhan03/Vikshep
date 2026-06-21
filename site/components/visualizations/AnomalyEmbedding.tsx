@@ -6,7 +6,7 @@ import { generateAnomalyData } from "@/lib/synthetic";
 // Compact card viewport (no overflow)
 const VW = 280, VH = 200;
 const CX = VW / 2, CY = VH / 2;
-const SCALE = 36; // reduced so max-dist≈3 → 108px < CX-12=128 margin
+const SCALE = 36;
 
 // Full interactive viewport
 const FW = 320, FH = 320;
@@ -25,7 +25,6 @@ export default function AnomalyEmbedding({ compact = false }: AnomalyEmbeddingPr
   const [threshold, setThreshold] = useState(2.5);
   const { background, signal } = useMemo(() => generateAnomalyData(), []);
 
-  // Subsample for compact in-card version
   const bgPoints = compact ? background.slice(0, 40) : background;
   const sigPoints = compact ? signal.slice(0, 12) : signal;
 
@@ -41,29 +40,28 @@ export default function AnomalyEmbedding({ compact = false }: AnomalyEmbeddingPr
       <svg
         viewBox={`0 0 ${VW} ${VH}`}
         width="100%"
-        style={{ display: "block", maxWidth: "100%", backgroundColor: "#F9F6F0", border: "1px solid var(--rule)" }}
+        style={{ display: "block", maxWidth: "100%", backgroundColor: "var(--bg-elev)", border: "1px solid var(--rule)" }}
         aria-label="BSM anomaly embedding scatter"
       >
         {bgPoints.map((p, i) => {
           const cx = clamp(CX + p.x * SCALE, 4, VW - 4);
           const cy = clamp(CY + p.y * SCALE, 4, VH - 4);
-          return <circle key={`bg-${i}`} cx={cx} cy={cy} r="2" fill={p.dist > threshold ? "#C2461F" : "#1B1B1F"} opacity={p.dist > threshold ? 0.55 : 0.18} />;
+          return <circle key={`bg-${i}`} cx={cx} cy={cy} r="2" fill={p.dist > threshold ? "var(--accent-warm)" : "var(--ink)"} opacity={p.dist > threshold ? 0.55 : 0.18} />;
         })}
         {sigPoints.map((p, i) => {
           const cx = clamp(CX + p.x * SCALE, 4, VW - 4);
           const cy = clamp(CY + p.y * SCALE, 4, VH - 4);
-          return <circle key={`sig-${i}`} cx={cx} cy={cy} r="2.5" fill="#C2461F" opacity={p.dist > threshold ? 0.85 : 0.3} />;
+          return <circle key={`sig-${i}`} cx={cx} cy={cy} r="2.5" fill="var(--accent-warm)" opacity={p.dist > threshold ? 0.85 : 0.3} />;
         })}
-        <circle cx={CX} cy={CY} r={ringR} fill="none" stroke="#C2461F" strokeWidth="1.5" strokeDasharray="5 3" opacity="0.7" />
-        <circle cx={CX} cy={CY} r="3" fill="#1B1B1F" opacity={0.3} />
-        <text x={labelX} y={labelY} fontSize="9" fill="#C2461F" fontFamily="var(--font-jetbrains), monospace">
+        <circle cx={CX} cy={CY} r={ringR} fill="none" stroke="var(--accent-warm)" strokeWidth="1.5" strokeDasharray="5 3" opacity="0.7" />
+        <circle cx={CX} cy={CY} r="3" fill="var(--ink)" opacity={0.3} />
+        <text x={labelX} y={labelY} fontSize="9" fill="var(--accent-warm)" fontFamily="var(--font-jetbrains), monospace">
           τ = {threshold.toFixed(1)}
         </text>
       </svg>
     );
   }
 
-  // Full interactive version
   const ringR = threshold * FSCALE;
   const labelX = clamp(FCX + ringR * 0.68, 8, FW - 48);
   const labelY = clamp(FCY - ringR * 0.68, 12, FH - 8);
@@ -74,21 +72,21 @@ export default function AnomalyEmbedding({ compact = false }: AnomalyEmbeddingPr
         <svg
           viewBox={`0 0 ${FW} ${FH}`}
           width="100%"
-          style={{ display: "block", maxWidth: FW, backgroundColor: "#F9F6F0", border: "1px solid var(--rule)" }}
+          style={{ display: "block", maxWidth: FW, backgroundColor: "var(--bg-elev)", border: "1px solid var(--rule)" }}
         >
           {bgPoints.map((p, i) => {
             const cx = clamp(FCX + p.x * FSCALE, 4, FW - 4);
             const cy = clamp(FCY + p.y * FSCALE, 4, FH - 4);
-            return <circle key={`bg-${i}`} cx={cx} cy={cy} r="2.5" fill={p.dist > threshold ? "#C2461F" : "#1B1B1F"} opacity={p.dist > threshold ? 0.55 : 0.18} />;
+            return <circle key={`bg-${i}`} cx={cx} cy={cy} r="2.5" fill={p.dist > threshold ? "var(--accent-warm)" : "var(--ink)"} opacity={p.dist > threshold ? 0.55 : 0.18} />;
           })}
           {sigPoints.map((p, i) => {
             const cx = clamp(FCX + p.x * FSCALE, 4, FW - 4);
             const cy = clamp(FCY + p.y * FSCALE, 4, FH - 4);
-            return <circle key={`sig-${i}`} cx={cx} cy={cy} r="3" fill="#C2461F" opacity={p.dist > threshold ? 0.85 : 0.3} stroke={p.dist > threshold ? "#C2461F" : "none"} strokeWidth="1" />;
+            return <circle key={`sig-${i}`} cx={cx} cy={cy} r="3" fill="var(--accent-warm)" opacity={p.dist > threshold ? 0.85 : 0.3} stroke={p.dist > threshold ? "var(--accent-warm)" : "none"} strokeWidth="1" />;
           })}
-          <circle cx={FCX} cy={FCY} r={ringR} fill="none" stroke="#C2461F" strokeWidth="1.5" strokeDasharray="6 4" opacity="0.7" />
-          <circle cx={FCX} cy={FCY} r="4" fill="#1B1B1F" opacity={0.3} />
-          <text x={labelX} y={labelY} fontSize="9" fill="#C2461F" fontFamily="var(--font-jetbrains), monospace">
+          <circle cx={FCX} cy={FCY} r={ringR} fill="none" stroke="var(--accent-warm)" strokeWidth="1.5" strokeDasharray="6 4" opacity="0.7" />
+          <circle cx={FCX} cy={FCY} r="4" fill="var(--ink)" opacity={0.3} />
+          <text x={labelX} y={labelY} fontSize="9" fill="var(--accent-warm)" fontFamily="var(--font-jetbrains), monospace">
             τ = {threshold.toFixed(1)}
           </text>
         </svg>

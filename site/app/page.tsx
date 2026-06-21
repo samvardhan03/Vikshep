@@ -1,6 +1,5 @@
 import CodeBlock from "@/components/CodeBlock";
 import ArchitectureDiagram from "@/components/ArchitectureDiagram";
-import ModuleStackBadges from "@/components/ModuleStackBadges";
 import RecipeCard from "@/components/RecipeCard";
 import MathAccordion from "@/components/MathAccordion";
 import MassSculptingKiller from "@/components/visualizations/MassSculptingKiller";
@@ -9,6 +8,7 @@ import ScatteringCascade from "@/components/visualizations/ScatteringCascade";
 import R2Invariance from "@/components/visualizations/R2Invariance";
 import WaveletFilterBank from "@/components/visualizations/WaveletFilterBank";
 import AnomalyEmbedding from "@/components/visualizations/AnomalyEmbedding";
+import HeroScalogram from "@/components/HeroScalogram";
 
 // ── shared style helpers ──────────────────────────────────────────
 const eyebrow: React.CSSProperties = {
@@ -105,16 +105,22 @@ export default function Home() {
       {/* 2.1 — Hero */}
       <section style={{ ...wrapper(), paddingTop: 112 }}>
         <div style={inner}>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(12,1fr)", gap: 24, alignItems: "start" }}>
-            <div style={{ gridColumn: "span 12", display: "flex", flexDirection: "column", gap: 24 }} className="md:col-span-8">
+          {/* Desktop: left 34% text / right 62% wavelet, vertically centered, 4% gap
+              Tablet/mobile: stacked, wavelet below headline */}
+          <div className="flex flex-col gap-10 lg:flex-row lg:items-center lg:gap-[4%]">
+            {/* ── Left column: 36% ── */}
+            <div
+              className="w-full lg:w-[36%] shrink-0"
+              style={{ display: "flex", flexDirection: "column", gap: 20 }}
+            >
               <p style={eyebrow}>Scientific compute infrastructure</p>
               <h1
                 style={{
                   fontFamily: "var(--font-source-serif), Georgia, serif",
                   fontWeight: 300,
-                  fontSize: "clamp(40px,5.6vw,88px)",
+                  fontSize: "clamp(2.2rem, 3.8vw, 3.4rem)",
                   lineHeight: 1.05,
-                  letterSpacing: "-0.02em",
+                  letterSpacing: "-0.01em",
                   color: "var(--ink)",
                 }}
               >
@@ -123,27 +129,8 @@ export default function Home() {
                   Nothing learned, nothing leaked.
                 </span>
               </h1>
-              <p style={{ fontSize: 18, lineHeight: 1.55, color: "var(--ink-mute)", maxWidth: 600 }}>
-                Wavelet scattering features for physics analyses — mass-decorrelated jet tagging,
-                template-free anomaly detection, rotation-invariant field inference.
-                On-prem, GPU-native, MCP-native.
-              </p>
-              <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 12 }}>
+              <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 10 }}>
                 <CodeBlock copyable>pip install vikshep</CodeBlock>
-                <a
-                  href="https://github.com/samvardhan03/Vikshep"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 13, color: "var(--ink)", textDecoration: "none" }}
-                >
-                  View on GitHub ↗
-                </a>
-                <a
-                  href="/math"
-                  style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 13, color: "var(--ink)", textDecoration: "none" }}
-                >
-                  Read the math ↗
-                </a>
                 <a
                   href="mailto:shekhawatsamvardhan@gmail.com?subject=Vikshep%20inquiry"
                   style={{
@@ -158,7 +145,14 @@ export default function Home() {
                   Talk to founders →
                 </a>
               </div>
-              <ModuleStackBadges />
+              <p style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 11, color: "var(--ink-mute)", margin: 0 }}>
+                AGPL-3.0 + Commercial · open source
+              </p>
+            </div>
+
+            {/* ── Right column: 62% ── */}
+            <div className="w-full lg:flex-1">
+              <HeroScalogram />
             </div>
           </div>
         </div>

@@ -1,26 +1,29 @@
 @import "katex/dist/katex.min.css";
 @import "tailwindcss";
 
-/* ── omnipulseid design tokens ───────────────────────────── */
+/* ── Vikshep design tokens ────────────────────────────────── */
 :root {
-  --bg:          #FBF1E6;
-  --bg-elev:     #F9F6F0;
-  --ink:         #1B1B1F;
-  --ink-mute:    #4A4A52;
-  --rule:        rgba(27, 27, 31, 0.12);
-  --accent:      #1B1B1F;
-  --signal-warm: #C2461F;
-  --accent-cyan: transparent;
-  --glow:        none;
+  --paper:        #EFEEEA;
+  --bg:           #EFEEEA;
+  --bg-elev:      #E9E8E3;
+  --ink:          #0E1116;
+  --ink-mute:     rgba(107, 107, 102, 0.75);
+  --rule:         #CCCAC3;
+  --accent:       #2C3FBF;
+  --accent-warm:  #C24A1F;
+  --signal-warm:  #C24A1F;
+  --accent-cyan:  transparent;
+  --glow:         none;
 }
 
 @theme inline {
-  --color-bg:          var(--bg);
-  --color-bg-elev:     var(--bg-elev);
-  --color-ink:         var(--ink);
-  --color-ink-mute:    var(--ink-mute);
-  --color-accent:      var(--accent);
-  --color-signal-warm: var(--signal-warm);
+  --color-bg:           var(--bg);
+  --color-bg-elev:      var(--bg-elev);
+  --color-ink:          var(--ink);
+  --color-ink-mute:     var(--ink-mute);
+  --color-accent:       var(--accent);
+  --color-accent-warm:  var(--accent-warm);
+  --color-signal-warm:  var(--signal-warm);
 
   --font-sans:  var(--font-inter), system-ui, sans-serif;
   --font-serif: var(--font-source-serif), Georgia, serif;
