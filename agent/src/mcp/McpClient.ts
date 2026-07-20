@@ -50,8 +50,8 @@ function resolveMcpBin(): string {
   }
   throw new Error(
     "[McpBridge] omnipulse-mcp not found.\n" +
-    "  Install: cargo install omnipulse-mcp\n" +
-    "  Or set:  export OMNIPULSE_MCP_BIN=/path/to/omnipulse-mcp"
+    "  Download the binary from the Vikshep Releases page and set:\n" +
+    "  export OMNIPULSE_MCP_BIN=/path/to/omnipulse-mcp"
   );
 }
 

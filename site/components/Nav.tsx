@@ -6,6 +6,7 @@ const navLinks = [
   { label: "Platform", href: "/#recipes" },
   { label: "Math", href: "/math" },
   { label: "Pilot", href: "/pilot" },
+  { label: "Pricing", href: "/pricing" },
   { label: "GitHub ↗", href: "https://github.com/samvardhan03/Vikshep", external: true },
 ];
 

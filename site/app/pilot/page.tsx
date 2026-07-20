@@ -450,7 +450,7 @@ export default function PilotPage() {
             </li>
             <li>
               Install dependencies:{" "}
-              <code style={{ color: "var(--ink)" }}>pip install vikshep &amp;&amp; cargo install omnipulse-mcp</code>
+              <code style={{ color: "var(--ink)" }}>pip install -e backend/ingest</code>
             </li>
             <li>
               Obtain the Geant4 samples (see{" "}
@@ -568,6 +568,68 @@ python -m bench.run \\
             }}
           >
             View quickstart on GitHub ↗
+          </a>
+        </div>
+      </section>
+
+      {/* ── For research groups ── */}
+      <section style={sec}>
+        <div style={wrap}>
+          <p style={eyebrow}>For research groups</p>
+          <h2 style={h2}>Run Vikshep on your own Geant4 simulation.</h2>
+          <p style={{ ...prose, marginBottom: 20 }}>
+            We are actively looking for a second pilot partner — a research group with Geant4
+            simulation output and an existing analysis pipeline. We will integrate Vikshep into
+            your analysis, validate against your existing significance benchmark, and deliver the
+            two numbers that matter: Δσ and ΔJSD. No hosted compute required; the tool runs
+            locally on your data, in your facility.
+          </p>
+          <p style={{ ...prose, marginBottom: 24 }}>
+            We ask for one thing: permission to cite the results (anonymised if needed) and to
+            share the benchmark numbers publicly. If the results are not better than your existing
+            pipeline on both metrics, we will say so plainly.
+          </p>
+
+          {/* BibTeX block */}
+          <p style={{ ...monoSm, fontSize: 11, color: "var(--ink-mute)", textTransform: "uppercase", letterSpacing: "0.14em", marginBottom: 10 }}>
+            Cite
+          </p>
+          <pre style={{
+            ...card,
+            fontSize: 12,
+            lineHeight: 1.7,
+            color: "var(--ink-mute)",
+            overflowX: "auto",
+            maxWidth: 640,
+            marginBottom: 24,
+          }}>{`@misc{vikshep2025,
+  title        = {Vikshep: Deterministic Wavelet-Scattering Features
+                  for Scientific Compute},
+  author       = {Singh, Samvardhan and Mishra, Yash and Papanwar, Komal},
+  year         = {2025},
+  howpublished = {\\url{https://github.com/samvardhan03/Vikshep}},
+  note         = {AGPL-3.0. Engine ships as binaries under separate terms.}
+}`}</pre>
+
+          <p style={{ ...monoSm, fontSize: 12, color: "var(--ink-mute)", lineHeight: 1.6, maxWidth: 560, marginBottom: 24 }}>
+            Contract statement: participation in a pilot is not a commercial engagement.
+            No fees. No data leaves your facility. The ingest step runs locally;
+            only the benchmark numbers (scalars) are shared.
+          </p>
+
+          <a
+            href="mailto:shekhawatsamvardhan@gmail.com?subject=Vikshep%20pilot%20interest"
+            style={{
+              ...monoSm,
+              fontSize: 13,
+              color: "var(--bg)",
+              textDecoration: "none",
+              backgroundColor: "var(--ink)",
+              padding: "10px 20px",
+              display: "inline-block",
+            }}
+          >
+            Express pilot interest →
           </a>
         </div>
       </section>

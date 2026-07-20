@@ -168,6 +168,7 @@ search.npy       # shape (N_search, D)`,
         { label: "Mallat group invariant scattering", href: "https://arxiv.org/abs/1101.2286", external: true },
         { label: "GitHub", href: "https://github.com/samvardhan03/Vikshep", external: true },
       ]}
+      runOnYourDataLocked
     />
   );
 }

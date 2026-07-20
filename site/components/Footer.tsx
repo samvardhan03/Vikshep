@@ -9,6 +9,7 @@ const NAV_COLS = [
       { label: "Platform", href: "/#recipes" },
       { label: "Math", href: "/math" },
       { label: "Pilot", href: "/pilot" },
+      { label: "Pricing", href: "/pricing" },
       { label: "Architecture", href: "/#architecture" },
     ],
   },
@@ -59,7 +60,7 @@ export default function Footer({ onFeedback }: FooterProps) {
               className="font-mono text-[11px] mt-1"
               style={{ color: "var(--ink-mute)" }}
             >
-              Apache-2.0 ·{" "}
+              AGPL-3.0 ·{" "}
               <a
                 href="mailto:shekhawatsamvardhan@gmail.com"
                 className="transition-opacity hover:opacity-60"

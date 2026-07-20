@@ -133,16 +133,31 @@ export default function Home() {
                   Nothing learned, nothing leaked.
                 </span>
               </h1>
+              <p style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 14, color: "var(--ink-mute)", margin: 0, lineHeight: 1.5 }}>
+                From Geant4 output to physics answer — in four commands.
+              </p>
               <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 10 }}>
-                <CodeBlock copyable>pip install vikshep</CodeBlock>
                 <a
-                  href="mailto:shekhawatsamvardhan@gmail.com?subject=Vikshep%20inquiry"
+                  href="#get-started"
                   style={{
                     fontFamily: "var(--font-jetbrains), monospace",
                     fontSize: 13,
                     color: "var(--bg)",
                     backgroundColor: "var(--ink)",
-                    padding: "6px 14px",
+                    padding: "8px 16px",
+                    textDecoration: "none",
+                  }}
+                >
+                  Get started →
+                </a>
+                <a
+                  href="mailto:shekhawatsamvardhan@gmail.com?subject=Vikshep%20inquiry"
+                  style={{
+                    fontFamily: "var(--font-jetbrains), monospace",
+                    fontSize: 13,
+                    color: "var(--ink)",
+                    border: "1px solid var(--rule)",
+                    padding: "8px 16px",
                     textDecoration: "none",
                   }}
                 >
@@ -407,10 +422,46 @@ export default function Home() {
       </section>
 
       {/* 2.10 — Get started */}
-      <section style={wrapper()}>
+      <section id="get-started" style={wrapper()}>
         <div style={inner}>
-          <p style={{ ...eyebrow, marginBottom: 16 }}>Get started in three steps</p>
-          <h2 style={{ ...sectionH2, maxWidth: 640, marginBottom: 40 }}>Try it in 90 seconds.</h2>
+          <p style={{ ...eyebrow, marginBottom: 16 }}>Get started</p>
+          <h2 style={{ ...sectionH2, maxWidth: 640, marginBottom: 16 }}>From Geant4 output to physics answer.</h2>
+          <p style={{ fontSize: 15, lineHeight: 1.6, color: "var(--ink-mute)", maxWidth: 580, marginBottom: 32 }}>
+            Four commands from a Geant4 CSV export to calibrated, mass-decorrelated tagger features.
+            No GPU required. No PyPI install — repo-local only.
+          </p>
+
+          {/* Loaders table */}
+          <p style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 11, textTransform: "uppercase", letterSpacing: "0.14em", color: "var(--ink-mute)", marginBottom: 12 }}>
+            Supported loaders
+          </p>
+          <div style={{ overflowX: "auto", marginBottom: 32 }}>
+            <table style={{ borderCollapse: "collapse", fontFamily: "var(--font-jetbrains), monospace", fontSize: 12, maxWidth: 720, width: "100%" }}>
+              <thead>
+                <tr>
+                  {["format", "loader", "schema / notes"].map((col) => (
+                    <th key={col} style={{ textAlign: "left", padding: "8px 14px", borderBottom: "1px solid var(--rule)", color: "var(--ink-mute)", textTransform: "uppercase", letterSpacing: "0.10em", fontSize: 10, backgroundColor: "var(--bg-elev)" }}>
+                      {col}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {[
+                  ["Geant4 CSV", "vikshep-ingest g4", "komal_v1 · generic (--column-map)"],
+                  ["Well HDF5", "vikshep-ingest well slice", "t0/t1/t2 fields · periodic/wall BCs"],
+                  ["ROOT TTree", "pilot harness (C++/CUDA)", "ATLAS analysis framework output"],
+                  ["NumPy / HDF5", "python (direct)", "pre-extracted arrays"],
+                ].map(([fmt, loader, notes], i) => (
+                  <tr key={i} style={{ borderBottom: "1px solid var(--rule)" }}>
+                    <td style={{ padding: "10px 14px", color: "var(--ink)", fontWeight: 600 }}>{fmt}</td>
+                    <td style={{ padding: "10px 14px", color: "var(--accent)" }}>{loader}</td>
+                    <td style={{ padding: "10px 14px", color: "var(--ink-mute)" }}>{notes}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
           <div style={{ maxWidth: 640, padding: 24, backgroundColor: "var(--bg-elev)", border: "1px solid var(--rule)", marginBottom: 24 }}>
             <pre style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 13, lineHeight: 1.7, color: "var(--ink)", overflowX: "auto", margin: 0 }}>
               {QUICKSTART}
