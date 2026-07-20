@@ -485,6 +485,93 @@ export default function PilotPage() {
         </div>
       </section>
 
+      {/* ── Run this on your own data (local CLI) ── */}
+      <section style={sec}>
+        <div style={wrap}>
+          <p style={eyebrow}>Geant4 Direct Interface</p>
+          <h2 style={h2}>Run this on your own data.</h2>
+          <p style={{ ...monoSm, fontSize: 14, color: "var(--ink-mute)", lineHeight: 1.7, maxWidth: 600, marginBottom: 28 }}>
+            No hosted compute required. Clone the repo, install the ingest package,
+            and go from Geant4 CSV export to features and calibration plots locally —
+            under 30 seconds on a fresh machine, no GPU.
+          </p>
+
+          <p style={{ ...monoSm, fontSize: 12, color: "var(--ink-mute)", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 8 }}>
+            Install (repo-local; not yet on PyPI)
+          </p>
+          <pre style={{
+            background: "var(--surface)",
+            border: "1px solid var(--rule)",
+            padding: "14px 18px",
+            fontSize: 13,
+            color: "var(--ink)",
+            fontFamily: "var(--mono)",
+            lineHeight: 1.6,
+            overflowX: "auto",
+            maxWidth: 620,
+            marginBottom: 24,
+          }}>{`git clone https://github.com/samvardhan03/Vikshep
+cd Vikshep
+pip install -e backend/ingest`}</pre>
+
+          <p style={{ ...monoSm, fontSize: 12, color: "var(--ink-mute)", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 8 }}>
+            Four-command pipeline
+          </p>
+          <pre style={{
+            background: "var(--surface)",
+            border: "1px solid var(--rule)",
+            padding: "14px 18px",
+            fontSize: 13,
+            color: "var(--ink)",
+            fontFamily: "var(--mono)",
+            lineHeight: 1.6,
+            overflowX: "auto",
+            maxWidth: 620,
+            marginBottom: 24,
+          }}>{`# 1. Ingest your Geant4 CSV
+vikshep-ingest g4 your_output.csv --schema komal_v1
+
+# 2. Calibrate detector response
+vikshep-recipe calibrate \\
+  --features manifest.json --target energy_mean
+
+# 3. Tag with DisCo decorrelation
+vikshep-recipe tag \\
+  --features manifest.json \\
+  --label is_signal --protect mass --lambda 1.0
+
+# 4. Run the benchmark harness
+python -m bench.run \\
+  --manifest manifest.json \\
+  --label is_signal --protect mass`}</pre>
+
+          <p style={{ ...monoSm, fontSize: 12, color: "var(--ink-mute)", lineHeight: 1.6, maxWidth: 600, marginBottom: 20 }}>
+            The <code style={{ color: "var(--ink)" }}>komal_v1</code> schema expects per-hit CSV rows with{" "}
+            <code style={{ color: "var(--ink)" }}>event_id, layer, phi, theta, momentum[, energy]</code>.
+            Use <code style={{ color: "var(--ink)" }}>--schema generic --column-map</code> for other ntuple exports.
+            A working sample CSV and step-by-step walkthrough live in{" "}
+            <code style={{ color: "var(--ink)" }}>examples/g4_quickstart/</code>.
+          </p>
+
+          <a
+            href="https://github.com/samvardhan03/Vikshep/tree/main/examples/g4_quickstart"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              ...monoSm,
+              fontSize: 13,
+              color: "var(--ink)",
+              textDecoration: "none",
+              border: "1px solid var(--rule)",
+              padding: "10px 18px",
+              display: "inline-block",
+            }}
+          >
+            View quickstart on GitHub ↗
+          </a>
+        </div>
+      </section>
+
       {/* ── Acknowledgements ── */}
       <section style={{ ...sec, borderBottom: "none" }}>
         <div style={wrap}>
