@@ -85,18 +85,22 @@ const FOUNDERS = [
   },
 ];
 
-// ── quickstart steps ──────────────────────────────────────────────
-const QUICKSTART = `# 1. Install the engine (binary wheel)
-pip install vikshep
+// ── quickstart steps — Geant4 Direct Interface ────────────────────
+// Four commands from Geant4 CSV output to physics answer.
+// Install vikshep-ingest repo-local (not yet on PyPI).
+const QUICKSTART = `# 1. Clone and install (repo-local)
+git clone https://github.com/samvardhan03/Vikshep && cd Vikshep
+pip install -e backend/ingest
 
-# 2. Install the Rust orchestrator
-cargo install omnipulse-mcp
+# 2. Ingest your Geant4 CSV
+vikshep-ingest g4 examples/g4_quickstart/sample.csv --schema komal_v1
 
-# 3. Run a recipe
-export OMNIPULSE_MCP_BIN=$(which omnipulse-mcp)
-bun run vikshep/agent/src/main.ts process \\
-  --input data/jets.root \\
-  --recipe hep-tagging-disco`;
+# 3. Calibrate detector response
+vikshep-recipe calibrate --features manifest.json --target layer1_e_mean
+
+# 4. Tag particles with DisCo decorrelation
+vikshep-recipe tag --features manifest.json \\
+  --label is_signal --protect mass --lambda 1.0`;
 
 // ─────────────────────────────────────────────────────────────────
 export default function Home() {
@@ -289,6 +293,18 @@ export default function Home() {
             The full stack, from TypeScript to CUDA.
           </h2>
           <ArchitectureDiagram />
+          <p style={{
+            fontFamily: "var(--font-jetbrains), monospace",
+            fontSize: 11,
+            color: "var(--ink-mute)",
+            lineHeight: 1.6,
+            marginTop: 16,
+            maxWidth: 520,
+          }}>
+            The agent, contract, loaders, recipes, and site are open under AGPL-3.0 (this repo).
+            The GPU engine ships as binaries — free for research; commercial use requires a license.
+            {" "}<a href="https://github.com/samvardhan03/Vikshep/blob/main/LICENSING.md" style={{ color: "var(--ink)", textDecoration: "underline" }}>LICENSING.md</a>
+          </p>
         </div>
       </section>
 

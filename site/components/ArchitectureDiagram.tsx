@@ -4,23 +4,27 @@ import { useState } from "react";
 
 const LAYERS = [
   {
-    icon: "ψ",
+    icon: "O",
     title: "TypeScript / Bun agent  (Vikshep)",
+    label: "open — AGPL-3.0",
     lines: ["Coordinator · MCP client · Recipe library", "React preview dashboard"],
   },
   {
-    icon: "🦀",
+    icon: "E",
     title: "omnipulse-mcp  (Rust — Data Plane)",
+    label: "engine — private, ships as binaries",
     lines: ["shm_open + mmap · spawn_blocking", "HNSW + Sliced-Wasserstein"],
   },
   {
-    icon: "🌉",
-    title: "omni-ffi  (Rust ⇄ C++ bridge)",
+    icon: "E",
+    title: "omni-ffi  (Rust ↔ C++ bridge)",
+    label: "engine — private, ships as binaries",
     lines: ['cxx 1.0 — unsafe extern "C++"', "CPU and CUDA dispatch paths"],
   },
   {
-    icon: "⚙️",
+    icon: "E",
     title: "omni-wst-core  (C++/CUDA)",
+    label: "engine — private, ships as binaries",
     lines: ["ScatteringEngine<Arch, Dim, Group, J, Q, L>", "Morlet bank · Solid-harmonic bank"],
   },
 ];
@@ -62,7 +66,19 @@ export default function ArchitectureDiagram() {
                 transition: "color 120ms",
               }}
             >
-              {layer.icon}{"  "}{layer.title}
+              {layer.title}
+              {"label" in layer && (
+                <span style={{
+                  marginLeft: 10,
+                  fontSize: 10,
+                  fontWeight: 400,
+                  color: layer.label?.startsWith("open") ? "#2D6A4F" : "var(--ink-mute)",
+                  border: "1px solid currentColor",
+                  padding: "1px 5px",
+                  borderRadius: 2,
+                  letterSpacing: "0.05em",
+                }}>{layer.label}</span>
+              )}
             </div>
             {layer.lines.map((line, li) => (
               <div
