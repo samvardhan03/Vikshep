@@ -558,7 +558,7 @@ export default function MathPage() {
              feature-extraction plane for scientific compute},
   year    = {2026},
   url     = {https://github.com/samvardhan03/Vikshep},
-  license = {Apache-2.0}
+  license = {AGPL-3.0-or-later}
 }`}
             </pre>
           </div>

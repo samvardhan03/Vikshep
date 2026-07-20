@@ -54,3 +54,10 @@ out/
 *.swn
 omnipulse-deprecate/
 backend/target/
+
+# Strategy and private material — never commit
+claude/
+docs/
+pilot/
+*.pdf
+.claude/

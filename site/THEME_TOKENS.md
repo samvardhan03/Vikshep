@@ -1,7 +1,7 @@
-# THEME_TOKENS — Vikshep site (lifted from Omnipulse/site/)
+# THEME_TOKENS — Vikshep site
 
 ## Source of truth
-`/Users/shekhawat/Desktop/omnipulse/site/` — do not modify.
+These tokens are frozen for the Vikshep site. Do not modify without updating all usages.
 
 ---
 

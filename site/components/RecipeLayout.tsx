@@ -73,6 +73,7 @@ export interface RecipeLayoutProps {
   cli: string;
   dashboardNote: string;
   related: RelatedLink[];
+  runOnYourDataLocked?: boolean;
 }
 
 export default function RecipeLayout({
@@ -87,6 +88,7 @@ export default function RecipeLayout({
   cli,
   dashboardNote,
   related,
+  runOnYourDataLocked = false,
 }: RecipeLayoutProps) {
   return (
     <article>
@@ -350,6 +352,75 @@ export default function RecipeLayout({
           </div>
         </div>
       </section>
+
+      {/* ── Run on your own data (locked) ── */}
+      {runOnYourDataLocked && (
+        <section style={sec}>
+          <div style={wrap}>
+            <p style={eyebrow}>Run on your own data</p>
+            <div
+              style={{
+                border: "1px solid var(--rule)",
+                backgroundColor: "var(--bg-elev)",
+                padding: "40px 32px",
+                maxWidth: 640,
+                display: "flex",
+                flexDirection: "column",
+                gap: 20,
+                position: "relative",
+                overflow: "hidden",
+              }}
+            >
+              {/* Overlay blur band */}
+              <div style={{
+                position: "absolute",
+                inset: 0,
+                backdropFilter: "blur(2px)",
+                WebkitBackdropFilter: "blur(2px)",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 16,
+                padding: 32,
+                textAlign: "center",
+              }}>
+                <span style={{ ...monoSm, fontSize: 11, textTransform: "uppercase", letterSpacing: "0.14em", color: "var(--ink-mute)" }}>
+                  Lab or Enterprise
+                </span>
+                <p style={{ fontFamily: "var(--font-source-serif), Georgia, serif", fontWeight: 300, fontSize: 20, color: "var(--ink)", lineHeight: 1.3 }}>
+                  Run this recipe on your own data
+                </p>
+                <p style={{ ...monoSm, fontSize: 12, color: "var(--ink-mute)", maxWidth: 340, lineHeight: 1.65 }}>
+                  Hosted compute, GPU-accelerated engine, and SLA support. Available on Lab and Enterprise tiers.
+                </p>
+                <Link
+                  href="/pricing"
+                  style={{
+                    ...monoSm,
+                    fontSize: 13,
+                    color: "var(--bg)",
+                    backgroundColor: "var(--ink)",
+                    padding: "10px 24px",
+                    textDecoration: "none",
+                    display: "inline-block",
+                  }}
+                >
+                  View pricing →
+                </Link>
+              </div>
+
+              {/* Background content (blurred) */}
+              <p style={{ ...monoSm, fontSize: 13, color: "var(--ink-mute)", lineHeight: 1.6 }}>
+                vikshep-ingest upload --dataset ...
+              </p>
+              <p style={{ ...monoSm, fontSize: 13, color: "var(--ink-mute)", lineHeight: 1.6 }}>
+                vikshep-recipe run --hosted ...
+              </p>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* ── Related ── */}
       <section style={sec}>

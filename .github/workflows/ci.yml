@@ -1,9 +1,60 @@
-name: vikshep CI
+name: CI
+
 on:
-  workflow_dispatch: {}
+  push:
+    branches: ["main", "feat/**", "chore/**", "fix/**"]
+  pull_request:
+    branches: ["main"]
 
 jobs:
-  check:
+  agent:
+    name: Agent (bun test + tsc)
     runs-on: ubuntu-latest
     steps:
-      - run: echo "lint/test/build run locally; this workflow never auto-fires"
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - name: Install dependencies
+        run: bun install
+      - name: bun test (agent)
+        working-directory: agent
+        run: bun test
+      - name: tsc (agent)
+        working-directory: agent
+        run: bunx tsc --noEmit
+
+  site:
+    name: Site build (bun run build)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - name: Install dependencies
+        run: bun install
+      - name: Build site
+        working-directory: site
+        run: bun run build
+
+  python:
+    name: Python tests (pytest backend/ingest)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install vikshep-ingest
+        run: pip install -e backend/ingest
+      - name: Run tests
+        run: python -m pytest backend/ingest/tests/ -v
+
+  boundaries:
+    name: Boundary checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: check-boundaries.sh
+        run: bash scripts/check-boundaries.sh

@@ -8,9 +8,9 @@ description = "Vikshep thin launcher: ensures POSIX shm dir, then execs omnipuls
 omnipulse-mcp = "0.1"
 
 # ---------------------------------------------------------------------------
-# Local-monorepo override — for development inside the OmniPulse monorepo.
-# Uncomment when building from /Users/.../omnipulse/ and comment out before
-# pushing Vikshep to its own repo.
+# Local development override for the private engine repo.
+# Requires access to samvardhan03/vikshep-engine.
+# Uncomment when building against a local checkout:
 # ---------------------------------------------------------------------------
 # [patch.crates-io]
-# omnipulse-mcp = { path = "../../omnipulse-rs/crates/omnipulse-mcp" }
+# omnipulse-mcp = { path = "<path-to-vikshep-engine>/omnipulse-rs/crates/omnipulse-mcp" }

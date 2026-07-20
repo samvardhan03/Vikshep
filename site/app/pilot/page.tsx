@@ -450,7 +450,7 @@ export default function PilotPage() {
             </li>
             <li>
               Install dependencies:{" "}
-              <code style={{ color: "var(--ink)" }}>pip install vikshep &amp;&amp; cargo install omnipulse-mcp</code>
+              <code style={{ color: "var(--ink)" }}>pip install -e backend/ingest</code>
             </li>
             <li>
               Obtain the Geant4 samples (see{" "}
@@ -481,6 +481,155 @@ export default function PilotPage() {
             }}
           >
             View pilot/ on GitHub ↗
+          </a>
+        </div>
+      </section>
+
+      {/* ── Run this on your own data (local CLI) ── */}
+      <section style={sec}>
+        <div style={wrap}>
+          <p style={eyebrow}>Geant4 Direct Interface</p>
+          <h2 style={h2}>Run this on your own data.</h2>
+          <p style={{ ...monoSm, fontSize: 14, color: "var(--ink-mute)", lineHeight: 1.7, maxWidth: 600, marginBottom: 28 }}>
+            No hosted compute required. Clone the repo, install the ingest package,
+            and go from Geant4 CSV export to features and calibration plots locally —
+            under 30 seconds on a fresh machine, no GPU.
+          </p>
+
+          <p style={{ ...monoSm, fontSize: 12, color: "var(--ink-mute)", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 8 }}>
+            Install (repo-local; not yet on PyPI)
+          </p>
+          <pre style={{
+            background: "var(--surface)",
+            border: "1px solid var(--rule)",
+            padding: "14px 18px",
+            fontSize: 13,
+            color: "var(--ink)",
+            fontFamily: "var(--mono)",
+            lineHeight: 1.6,
+            overflowX: "auto",
+            maxWidth: 620,
+            marginBottom: 24,
+          }}>{`git clone https://github.com/samvardhan03/Vikshep
+cd Vikshep
+pip install -e backend/ingest`}</pre>
+
+          <p style={{ ...monoSm, fontSize: 12, color: "var(--ink-mute)", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 8 }}>
+            Four-command pipeline
+          </p>
+          <pre style={{
+            background: "var(--surface)",
+            border: "1px solid var(--rule)",
+            padding: "14px 18px",
+            fontSize: 13,
+            color: "var(--ink)",
+            fontFamily: "var(--mono)",
+            lineHeight: 1.6,
+            overflowX: "auto",
+            maxWidth: 620,
+            marginBottom: 24,
+          }}>{`# 1. Ingest your Geant4 CSV
+vikshep-ingest g4 your_output.csv --schema komal_v1
+
+# 2. Calibrate detector response
+vikshep-recipe calibrate \\
+  --features manifest.json --target energy_mean
+
+# 3. Tag with DisCo decorrelation
+vikshep-recipe tag \\
+  --features manifest.json \\
+  --label is_signal --protect mass --lambda 1.0
+
+# 4. Run the benchmark harness
+python -m bench.run \\
+  --manifest manifest.json \\
+  --label is_signal --protect mass`}</pre>
+
+          <p style={{ ...monoSm, fontSize: 12, color: "var(--ink-mute)", lineHeight: 1.6, maxWidth: 600, marginBottom: 20 }}>
+            The <code style={{ color: "var(--ink)" }}>komal_v1</code> schema expects per-hit CSV rows with{" "}
+            <code style={{ color: "var(--ink)" }}>event_id, layer, phi, theta, momentum[, energy]</code>.
+            Use <code style={{ color: "var(--ink)" }}>--schema generic --column-map</code> for other ntuple exports.
+            A working sample CSV and step-by-step walkthrough live in{" "}
+            <code style={{ color: "var(--ink)" }}>examples/g4_quickstart/</code>.
+          </p>
+
+          <a
+            href="https://github.com/samvardhan03/Vikshep/tree/main/examples/g4_quickstart"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              ...monoSm,
+              fontSize: 13,
+              color: "var(--ink)",
+              textDecoration: "none",
+              border: "1px solid var(--rule)",
+              padding: "10px 18px",
+              display: "inline-block",
+            }}
+          >
+            View quickstart on GitHub ↗
+          </a>
+        </div>
+      </section>
+
+      {/* ── For research groups ── */}
+      <section style={sec}>
+        <div style={wrap}>
+          <p style={eyebrow}>For research groups</p>
+          <h2 style={h2}>Run Vikshep on your own Geant4 simulation.</h2>
+          <p style={{ ...prose, marginBottom: 20 }}>
+            We are actively looking for a second pilot partner — a research group with Geant4
+            simulation output and an existing analysis pipeline. We will integrate Vikshep into
+            your analysis, validate against your existing significance benchmark, and deliver the
+            two numbers that matter: Δσ and ΔJSD. No hosted compute required; the tool runs
+            locally on your data, in your facility.
+          </p>
+          <p style={{ ...prose, marginBottom: 24 }}>
+            We ask for one thing: permission to cite the results (anonymised if needed) and to
+            share the benchmark numbers publicly. If the results are not better than your existing
+            pipeline on both metrics, we will say so plainly.
+          </p>
+
+          {/* BibTeX block */}
+          <p style={{ ...monoSm, fontSize: 11, color: "var(--ink-mute)", textTransform: "uppercase", letterSpacing: "0.14em", marginBottom: 10 }}>
+            Cite
+          </p>
+          <pre style={{
+            ...card,
+            fontSize: 12,
+            lineHeight: 1.7,
+            color: "var(--ink-mute)",
+            overflowX: "auto",
+            maxWidth: 640,
+            marginBottom: 24,
+          }}>{`@misc{vikshep2025,
+  title        = {Vikshep: Deterministic Wavelet-Scattering Features
+                  for Scientific Compute},
+  author       = {Singh, Samvardhan and Mishra, Yash and Papanwar, Komal},
+  year         = {2025},
+  howpublished = {\\url{https://github.com/samvardhan03/Vikshep}},
+  note         = {AGPL-3.0. Engine ships as binaries under separate terms.}
+}`}</pre>
+
+          <p style={{ ...monoSm, fontSize: 12, color: "var(--ink-mute)", lineHeight: 1.6, maxWidth: 560, marginBottom: 24 }}>
+            Contract statement: participation in a pilot is not a commercial engagement.
+            No fees. No data leaves your facility. The ingest step runs locally;
+            only the benchmark numbers (scalars) are shared.
+          </p>
+
+          <a
+            href="mailto:shekhawatsamvardhan@gmail.com?subject=Vikshep%20pilot%20interest"
+            style={{
+              ...monoSm,
+              fontSize: 13,
+              color: "var(--bg)",
+              textDecoration: "none",
+              backgroundColor: "var(--ink)",
+              padding: "10px 20px",
+              display: "inline-block",
+            }}
+          >
+            Express pilot interest →
           </a>
         </div>
       </section>

@@ -1,11 +1,11 @@
-# ψ Vikshep
+# Vikshep
 
 **Deterministic feature extraction for physics. Nothing learned, nothing leaked.**
 
 [![PyPI — vikshep](https://img.shields.io/pypi/v/vikshep.svg?label=vikshep&color=1B1B1F)](https://pypi.org/project/vikshep/)
 [![License: AGPL-3.0 + Commercial](https://img.shields.io/badge/license-AGPL--3.0%2BCommercial-1B1B1F.svg)](LICENSING.md)
 [![Built with](https://img.shields.io/badge/built%20with-TypeScript%20%7C%20Rust%20%7C%20C%2B%2B%2FCUDA-1B1B1F.svg)]()
-[![Site](https://img.shields.io/badge/site-vikshep.dev-1B1B1F.svg)](https://vikshep.vercel.app)
+[![Site](https://img.shields.io/badge/site-vikshep.vercel.app-1B1B1F.svg)](https://vikshep.vercel.app)
 
 ---
 
@@ -47,36 +47,51 @@ with a single closed-form penalty. [See the full story on the site →](https://
 | Reproducibility | Run-dependent | Bit-for-bit deterministic |
 | Provenance | Black box | SHA3-256 OID per tensor, logged |
 
-The scattering ratio **r₂ = S₂ / S₁** is dimensionless and scale-invariant — it cannot carry
-an energy scale and therefore cannot correlate with the resonance mass by construction.
-The **DisCo penalty** (weighted distance correlation) enforces dCorr(ŷ, m | bkg) = 0 on the
-downstream classifier output, providing a closed-form statistical independence guarantee.
+---
+
+## Open core
+
+The seam is public and frozen; the engine behind it ships as binaries. Downstream
+results are reproducible bit-for-bit from the contract without the engine source.
+
+| Open (AGPL-3.0, this repo) | Engine (private, ships as binaries) |
+|---|---|
+| `contract/` — frozen seam (OID, MCP, WS preview) | CUDA scattering kernels for 1-D/2-D/SE(2)/SO(3) |
+| `agent/` — TypeScript/Bun MCP orchestrator | Steerable/tile-policy GPU paths |
+| `backend/ingest/` — G4 and Well data loaders | Rust MCP data plane (`omnipulse-mcp`) |
+| `backend/ingest/disco.py` — weighted DisCo | Wheel packaging (`vikshep`) |
+| `bench/` — benchmark harness | Pilot data and analysis scripts |
+| `examples/` — quickstart and sample data | |
+| `site/` — marketing site and client-side demos | |
+| All math and statistical methods | |
+
+See [LICENSING.md](LICENSING.md) for engine binary terms.
 
 ---
 
 ## Architecture
 
 ```
-┌──────────────── Vikshep (this repo) ──────────────────┐
-│                                                        │
-│  agent/          TypeScript/Bun MCP client             │
-│    └─ recipes/   hep-tagging-disco · bsm-anomaly · … │
-│  web/            React preview dashboard               │
-│  contract/       frozen seam: OID · MCP · WS preview  │
-│  backend/        thin Rust launcher + Python loaders   │
-│  site/           Next.js marketing site                │
-│                                                        │
-└───────────────────────┬────────────────────────────────┘
+┌──────────────── Vikshep (this repo — AGPL-3.0) ──────────────┐
+│                                                                │
+│  agent/          TypeScript/Bun MCP client                    │
+│    └─ recipes/   hep-tagging-disco · bsm-anomaly · …         │
+│  web/            React preview dashboard                       │
+│  contract/       frozen seam: OID · MCP · WS preview          │
+│  backend/        thin Rust launcher + Python loaders           │
+│  site/           Next.js marketing site                        │
+│                                                                │
+└───────────────────────┬────────────────────────────────────────┘
                         │  28-hex shm OID  ·  JSON-RPC 2.0
                         ▼
-              omnipulse-mcp  (Rust — Data Plane)
-                        │  u64 host pointer  ·  cxx zero-marshalling
-                        ▼
-              omni-ffi  (Rust ⇄ C++ bridge)
-                        │  pinned host page
-                        ▼
-              omni-wst-core  (C++/CUDA)
-              ScatteringEngine<Arch, Dim, Group, J, Q, L>
+              ┌── vikshep-engine (private repo, installed as binaries) ──┐
+              │ omnipulse-mcp  (Rust — Data Plane)                       │
+              │         │  u64 host pointer  ·  cxx zero-marshalling     │
+              │ omni-ffi  (Rust ↔ C++ bridge)                            │
+              │         │  pinned host page                               │
+              │ omni-wst-core  (C++/CUDA)                                │
+              │ ScatteringEngine<Arch, Dim, Group, J, Q, L>              │
+              └──────────────────────────────────────────────────────────┘
 ```
 
 Four things cross the boundary: a 28-char hex object name, line-delimited JSON-RPC 2.0 frames,
@@ -85,50 +100,78 @@ TypeScript or the browser.
 
 ---
 
-## Quickstart
+## Install
+
+**Python SDK** (compiled wheel; the engine is inside):
+```bash
+pip install vikshep
+```
+
+**Engine MCP binary** (`omnipulse-mcp`): download from the
+[Releases page](https://github.com/samvardhan03/Vikshep/releases) of this repo
+(built by the private release workflow) and set `OMNIPULSE_MCP_BIN` to its path.
+
+> Engine binaries: first public release pending — pilot access via
+> shekhawatsamvardhan@gmail.com until the first tagged release ships.
+
+**Geant4 Direct Interface** (repo-local install; not yet on PyPI):
+```bash
+git clone https://github.com/samvardhan03/Vikshep.git
+pip install -e Vikshep/backend/ingest
+```
+
+Do not `cargo install omnipulse-mcp` — crates.io would publish the engine source.
+
+---
+
+## Quickstart (Geant4 Direct Interface)
+
+From Geant4 CSV output to physics answer in four commands:
 
 ```bash
-# 1. Install the Python engine wheel
-pip install vikshep
+# 1. Install (repo-local)
+git clone https://github.com/samvardhan03/Vikshep.git && cd Vikshep
+pip install -e backend/ingest
 
-# 2. Install the Rust MCP orchestrator
-cargo install omnipulse-mcp
+# 2. Ingest your Geant4 CSV
+vikshep-ingest g4 examples/g4_quickstart/sample.csv --schema komal_v1
 
-# 3. Run a recipe
-export OMNIPULSE_MCP_BIN=$(which omnipulse-mcp)
-bun run agent/src/main.ts process \
-  --input data/jets.root \
-  --recipe hep-tagging-disco
+# 3. Calibrate detector response
+vikshep-recipe calibrate --features manifest.json --target layer1_e_mean
+
+# 4. Tag particles with DisCo decorrelation
+vikshep-recipe tag --features manifest.json --label is_signal --protect mass --lambda 1.0
 ```
+
+Time to first value: **under 30 seconds** on a fresh machine, no GPU.
+See `examples/g4_quickstart/README.md` for a full walkthrough.
 
 ---
 
 ## Recipes
 
-| Recipe | Trigger | Pipeline |
+| Recipe | CLI | Pipeline |
 |---|---|---|
-| `hep-tagging-disco` | `tag jets, decorrelate mass` | ingest → scatter SE(2) → r₂ reduce → DisCo classifier |
-| `bsm-anomaly` | `find events that don't look like SM` | ingest → scatter → log-mean → HNSW (SW₁) → detect |
-| `general-feature` | `extract rotation-invariant features` | ingest → scatter (Dim, Group from request) → reduce |
+| `hep-tagging-disco` | `vikshep-recipe tag` | G4 ingest → aggregates → r₂ → DisCo classifier |
+| `bsm-anomaly` | `vikshep-recipe tag --protect mass` | ingest → scatter → log-mean → HNSW → detect |
+| `general-feature` | `vikshep-ingest g4 / well_slice` | ingest → scatter (Dim, Group from request) → reduce |
 
-Recipes are declarative MCP tool sequences. `cfgFrom: "ingestMeta"` pulls `dim`/`group` from
-the loader; `cfgFrom: "request"` lets the caller pass any `{dim, group, J, Q, L}` at runtime.
+Agent recipes are declarative MCP tool sequences; CLI recipes are executable
+Python scripts installable from `backend/ingest`.
 
 ---
 
 ## Data loaders
 
-Loaders are discovered via entry points (`vikshep.loaders`). Each reads a format, writes POSIX
-shared memory, and returns a 28-hex OID.
-
-| Entry point | Format | Default config hint |
+| Loader | Format | Install |
 |---|---|---|
-| `root-uproot` | `.root` (Geant4, CMS Open Data, …) | dim=2, group=so2 (η×φ image) |
-| `hdf5` | `.h5`, `.hdf5`, `.hdf`, `.npz` | dim inferred from array rank |
+| `g4` (Geant4 Direct Interface) | Geant4 CSV (`event_id, layer, phi, theta, momentum[, energy]`) | `pip install -e backend/ingest` (repo-local) |
+| `root-uproot` | `.root` (Geant4, CMS Open Data) | `pip install -e backend/ingest` |
+| `hdf5` | `.h5`, HDF5 | `pip install -e backend/ingest` |
+| `well` | The Well HDF5 (15TB physics simulations) | `pip install -e backend/ingest` (Stage 3) |
 
-Add a loader by implementing the `Loader` protocol
-(`backend/ingest/src/vikshep_ingest/loaders/base.py`) and registering an entry point in your
-`pyproject.toml`.
+Loaders are discovered via entry points (`vikshep.loaders`). Each writes POSIX
+shared memory and returns a 28-hex OID.
 
 ---
 
@@ -137,7 +180,8 @@ Add a loader by implementing the `Loader` protocol
 `contract/` is the frozen seam between Control-Plane and Data-Plane:
 
 - **`objectId.ts`** — `OID = z.string().regex(/^[0-9a-f]{28}$/)` — `sha3_256(buf)[:14]` hex
-- **`mcpSchemas.ts`** — `ComputeScatteringInput`, `ReduceInput`, `CompareInput`, `DetectAnomalyInput`
+- **`mcpSchemas.ts`** — `ComputeScatteringInput`, `ReduceInput`, `CompareInput`,
+  `DetectAnomalyInput`, `IngestG4Input`, `WellSliceInput`, `FeaturizeWellInput`
 - **`wsPreview.ts`** — `PreviewMsg` and `PipelineEvent` — browser receives only OID + thumbnail + summary
 
 Changing this contract is a breaking change and requires a major version bump in both
@@ -145,24 +189,19 @@ Control-Plane and Data-Plane.
 
 ---
 
-## Links
-
-- **Site & interactive demos**: [vikshep.vercel.app](https://vikshep.vercel.app)
-- **The math**: [vikshep.vercel.app/math](https://vikshep.vercel.app/math)
-- **Pilot (University of Edinburgh)**: [vikshep.vercel.app/pilot](https://vikshep.vercel.app/pilot)
-- **PyPI**: [pypi.org/project/vikshep](https://pypi.org/project/vikshep/)
-
----
-
 ## License
 
-Dual-licensed:
+Three-tier model:
 
-- **GNU AGPL-3.0** — free for research, academic, and open-source use (see [LICENSE](LICENSE))
-- **Commercial License** — required for proprietary or production deployments that cannot comply
-  with the AGPL-3.0 source-disclosure requirement (see [LICENSING.md](LICENSING.md))
+- **GNU AGPL-3.0** — all source in this repository: free for research, academic, and open-source
+  use (see [LICENSE](LICENSE))
+- **Engine binaries gratis** — the `vikshep` wheel and `omnipulse-mcp` binary: free for
+  research/evaluation use under the Vikshep Engine Binary Terms
+- **Commercial license** — required for proprietary production deployments (AGPL compliance)
+  or for the premium engine components (3-D SO(3)/solid-harmonic kernels, high-throughput
+  batch scatter, on-premise appliance) — contact shekhawatsamvardhan@gmail.com
 
-Contact shekhawatsamvardhan@gmail.com for commercial terms.
+See [LICENSING.md](LICENSING.md) for the full model.
 
 ---
 

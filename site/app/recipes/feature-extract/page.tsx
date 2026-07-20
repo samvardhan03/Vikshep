@@ -171,6 +171,7 @@ bun run main.ts process \\
         { label: "Cheng & Ménard — scattering for cosmology", href: "https://arxiv.org/abs/2112.01288", external: true },
         { label: "GitHub", href: "https://github.com/samvardhan03/Vikshep", external: true },
       ]}
+      runOnYourDataLocked
     />
   );
 }

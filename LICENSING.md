@@ -22,3 +22,22 @@ For commercial terms, contact shekhawatsamvardhan@gmail.com.
 
 This document describes the licensing model; it is not the commercial license agreement itself.
 Commercial terms are provided separately on request.
+
+## Engine source and binaries
+
+The wavelet scattering engine source code (CUDA kernels, Rust MCP data plane,
+wheel packaging) lives in a private repository (`samvardhan03/vikshep-engine`)
+and is not part of this AGPL distribution.
+
+Compiled engine artifacts — the `vikshep` wheel and the `omnipulse-mcp` binary
+— are distributed at no cost for **research, academic, and evaluation use**
+under the Vikshep Engine Binary Terms. Commercial or production embedding of
+these artifacts requires the commercial license above.
+
+The premium components listed above (3-D SO(3)/solid-harmonic kernels,
+high-throughput batch scatter, on-premise appliance) are part of the engine and
+are only available under the commercial license.
+
+The AGPL applies to all source code in this repository. The seam is public and
+frozen; downstream results are reproducible bit-for-bit from the contract
+without the engine source.
