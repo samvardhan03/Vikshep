@@ -61,3 +61,6 @@ docs/
 pilot/
 *.pdf
 .claude/
+
+# Private engine repo (nested; has its own .git — never commit its contents)
+vikshep-engine/
