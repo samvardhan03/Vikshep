@@ -148,7 +148,10 @@ export default function PricingPage() {
             }}
           >
             The control plane is AGPL-3.0 and always will be. The GPU engine ships as
-            binaries — free for research, licensed for commercial use.
+            binaries — free for research, licensed for commercial use.{" "}
+            <a href="/docs" style={{ color: "var(--ink)" }}>
+              See the free-vs-paid boundary →
+            </a>
           </p>
         </div>
       </header>

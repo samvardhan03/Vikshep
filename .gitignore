@@ -57,7 +57,7 @@ backend/target/
 
 # Strategy and private material — never commit
 claude/
-docs/
+/docs/
 pilot/
 *.pdf
 .claude/

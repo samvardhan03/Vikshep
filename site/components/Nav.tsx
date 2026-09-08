@@ -5,7 +5,7 @@ import Link from "next/link";
 const navLinks = [
   { label: "Platform", href: "/#recipes" },
   { label: "Math", href: "/math" },
-  { label: "Pilot", href: "/pilot" },
+  { label: "Docs", href: "/docs" },
   { label: "Pricing", href: "/pricing" },
   { label: "GitHub ↗", href: "https://github.com/samvardhan03/Vikshep", external: true },
 ];
@@ -67,13 +67,11 @@ export default function Nav() {
         {/* Right CTAs */}
         <div className="flex items-center gap-3">
           <a
-            href="https://github.com/samvardhan03/Vikshep#readme"
-            target="_blank"
-            rel="noopener noreferrer"
+            href="/docs"
             className="font-mono text-[12px] uppercase tracking-[0.12em] px-4 py-2 border transition-opacity hover:opacity-70"
             style={{ borderColor: "var(--rule)", color: "var(--ink)" }}
           >
-            Docs ↗
+            Docs
           </a>
           <a
             href="mailto:shekhawatsamvardhan@gmail.com?subject=Vikshep%20inquiry"
