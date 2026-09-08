@@ -61,6 +61,7 @@ const TIERS = [
     price: "Contact",
     priceNote: "per analysis run",
     audience: "Research groups that want hosted compute, managed GPU access, or SLA support.",
+    trial: "Free trial: 7 days + 900 GPU-seconds, no card required. One per verified email.",
     features: [
       "Everything in Free",
       "GPU-accelerated engine binaries (no build required)",
@@ -71,6 +72,7 @@ const TIERS = [
       "Private pilot: cite Vikshep in your paper (optional)",
     ],
     cta: { label: "Contact for Lab access →", href: "mailto:shekhawatsamvardhan@gmail.com?subject=Vikshep%20Lab%20tier", external: false },
+    trialCta: { label: "Request trial →", href: "mailto:shekhawatsamvardhan@gmail.com?subject=Vikshep%20Lab%20trial" },
     highlight: true,
   },
   {
@@ -206,6 +208,20 @@ export default function PricingPage() {
                 {/* Audience */}
                 <p style={{ fontSize: 14, lineHeight: 1.6, color: "var(--ink-mute)" }}>{tier.audience}</p>
 
+                {/* Trial strip — Lab only */}
+                {"trial" in tier && (
+                  <div style={{
+                    border: "1px solid var(--rule)",
+                    borderLeft: "2px solid var(--accent)",
+                    padding: "10px 14px",
+                    backgroundColor: "var(--bg)",
+                  }}>
+                    <p style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 12, color: "var(--ink)", lineHeight: 1.6 }}>
+                      {(tier as { trial: string }).trial}
+                    </p>
+                  </div>
+                )}
+
                 {/* Feature list */}
                 <ul style={{ listStyle: "none", padding: 0, display: "flex", flexDirection: "column", gap: 8 }}>
                   {tier.features.map((f, i) => (
@@ -217,7 +233,7 @@ export default function PricingPage() {
                 </ul>
 
                 {/* CTA */}
-                <div style={{ marginTop: "auto" }}>
+                <div style={{ marginTop: "auto", display: "flex", flexDirection: "column", gap: 8 }}>
                   <a
                     href={tier.cta.href}
                     target={tier.cta.external ? "_blank" : undefined}
@@ -235,6 +251,21 @@ export default function PricingPage() {
                   >
                     {tier.cta.label}
                   </a>
+                  {"trialCta" in tier && (
+                    <a
+                      href={(tier as { trialCta: { label: string; href: string } }).trialCta.href}
+                      style={{
+                        fontFamily: "var(--font-jetbrains), monospace",
+                        fontSize: 12,
+                        color: "var(--accent)",
+                        textDecoration: "none",
+                        display: "inline-block",
+                        paddingTop: 4,
+                      }}
+                    >
+                      {(tier as { trialCta: { label: string; href: string } }).trialCta.label}
+                    </a>
+                  )}
                 </div>
               </div>
             ))}
