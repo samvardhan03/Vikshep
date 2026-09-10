@@ -51,6 +51,8 @@ jobs:
         run: pip install pytest -e backend/ingest
       - name: Run tests
         run: python -m pytest backend/ingest/tests/ -v
+      - name: Golden-hash determinism tests
+        run: python -m pytest backend/ingest/tests/test_determinism_golden.py -v
 
   boundaries:
     name: Boundary checks

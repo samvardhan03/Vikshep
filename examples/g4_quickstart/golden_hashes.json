@@ -1,0 +1,23 @@
+{
+  "engine_version": "0.2.0",
+  "fixture": "examples/g4_quickstart/sample.csv",
+  "note": "A golden change without an engine version bump must fail CI. Bump engine_version and update hashes together.",
+  "stable_fields_note": "Hashes cover only deterministic fields (paths and timestamps are excluded). See test_determinism_golden.py for exact field selection.",
+  "ops": {
+    "ingest_g4": {
+      "hash": "9dbce4da22ac51cadf468380fcbbae341079b182770631d40275d54191d2ba21",
+      "args": { "schema": "komal_v1" },
+      "stable_fields": ["aggregate_names", "aggregates", "n_events", "grid_oids"]
+    },
+    "recipe_calibrate": {
+      "hash": "1dc02a7149859a21ff3a9108e3a9796d5c9f59347cbd08bceceacd694dd44b24",
+      "args": { "target": "e_sum_global" },
+      "stable_fields": ["recipe", "target_col", "r2_score", "residual_std", "n_events"]
+    },
+    "recipe_tag": {
+      "hash": "c589a37a3301dc0755ec6b86ba9b2073a7786472585cb71109b1a073e95d8fea",
+      "args": { "label": "layer1_n_hits", "protect": "e_sum_global" },
+      "stable_fields": ["recipe", "lambda", "auc", "dcorr2", "n_events"]
+    }
+  }
+}
