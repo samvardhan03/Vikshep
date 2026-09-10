@@ -34,6 +34,11 @@ yarn-error.log*
 */data/processed/
 *.npy
 
+# Generated quickstart outputs — produced by TTFV verification; never commit
+examples/g4_quickstart/manifest.json
+examples/g4_quickstart/calibrate_report.json
+examples/g4_quickstart/tag_report.json
+
 # Environment variables
 .env
 .env.local
