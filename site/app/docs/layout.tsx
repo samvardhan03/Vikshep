@@ -5,6 +5,7 @@ const NAV = [
   { label: "Install", href: "/docs/install" },
   { label: "Quickstart", href: "/docs/quickstart" },
   { label: "Recipes", href: "/docs/recipes" },
+  { label: "API reference", href: "/docs/api" },
   { label: "FAQ", href: "/docs/faq" },
 ];
 

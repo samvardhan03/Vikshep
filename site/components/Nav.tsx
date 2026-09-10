@@ -66,6 +66,15 @@ export default function Nav() {
 
         {/* Right CTAs */}
         <div className="flex items-center gap-3">
+          {process.env.NEXT_PUBLIC_VIKSHEP_API_BASE && (
+            <a
+              href={`${process.env.NEXT_PUBLIC_VIKSHEP_API_BASE}/signin`}
+              className="font-mono text-[12px] uppercase tracking-[0.12em] px-4 py-2 border transition-opacity hover:opacity-70"
+              style={{ borderColor: "var(--rule)", color: "var(--ink)" }}
+            >
+              Sign in
+            </a>
+          )}
           <a
             href="/docs"
             className="font-mono text-[12px] uppercase tracking-[0.12em] px-4 py-2 border transition-opacity hover:opacity-70"

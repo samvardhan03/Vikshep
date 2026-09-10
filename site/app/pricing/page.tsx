@@ -1,5 +1,9 @@
 export const metadata = { title: "Pricing" };
 
+// When NEXT_PUBLIC_VIKSHEP_API_BASE is set at build time, Lab CTAs link to the
+// private app's /signin (trial) and /checkout (buy). Otherwise, mailto fallback.
+const APP_BASE = process.env.NEXT_PUBLIC_VIKSHEP_API_BASE ?? null;
+
 const eyebrow: React.CSSProperties = {
   fontFamily: "var(--font-jetbrains), monospace",
   fontSize: 12,
@@ -71,8 +75,8 @@ const TIERS = [
       "Results validated by the Vikshep team before delivery",
       "Private pilot: cite Vikshep in your paper (optional)",
     ],
-    cta: { label: "Contact for Lab access →", href: "mailto:shekhawatsamvardhan@gmail.com?subject=Vikshep%20Lab%20tier", external: false },
-    trialCta: { label: "Request trial →", href: "mailto:shekhawatsamvardhan@gmail.com?subject=Vikshep%20Lab%20trial" },
+    cta: { label: APP_BASE ? "Buy Lab access →" : "Contact for Lab access →", href: APP_BASE ? `${APP_BASE}/checkout` : "mailto:shekhawatsamvardhan@gmail.com?subject=Vikshep%20Lab%20tier", external: !APP_BASE },
+    trialCta: { label: APP_BASE ? "Start free trial →" : "Request trial →", href: APP_BASE ? `${APP_BASE}/signin` : "mailto:shekhawatsamvardhan@gmail.com?subject=Vikshep%20Lab%20trial" },
     highlight: true,
   },
   {
