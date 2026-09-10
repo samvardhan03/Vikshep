@@ -9,7 +9,7 @@ import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
-import { IngestG4Input } from "../../contract/mcpSchemas";
+import { IngestG4Input } from "../../../contract/mcpSchemas";
 import type { z } from "zod";
 
 const exec = promisify(execFile);
