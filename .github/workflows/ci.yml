@@ -48,7 +48,7 @@ jobs:
         with:
           python-version: "3.11"
       - name: Install vikshep-ingest
-        run: pip install pytest -e backend/ingest
+        run: pip install "pytest" "scikit-learn==1.8.0" "numpy==2.2.6" -e backend/ingest
       - name: Run tests
         run: python -m pytest backend/ingest/tests/ -v
       - name: Golden-hash determinism tests
