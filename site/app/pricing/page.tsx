@@ -1,5 +1,9 @@
 export const metadata = { title: "Pricing" };
 
+// When NEXT_PUBLIC_VIKSHEP_API_BASE is set at build time, Lab CTAs link to the
+// private app's /signin (trial) and /checkout (buy). Otherwise, mailto fallback.
+const APP_BASE = process.env.NEXT_PUBLIC_VIKSHEP_API_BASE ?? null;
+
 const eyebrow: React.CSSProperties = {
   fontFamily: "var(--font-jetbrains), monospace",
   fontSize: 12,
@@ -61,6 +65,7 @@ const TIERS = [
     price: "Contact",
     priceNote: "per analysis run",
     audience: "Research groups that want hosted compute, managed GPU access, or SLA support.",
+    trial: "Free trial: 7 days + 900 GPU-seconds, no card required. One per verified email.",
     features: [
       "Everything in Free",
       "GPU-accelerated engine binaries (no build required)",
@@ -70,7 +75,8 @@ const TIERS = [
       "Results validated by the Vikshep team before delivery",
       "Private pilot: cite Vikshep in your paper (optional)",
     ],
-    cta: { label: "Contact for Lab access →", href: "mailto:shekhawatsamvardhan@gmail.com?subject=Vikshep%20Lab%20tier", external: false },
+    cta: { label: APP_BASE ? "Buy Lab access →" : "Contact for Lab access →", href: APP_BASE ? `${APP_BASE}/checkout` : "mailto:shekhawatsamvardhan@gmail.com?subject=Vikshep%20Lab%20tier", external: !APP_BASE },
+    trialCta: { label: APP_BASE ? "Start free trial →" : "Request trial →", href: APP_BASE ? `${APP_BASE}/signin` : "mailto:shekhawatsamvardhan@gmail.com?subject=Vikshep%20Lab%20trial" },
     highlight: true,
   },
   {
@@ -148,7 +154,10 @@ export default function PricingPage() {
             }}
           >
             The control plane is AGPL-3.0 and always will be. The GPU engine ships as
-            binaries — free for research, licensed for commercial use.
+            binaries — free for research, licensed for commercial use.{" "}
+            <a href="/docs" style={{ color: "var(--ink)" }}>
+              See the free-vs-paid boundary →
+            </a>
           </p>
         </div>
       </header>
@@ -203,6 +212,20 @@ export default function PricingPage() {
                 {/* Audience */}
                 <p style={{ fontSize: 14, lineHeight: 1.6, color: "var(--ink-mute)" }}>{tier.audience}</p>
 
+                {/* Trial strip — Lab only */}
+                {"trial" in tier && (
+                  <div style={{
+                    border: "1px solid var(--rule)",
+                    borderLeft: "2px solid var(--accent)",
+                    padding: "10px 14px",
+                    backgroundColor: "var(--bg)",
+                  }}>
+                    <p style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 12, color: "var(--ink)", lineHeight: 1.6 }}>
+                      {(tier as { trial: string }).trial}
+                    </p>
+                  </div>
+                )}
+
                 {/* Feature list */}
                 <ul style={{ listStyle: "none", padding: 0, display: "flex", flexDirection: "column", gap: 8 }}>
                   {tier.features.map((f, i) => (
@@ -214,7 +237,7 @@ export default function PricingPage() {
                 </ul>
 
                 {/* CTA */}
-                <div style={{ marginTop: "auto" }}>
+                <div style={{ marginTop: "auto", display: "flex", flexDirection: "column", gap: 8 }}>
                   <a
                     href={tier.cta.href}
                     target={tier.cta.external ? "_blank" : undefined}
@@ -232,6 +255,21 @@ export default function PricingPage() {
                   >
                     {tier.cta.label}
                   </a>
+                  {"trialCta" in tier && (
+                    <a
+                      href={(tier as { trialCta: { label: string; href: string } }).trialCta.href}
+                      style={{
+                        fontFamily: "var(--font-jetbrains), monospace",
+                        fontSize: 12,
+                        color: "var(--accent)",
+                        textDecoration: "none",
+                        display: "inline-block",
+                        paddingTop: 4,
+                      }}
+                    >
+                      {(tier as { trialCta: { label: string; href: string } }).trialCta.label}
+                    </a>
+                  )}
                 </div>
               </div>
             ))}

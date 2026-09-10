@@ -10,7 +10,7 @@ import { promisify } from "node:util";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import os from "node:os";
-import { WellSliceInput } from "../../contract/mcpSchemas";
+import { WellSliceInput } from "../../../contract/mcpSchemas";
 import type { z } from "zod";
 
 const exec = promisify(execFile);

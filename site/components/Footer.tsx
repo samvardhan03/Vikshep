@@ -31,6 +31,14 @@ const NAV_COLS = [
       { label: "Help us improve", href: "#feedback", action: "feedback" },
     ],
   },
+  {
+    title: "Legal",
+    links: [
+      { label: "Terms of Service", href: "/terms" },
+      { label: "Privacy Policy", href: "/privacy" },
+      { label: "Refund Policy", href: "/refunds" },
+    ],
+  },
 ];
 
 interface FooterProps {

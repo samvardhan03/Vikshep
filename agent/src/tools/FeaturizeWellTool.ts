@@ -11,7 +11,7 @@ import { promisify } from "node:util";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import os from "node:os";
-import { FeaturizeWellInput } from "../../contract/mcpSchemas";
+import { FeaturizeWellInput } from "../../../contract/mcpSchemas";
 import type { z } from "zod";
 
 const exec = promisify(execFile);
