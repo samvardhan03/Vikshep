@@ -46,7 +46,14 @@ vikshep-recipe tag \
 |---------|-------|--------|
 | `vikshep-ingest g4` | Geant4 CSV | `manifest.json` with per-event aggregate scalars and 28-char shm OIDs for the 2-D (phi, theta) rasterized grids |
 | `vikshep-recipe calibrate` | manifest | `calibrate_report.json` with R² score and residual std for the regression target |
-| `vikshep-recipe tag` | manifest | `tag_report.json` with AUC and dCorr² (lower = better decorrelation) at the chosen lambda |
+| `vikshep-recipe tag` | manifest | `tag_report.json` with AUC and dCorr² (lower = better decorrelation) at the chosen lambda, plus `training_gradient: "pearson_proxy"` and `reported_dcorr2: "exact_weighted"` |
+
+Both recipes train on the per-event aggregates only. The rasterized grids are
+staged in shared memory for the scattering core, which is in development and
+not part of this pipeline yet. The tag recipe trains with a Pearson-correlation
+proxy for the DisCo gradient and reports the exact weighted dCorr² once
+training finishes; the report says so in its `training_gradient` and
+`reported_dcorr2` fields.
 
 ## Understanding the manifest
 
@@ -87,6 +94,7 @@ End-to-end from `git clone` to `tag_report.json`: **under 30 seconds.**
   python -m bench.run --manifest manifest.json --label <signal_col> \
                       --protect <mass_col> --lambdas 0,0.1,1,10
   ```
-- Connect to the scattering engine: `pip install vikshep` (compiled wheel)
-  then set `OMNIPULSE_MCP_BIN` to the engine binary path.
+- Scattering features (S0/S1/S2, r2) on the staged grids come from the open
+  deterministic scattering core, which is in development
+  (`samvardhan03/vikshep-compute`). No engine binary is released yet.
 - Install via repo clone only — `vikshep-ingest` is not yet on PyPI.

@@ -57,7 +57,7 @@ const FAQ = [
     items: [
       {
         q: "Does the Free tier include GPU acceleration?",
-        a: "CPU inference is available in the Free tier — all loaders, the ingest pipeline, DisCo recipes, and the benchmark harness run without GPU. GPU-accelerated scattering via the engine binary requires the Lab or Enterprise tier (or a pilot arrangement).",
+        a: "CPU inference is available in the Free tier — all loaders, the ingest pipeline, DisCo recipes, and the benchmark harness run without GPU. No tier runs the scattering transform yet: the open deterministic scattering core is in development, and GPU acceleration is planned.",
       },
       {
         q: "What is the trial and how does it work?",
@@ -78,7 +78,7 @@ const FAQ = [
     items: [
       {
         q: "What does 'nothing learned' mean exactly?",
-        a: "The wavelet filters are analytic Morlets — their shape is determined by three geometry parameters (J, Q, L) chosen before any data is seen. No gradient step, no training loop, no adaptation. Every guarantee (mass-decorrelation, stability under deformations, bit-for-bit reproducibility) is a theorem about the transform, not an empirical claim about a trained model.",
+        a: "It describes the feature plane. The wavelet filters are analytic Morlets — their shape is determined by three geometry parameters (J, Q, L) chosen before any data is seen. No gradient step, no training loop, no adaptation. Translation invariance and stability under deformations are theorems about the scattering transform, not empirical claims about a trained model. The scattering transform is being delivered by the open deterministic core, which is in development; the released CLI does not run it yet. Today the CLI ingests Geant4 output, computes per-event aggregates, and trains calibration and DisCo-penalised tagging models on those aggregates. Those models are learned, and the tag report says how: training_gradient \"pearson_proxy\", reported_dcorr2 \"exact_weighted\".",
       },
       {
         q: "What is a 28-char OID and why does it appear in the manifest?",
@@ -86,7 +86,7 @@ const FAQ = [
       },
       {
         q: "Is Vikshep reproducible across machines?",
-        a: "Yes — given the same input data and the same (J, Q, L, Dim, Group) configuration, the output is bit-for-bit identical across machines, operating systems, and runs. There is no random seed, no dropout, no floating-point non-determinism from training. The SHA3-256 OID of the output tensor is a stable content address.",
+        a: "Deterministic by design. Tested today: byte-identical reports under a fixed seed on the same machine (backend/ingest/tests/test_bench_determinism.py). Cross-platform bit identity is the target of the VDS-1 conformance suite, verified in public CI once released. Until then, do not assume bit identity across machines or operating systems. The SHA3-256 OID is a content address: identical bytes always give the same OID.",
       },
       {
         q: "How do I use a Geant4 ntuple format other than komal_v1?",

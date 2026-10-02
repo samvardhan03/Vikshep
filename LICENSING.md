@@ -27,7 +27,9 @@ Commercial terms are provided separately on request.
 
 The wavelet scattering engine source code (CUDA kernels, Rust MCP data plane,
 wheel packaging) lives in a private repository (`samvardhan03/vikshep-engine`)
-and is not part of this AGPL distribution.
+and is not part of this AGPL distribution. The open deterministic scattering
+core is developed separately, in the open, in `samvardhan03/vikshep-compute`
+(in development).
 
 Compiled engine artifacts — the `vikshep` wheel and the `omnipulse-mcp` binary
 — are distributed at no cost for **research, academic, and evaluation use**
@@ -39,5 +41,7 @@ high-throughput batch scatter, on-premise appliance) are part of the engine and
 are only available under the commercial license.
 
 The AGPL applies to all source code in this repository. The seam is public and
-frozen; downstream results are reproducible bit-for-bit from the contract
-without the engine source.
+frozen, so downstream tooling can be written and audited against the contract
+without the engine source. Determinism tested today: byte-identical reports
+under a fixed seed on the same machine. Cross-platform bit identity is the
+target of the VDS-1 conformance suite, verified in public CI once released.

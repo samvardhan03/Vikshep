@@ -435,11 +435,13 @@ export default function MathPage() {
           </div>
 
           <p style={prose}>
-            This is the closed-form guarantee. The penalty is not a heuristic post-processing step,
-            not an adversarial training trick that might or might not converge, and not a planing
-            procedure that requires re-optimisation of the cut. It is a single differentiable term
-            in the loss function that provably drives the score distribution to be independent of mass
-            on background — hence ε(m) constant — hence the background shape preserved by construction.
+            The criterion is exact: dCorr² = 0 if and only if the score is independent of mass on
+            background, and then ε(m) is constant and the background shape is preserved. The penalty
+            is not a heuristic post-processing step, not an adversarial training trick, and not a
+            planing procedure that requires re-optimisation of the cut. It is a single term in the
+            loss that pushes the trained score toward that point. How close a trained tagger gets is
+            measured, not assumed: the released <code>vikshep-recipe tag</code> trains with a
+            Pearson-correlation proxy for the penalty gradient and reports the exact weighted dCorr².
           </p>
 
           <div style={vizWrap}>

@@ -8,6 +8,13 @@ export default function BsmAnomalyPage() {
       number="02"
       title="BSM Anomaly Detection"
       tagline="Template-free new-physics search."
+      status={
+        <>
+          This page describes the designed agent pipeline. Its scattering steps run on the
+          open deterministic scattering core, which is in development, so this recipe does not
+          run yet. See <a href="/docs#engine-status" style={{ color: "var(--ink)" }}>engine status</a>.
+        </>
+      }
       whenToUse={
         <>
           <p style={{ marginBottom: 14 }}>
@@ -76,7 +83,7 @@ search.npy       # shape (N_search, D)`,
           method: "vikshep/compute_scattering + vikshep/reduce_scattering",
           description: (
             <>
-              Computes scattering coefficients for all events and reduces them to a fixed-length
+              Designed to compute scattering coefficients for all events and reduce them to a fixed-length
               feature vector. For anomaly detection, the default reduction is{" "}
               <code style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 12 }}>method=&quot;log_mean&quot;</code>{" "}
               rather than ratio, which preserves more information about the overall energy scale

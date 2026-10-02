@@ -49,7 +49,7 @@ const TIERS = [
     audience: "Research groups, open-source projects, academic collaborations.",
     features: [
       "Full ingest pipeline: Geant4 CSV, Well HDF5, ROOT TTrees",
-      "Wavelet-scattering feature extraction (CPU)",
+      "Per-event rasterization and aggregate features (scattering core in development)",
       "DisCo mass-decorrelation training and calibration CLIs",
       "Benchmark harness (Asimov proxy, JSD)",
       "21-test Well adapter suite + G4 adapter suite",

@@ -74,6 +74,8 @@ export interface RecipeLayoutProps {
   dashboardNote: string;
   related: RelatedLink[];
   runOnYourDataLocked?: boolean;
+  /** Release status of the pipeline, shown under the tagline. */
+  status?: React.ReactNode;
 }
 
 export default function RecipeLayout({
@@ -89,6 +91,7 @@ export default function RecipeLayout({
   dashboardNote,
   related,
   runOnYourDataLocked = false,
+  status,
 }: RecipeLayoutProps) {
   return (
     <article>
@@ -131,6 +134,23 @@ export default function RecipeLayout({
           >
             {tagline}
           </p>
+          {status && (
+            <div
+              style={{
+                ...prose,
+                fontSize: 14,
+                marginTop: 24,
+                padding: "12px 16px",
+                border: "1px solid var(--rule)",
+                borderLeft: "3px solid var(--accent)",
+              }}
+            >
+              <span style={{ ...monoSm, fontSize: 11, textTransform: "uppercase", letterSpacing: "0.14em", color: "var(--ink)", marginRight: 10 }}>
+                Status
+              </span>
+              {status}
+            </div>
+          )}
         </div>
       </header>
 

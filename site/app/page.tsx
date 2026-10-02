@@ -198,8 +198,8 @@ export default function Home() {
                 Deterministic feature extraction
               </h3>
               <p style={{ fontSize: 14, lineHeight: 1.65, color: "var(--ink-mute)" }}>
-                Fixed analytic Morlet wavelets cascade through the data — translate, modulate, pool. No learned weights means
-                no mass leakage by construction. r₂ = S₂/S₁ is dimensionless and scale-invariant.
+                Fixed analytic Morlet wavelets cascade through the data — translate, modulate, pool. No learned weights in the
+                feature map, so it cannot adapt to leak mass. r₂ = S₂/S₁ is dimensionless and scale-invariant.
               </p>
               <ScatteringCascade />
             </div>
@@ -210,7 +210,8 @@ export default function Home() {
               </h3>
               <p style={{ fontSize: 14, lineHeight: 1.65, color: "var(--ink-mute)" }}>
                 A weighted distance-correlation penalty enforces statistical independence between the tagger output
-                and the resonance mass. dCorr = 0 is a closed-form guarantee — not a heuristic.
+                and the resonance mass. Distance correlation is zero if and only if the two are independent — an exact
+                criterion, not a heuristic.
               </p>
               <R2Invariance />
             </div>
@@ -250,9 +251,13 @@ export default function Home() {
           <h2 style={{ ...sectionH2, marginBottom: 12 }}>NN taggers sculpt. r₂ doesn't.</h2>
           <p style={{ fontSize: 16, lineHeight: 1.6, color: "var(--ink-mute)", maxWidth: 580, marginBottom: 32 }}>
             Every standard jet classifier correlates with m_jj — cutting on it deforms the background mass spectrum.
-            The scattering ratio r₂ = S₂/S₁ is mass-decorrelated by construction. DisCo makes it rigorous.
+            The scattering ratio r₂ = S₂/S₁ is scale-free by construction, so it cannot carry the overall energy scale.
+            DisCo penalises the residual dependence on mass.
           </p>
           <MassSculptingKiller />
+          <p style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 11, color: "var(--ink-mute)", marginTop: 12 }}>
+            Illustrative demo on synthetic distributions computed in your browser — not a benchmark result.
+          </p>
         </div>
       </section>
 
@@ -260,7 +265,12 @@ export default function Home() {
       <section id="recipes" style={wrapper()}>
         <div style={inner}>
           <p style={{ ...eyebrow, marginBottom: 16 }}>Three recipes, one engine</p>
-          <h2 style={{ ...sectionH2, marginBottom: 40 }}>Drop in a pipeline. Or write your own.</h2>
+          <h2 style={{ ...sectionH2, marginBottom: 12 }}>Drop in a pipeline. Or write your own.</h2>
+          <p style={{ fontSize: 15, lineHeight: 1.6, color: "var(--ink-mute)", maxWidth: 640, marginBottom: 40 }}>
+            The scattering steps in these recipes run on the open deterministic core, which is in development.
+            Available today: Geant4 ingest, calibration, and DisCo-penalised tagging on per-event aggregates.{" "}
+            <a href="/docs#engine-status" style={{ color: "var(--ink)" }}>Engine status →</a>
+          </p>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(280px,1fr))", gap: 16 }}>
             <RecipeCard
               number="01"
