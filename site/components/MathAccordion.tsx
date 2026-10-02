@@ -89,7 +89,7 @@ export default function MathAccordion() {
               <MathBlock
                 title="The decorrelation"
                 latex={String.raw`\mathcal{L} \;=\; \mathrm{wBCE}(\hat y, y) \;+\; \lambda\,\mathrm{dCorr}^2_w(\hat y,\, m \mid \text{bkg})`}
-                caption="Distance correlation is zero iff the tagger output is statistically independent of the mass. The cut preserves the spectrum by construction."
+                caption="Distance correlation is zero iff the tagger output is statistically independent of the mass. When it is zero, the cut preserves the spectrum."
                 href="/math#s6"
               />
             </div>

@@ -66,7 +66,7 @@ export default function BriefPage() {
             From Geant4 output to physics answer.
           </h1>
           <p style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 14, color: "var(--ink-mute)", lineHeight: 1.5, marginBottom: 0 }}>
-            AGPL-3.0 control plane · GPU engine ships as binaries (research: free)
+            AGPL-3.0 control plane · released CLI: Geant4 ingest, calibration, DisCo tagging on aggregates · scattering core in development
           </p>
         </div>
       </header>
@@ -102,24 +102,26 @@ export default function BriefPage() {
             The solution
           </p>
           <h2 style={{ fontFamily: "var(--font-source-serif), Georgia, serif", fontWeight: 300, fontSize: 22, color: "var(--ink)", marginBottom: 16 }}>
-            Two mathematical guarantees, not heuristics.
+            Fixed features and an exact independence criterion.
           </h2>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 24 }}>
             <div>
               <p style={{ ...monoSm, fontSize: 13, color: "var(--ink)", marginBottom: 8 }}>1. Deterministic scattering features</p>
               <p style={prose}>
                 Fixed analytic Morlet wavelets — no learned weights. The scattering ratio
-                r₂ = S₂/S₁ is dimensionless, scale-invariant, and mass-decorrelated by
-                construction. No training step, no data-hungry fitting.
+                r₂ = S₂/S₁ is dimensionless and scale-invariant by construction, so it cannot
+                carry the overall energy scale. No training step, no data-hungry fitting.
+                Delivered by the open deterministic scattering core, in development.
               </p>
             </div>
             <div>
               <p style={{ ...monoSm, fontSize: 13, color: "var(--ink)", marginBottom: 8 }}>2. DisCo distance-correlation penalty</p>
               <p style={prose}>
                 A weighted Szekely-Rizzo distance correlation penalty (dCorr = 0 iff
-                statistical independence) is added to the classifier loss. This provides
-                a closed-form guarantee that the tagger output is independent of the
-                resonance mass — not a heuristic, not a regularisation trick.
+                statistical independence) is added to the classifier loss, penalising
+                dependence between the tagger output and the resonance mass on background
+                events. The released CLI trains with a Pearson-correlation proxy for the
+                penalty gradient and reports the exact weighted dCorr².
               </p>
             </div>
           </div>

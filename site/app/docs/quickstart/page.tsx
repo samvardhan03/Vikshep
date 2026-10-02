@@ -192,10 +192,12 @@ Grid OIDs (first 3): ['...28 hex chars...', '...', '...']`}</pre>
           Tag with DisCo mass-decorrelation
         </h2>
         <p style={prose}>
-          Train a classifier and enforce zero distance correlation between its
-          score and a protected variable (e.g. mass). The{" "}
-          <code style={code}>--lambda</code> flag controls the decorrelation
-          penalty strength. Higher = stricter decorrelation.
+          Train a classifier on the per-event aggregates with a DisCo penalty on
+          the dependence between its score and a protected variable (e.g. mass).
+          The <code style={code}>--lambda</code> flag controls the penalty
+          strength. Higher = stricter decorrelation. Training uses a
+          Pearson-correlation proxy for the penalty gradient; the reported
+          dCorr² is the exact weighted value, computed once after training.
         </p>
         <pre style={codeBlock}>{`vikshep-recipe tag \\
   --features examples/g4_quickstart/manifest.json \\
@@ -205,15 +207,20 @@ Grid OIDs (first 3): ['...28 hex chars...', '...', '...']`}</pre>
         <p style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 11, textTransform: "uppercase", letterSpacing: "0.14em", color: "var(--ink-mute)", marginTop: 16, marginBottom: 4 }}>
           Expected output
         </p>
-        <pre style={outputBlock}>{`Report written: examples/g4_quickstart/tag_report.json
+        <pre style={outputBlock}>{`  Report written: examples/g4_quickstart/tag_report.json
+vikshep-recipe tag
   lambda   : 1.0
   AUC      : 1.0000
   dCorr^2  : 0.0000  (lower = better decorrelation)
+  training_gradient : pearson_proxy
+  reported_dcorr2   : exact_weighted
   n_events : 10`}</pre>
         <p style={{ ...note, marginTop: 16 }}>
-          <strong style={{ color: "var(--ink)" }}>dCorr² = 0.0000</strong> means the
-          tagger score and the protected variable are statistically independent at
-          this sample size — mass sculpting is suppressed.
+          <strong style={{ color: "var(--ink)" }}>dCorr² = 0.0000</strong> means no
+          measurable dependence between the tagger score and the protected variable
+          on background events in this 10-event sample. Distance correlation is zero
+          only under independence, but a sample this small cannot establish it;
+          check dCorr² on your full sample.
         </p>
       </section>
 
@@ -235,7 +242,7 @@ Grid OIDs (first 3): ['...28 hex chars...', '...', '...']`}</pre>
               {[
                 ["vikshep-ingest g4", "Geant4 CSV", "manifest.json — OIDs + 32 scalars/event"],
                 ["vikshep-recipe calibrate", "manifest.json", "calibrate_report.json — R² + residual std"],
-                ["vikshep-recipe tag", "manifest.json", "tag_report.json — AUC + dCorr²"],
+                ["vikshep-recipe tag", "manifest.json", "tag_report.json — AUC + dCorr² + method fields"],
               ].map(([cmd, input, output], i) => (
                 <tr key={i} style={{ borderBottom: "1px solid var(--rule)" }}>
                   <td style={{ padding: "8px 12px", color: "var(--ink)" }}>{cmd}</td>

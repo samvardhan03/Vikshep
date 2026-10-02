@@ -12,15 +12,36 @@
 ## What it is
 
 Vikshep is a **deterministic feature-extraction plane** for scientific data — not a classifier,
-regressor, or generative model. It computes wavelet scattering coefficients of physics data;
-downstream models (classifiers, anomaly detectors, likelihood fits) consume those coefficients
-as input features. Nothing is learned during feature extraction, so nothing can adapt to leak
-the quantity you are trying to measure.
+regressor, or generative model. Its feature plane is the wavelet scattering transform
+(S0, S1, S2 and the scale-free ratio r2 = S2/S1); downstream models (classifiers, anomaly
+detectors, likelihood fits) consume those coefficients as input features. Nothing is learned
+during feature extraction, so nothing can adapt to leak the quantity you are trying to measure.
 
-The engine is a multiscale, oriented wavelet cascade: modulus, convolve, modulus, low-pass.
-The filters are fixed analytic Morlet wavelets chosen by the (J, Q, L) geometry — not trained.
-Translation invariance and Lipschitz-bounded deformation stability are mathematical properties
-of the transform, not empirical claims about a trained model.
+The scattering transform is being delivered by the open deterministic core, which is in
+development (see [Engine status](#engine-status)). The released CLI does not run it yet: today it
+ingests Geant4 output, rasterizes each event to a 2-D grid in shared memory, computes per-event
+aggregates, and trains calibration and DisCo-penalised tagging models on those aggregates with an
+honest report.
+
+The transform is a multiscale, oriented wavelet cascade: convolve, modulus, convolve, modulus,
+low-pass. The filters are fixed analytic Morlet wavelets chosen by the (J, Q, L) geometry — not
+trained. Translation invariance and Lipschitz-bounded deformation stability are mathematical
+properties of the transform, not empirical claims about a trained model.
+
+---
+
+## Engine status
+
+- **Available now** — the `vikshep-ingest` / `vikshep-recipe` CLI in `backend/ingest`: Geant4 CSV
+  ingest, per-event 2-D rasterization into shared memory, per-event aggregates, calibration
+  regression, DisCo-penalised tagging on the aggregates (training gradient: Pearson proxy;
+  reported dCorr²: exact weighted), and the benchmark harness. Tested today: byte-identical
+  reports under a fixed seed on the same machine.
+- **In development** — the open deterministic scattering core
+  ([`samvardhan03/vikshep-compute`](https://github.com/samvardhan03/vikshep-compute)), which
+  computes S0/S1/S2 and r2 on the ingested grids. It is built against a written determinism
+  specification (VDS-1) with a cross-platform conformance suite.
+- **Planned** — desktop app; GPU acceleration.
 
 ---
 
@@ -31,30 +52,37 @@ Cut on its score and you carve a bump-shaped hole into the background mass spect
 signal. This is mass sculpting, and it is a recognized failure mode in ATLAS, CMS, and every
 boosted-object search that uses a learned discriminant without explicit decorrelation.
 
-Vikshep replaces the learned feature extractor with a fixed one, then kills residual correlation
-with a single closed-form penalty. [See the full story on the site →](https://vikshep.vercel.app)
+Vikshep's design replaces the learned feature extractor with a fixed one, then penalises
+residual correlation with a weighted distance-correlation (DisCo) term. [See the full story on the site →](https://vikshep.vercel.app)
 
 ---
 
 ## Why it's different
 
+The table compares the method. What ships today is listed under [Engine status](#engine-status).
+
 | Property | Standard NN tagger | Vikshep |
 |---|---|---|
 | Feature weights | Learned from data | Fixed (analytic Morlets) |
-| Mass leakage | Implicit, hard to control | Zero by construction |
-| Decorrelation | Adversarial / heuristic | Closed-form dCorr = 0 |
+| Mass leakage | Implicit, hard to control | None in the fixed feature map; residual dependence penalised by DisCo |
+| Decorrelation | Adversarial / heuristic | Weighted DisCo penalty; exact weighted dCorr² reported |
 | Dimensionality | 1-D/2-D specific | 1-D / 2-D / 3-D via runtime (Dim, Group) config |
-| Reproducibility | Run-dependent | Bit-for-bit deterministic |
+| Reproducibility | Run-dependent | Deterministic by design (see below) |
 | Provenance | Black box | SHA3-256 OID per tensor, logged |
+
+Deterministic by design. Tested today: byte-identical reports under a fixed seed on the same
+machine. Cross-platform bit identity is the target of the VDS-1 conformance suite, verified in
+public CI once released.
 
 ---
 
 ## Open core
 
-The seam is public and frozen; the engine behind it ships as binaries. Downstream
-results are reproducible bit-for-bit from the contract without the engine source.
+The seam is public and frozen, so downstream tooling can be written and audited against the
+contract without the engine source. The private engine behind it is intended to ship as
+binaries; no engine binary has been released yet.
 
-| Open (AGPL-3.0, this repo) | Engine (private, ships as binaries) |
+| Open (AGPL-3.0, this repo) | Engine (private; binaries not yet released) |
 |---|---|
 | `contract/` — frozen seam (OID, MCP, WS preview) | CUDA scattering kernels for 1-D/2-D/SE(2)/SO(3) |
 | `agent/` — TypeScript/Bun MCP orchestrator | Steerable/tile-policy GPU paths |
@@ -102,7 +130,8 @@ TypeScript or the browser.
 
 ## Install
 
-**Python SDK** (compiled wheel; the engine is inside):
+**Python SDK** (`vikshep` wheel; the first engine release is pending and the current PyPI upload
+carries stale metadata):
 ```bash
 pip install vikshep
 ```
@@ -146,15 +175,22 @@ vikshep-recipe tag --features manifest.json --label is_signal --protect mass --l
 Time to first value: **under 30 seconds** on a fresh machine, no GPU.
 See `examples/g4_quickstart/README.md` for a full walkthrough.
 
+Steps 3 and 4 train on the per-event aggregates in the manifest; the rasterized grids are staged
+for the scattering core but not consumed yet. The tag report states its method in two fields:
+`training_gradient: "pearson_proxy"` (the DisCo gradient used during training) and
+`reported_dcorr2: "exact_weighted"` (the dCorr² it reports).
+
 ---
 
 ## Recipes
 
-| Recipe | CLI | Pipeline |
-|---|---|---|
-| `hep-tagging-disco` | `vikshep-recipe tag` | G4 ingest → aggregates → r₂ → DisCo classifier |
-| `bsm-anomaly` | `vikshep-recipe tag --protect mass` | ingest → scatter → log-mean → HNSW → detect |
-| `general-feature` | `vikshep-ingest g4 / well_slice` | ingest → scatter (Dim, Group from request) → reduce |
+| Recipe | Entry point | Pipeline | Status |
+|---|---|---|---|
+| CLI tag | `vikshep-recipe tag` | G4 ingest → per-event aggregates → DisCo-penalised classifier | Available now |
+| CLI calibrate | `vikshep-recipe calibrate` | G4 ingest → per-event aggregates → calibration regression | Available now |
+| `hep-tagging-disco` | agent recipe | ingest → scatter → r₂ → DisCo classifier | Needs the scattering core (in development) |
+| `bsm-anomaly` | agent recipe | ingest → scatter → log-mean → HNSW → detect | Needs the scattering core (in development) |
+| `general-feature` | agent recipe | ingest → scatter (Dim, Group from request) → reduce | Needs the scattering core (in development) |
 
 Agent recipes are declarative MCP tool sequences; CLI recipes are executable
 Python scripts installable from `backend/ingest`.

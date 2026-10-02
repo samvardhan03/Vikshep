@@ -8,6 +8,15 @@ export default function HepTaggingPage() {
       number="01"
       title="HEP Tagging (DisCo)"
       tagline="Mass-decorrelated boosted-object tagging."
+      status={
+        <>
+          This page describes the designed agent pipeline. Its scattering steps run on the
+          open deterministic scattering core, which is in development. Available today:{" "}
+          <code style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 12 }}>vikshep-recipe tag</code>{" "}
+          trains the DisCo-penalised classifier on per-event aggregates from Geant4 output.
+          See <a href="/docs#engine-status" style={{ color: "var(--ink)" }}>engine status</a>.
+        </>
+      }
       whenToUse={
         <>
           <p style={{ marginBottom: 14 }}>
@@ -18,10 +27,11 @@ export default function HepTaggingPage() {
             background and create fake bumps in your bump-hunt.
           </p>
           <p style={{ marginBottom: 14 }}>
-            This recipe replaces the learned feature extractor with the wavelet scattering transform,
-            producing dimensionless r₂ = S₂/S₁ features that are scale-invariant by construction.
-            A DisCo penalty in the classifier training then drives the residual statistical dependence
-            between the tagger score and the resonance mass to zero on background events.
+            This recipe is designed to replace the learned feature extractor with the wavelet
+            scattering transform, producing dimensionless r₂ = S₂/S₁ features that are
+            scale-invariant by construction. A DisCo penalty in the classifier training then
+            penalises the residual statistical dependence between the tagger score and the
+            resonance mass on background events.
           </p>
           <p>
             The result is validated by two numbers: the significance gain Δσ over the NN baseline,
@@ -71,7 +81,7 @@ isSignal                 # int      — 1 for signal, 0 for background
           method: "vikshep/compute_scattering",
           description: (
             <>
-              Calls the C++/CUDA scattering engine via the Rust FFI bridge. Runs 2-D oriented
+              Designed to call the scattering engine over the MCP seam and run 2-D oriented
               SE(2) scattering with J=4 scales, Q=1 voice per octave, and L=8 orientations.
               Each jet image is convolved with the full oriented Morlet filter bank; the cascade
               modulus produces first- and second-order coefficients. Output is a coefficient

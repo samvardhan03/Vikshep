@@ -8,6 +8,13 @@ export default function FeatureExtractPage() {
       number="03"
       title="General Feature Extraction"
       tagline="Cosmology, plasma, GW, hydrodynamics."
+      status={
+        <>
+          This page describes the designed agent pipeline. Its scattering steps run on the
+          open deterministic scattering core, which is in development, so this recipe does not
+          run yet. See <a href="/docs#engine-status" style={{ color: "var(--ink)" }}>engine status</a>.
+        </>
+      }
       whenToUse={
         <>
           <p style={{ marginBottom: 14 }}>
@@ -26,8 +33,8 @@ export default function FeatureExtractPage() {
             (Eickenberg et al., 2018), and plasma turbulence.
           </p>
           <p>
-            The engine is runtime-configurable: pass (dim, group, J, Q, L) as flags and the same
-            binary handles 1-D gravitational-wave strain, 2-D CMB patches, and 3-D density fields.
+            The engine is designed to be runtime-configurable: pass (dim, group, J, Q, L) as flags
+            and the same binary handles 1-D gravitational-wave strain, 2-D CMB patches, and 3-D density fields.
             No recompilation, no model retraining, no rebuild per domain.
           </p>
         </>
@@ -76,8 +83,8 @@ data.npy         # shape (..., *spatial_dims)`,
           method: "vikshep/compute_scattering",
           description: (
             <>
-              Runs the scattering engine with caller-supplied (dim, group, J, Q, L). The engine
-              selects the appropriate filter bank at runtime:
+              Designed to run the scattering engine with caller-supplied (dim, group, J, Q, L).
+              The engine selects the appropriate filter bank at runtime:
               <ul style={{ margin: "8px 0 0 16px", lineHeight: 1.8, fontSize: 13 }}>
                 <li>dim=1, group=trivial → 1-D Morlet wavelets</li>
                 <li>dim=2, group=so2 → oriented 2-D Morlet bank (SE(2))</li>
@@ -111,9 +118,9 @@ data.npy         # shape (..., *spatial_dims)`,
             <>
               Exports the feature matrix to HDF5 or NumPy. Includes provenance metadata: the
               (dim, group, J, Q, L) configuration, the reduction method, the source OID, and
-              a SHA3-256 hash of the engine version used to produce the features. Features
-              exported with the same config and engine version are bit-reproducible across
-              runs and machines with the same CUDA version.
+              a SHA3-256 hash of the engine version used to produce the features. Deterministic
+              by design: cross-platform bit identity for the same config and engine version is
+              the target of the VDS-1 conformance suite, verified in public CI once released.
             </>
           ),
           inputShape: "feature OID + output format",

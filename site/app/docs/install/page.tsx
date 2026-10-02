@@ -116,10 +116,12 @@ vikshep-recipe --help`}</pre>
 
       {/* Path 2 — engine wheel */}
       <section style={{ borderBottom: "1px solid var(--rule)", paddingBottom: 32 }}>
-        <h2 style={h2Style}>Path 2 — Engine wheel (GPU acceleration)</h2>
+        <h2 style={h2Style}>Path 2 — Engine wheel (not yet released)</h2>
         <p style={prose}>
-          The <code style={code}>vikshep</code> wheel bundles the compiled engine
-          and enables GPU-accelerated scattering. Install it alongside the loaders.
+          The <code style={code}>vikshep</code> wheel is intended to bundle the
+          compiled engine. It does not run the scattering transform today: the
+          open deterministic scattering core is in development and GPU
+          acceleration is planned.
         </p>
         <pre style={codeBlock}>{`pip install vikshep`}</pre>
         <p style={note}>
@@ -134,7 +136,8 @@ vikshep-recipe --help`}</pre>
 
         <h2 style={h2Style}>Engine binary (<code style={{ ...code, fontSize: 18 }}>omnipulse-mcp</code>)</h2>
         <p style={prose}>
-          Download the <code style={code}>omnipulse-mcp</code> binary from the{" "}
+          Once the first release ships, download the{" "}
+          <code style={code}>omnipulse-mcp</code> binary from the{" "}
           <a
             href="https://github.com/samvardhan03/Vikshep/releases"
             target="_blank"

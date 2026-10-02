@@ -46,7 +46,7 @@ const rule: React.CSSProperties = {
 const FREE_ITEMS = [
   "G4 Direct Interface — Geant4 CSV → features in one command",
   "All loaders: g4, root-uproot, hdf5, well (local CPU)",
-  "Wavelet-scattering feature extraction (CPU)",
+  "Per-event 2-D rasterization and aggregate features",
   "DisCo mass-decorrelation training and calibration CLIs",
   "Benchmark harness (Asimov proxy, JSD)",
   "Agent orchestrator and all recipes",
@@ -63,6 +63,21 @@ const PAID_ITEMS = [
   "Premium 3-D SO(3) engine paths",
   "Commercial license (no AGPL copyleft)",
   "Priority support and SLA",
+];
+
+const ENGINE_STATUS = [
+  {
+    label: "Available now",
+    body: "The vikshep-ingest / vikshep-recipe CLI: Geant4 CSV ingest, per-event 2-D rasterization into shared memory, per-event aggregates, calibration regression, DisCo-penalised tagging on the aggregates (training gradient: Pearson proxy; reported dCorr²: exact weighted), and the benchmark harness. Tested today: byte-identical reports under a fixed seed on the same machine.",
+  },
+  {
+    label: "In development",
+    body: "The open deterministic scattering core (samvardhan03/vikshep-compute), which computes S₀/S₁/S₂ and r₂ = S₂/S₁ on the ingested grids. It is built against a written determinism specification (VDS-1) with a cross-platform conformance suite.",
+  },
+  {
+    label: "Planned",
+    body: "Desktop app. GPU acceleration.",
+  },
 ];
 
 const TRIAL_ITEMS = [
@@ -82,10 +97,13 @@ export default function DocsIndexPage() {
         </h1>
         <p style={{ ...prose, marginBottom: 24 }}>
           Vikshep is a deterministic feature-extraction plane for physics data.
-          Nothing is learned during feature extraction — the wavelet filters are
-          fixed analytic Morlets chosen by geometry, not trained. The guarantees
-          (stability, mass-decorrelation, reproducibility) are theorems about the
-          transform, not benchmarks.
+          Its feature plane is the wavelet scattering transform: nothing is
+          learned during feature extraction — the wavelet filters are fixed
+          analytic Morlets chosen by geometry, not trained. Translation
+          invariance and deformation stability are theorems about the
+          transform, not benchmarks. The transform is delivered by the open
+          deterministic core, in development; see Engine status below for what
+          the released CLI does today.
         </p>
         <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
           {[
@@ -114,12 +132,36 @@ export default function DocsIndexPage() {
         </div>
       </div>
 
+      {/* Engine status */}
+      <div id="engine-status" style={rule}>
+        <h2 style={{ ...h2Style, marginTop: 0 }}>Engine status</h2>
+        <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 14, maxWidth: 680 }}>
+          {ENGINE_STATUS.map((item) => (
+            <li key={item.label} style={{ fontSize: 15, lineHeight: 1.7, color: "var(--ink-mute)" }}>
+              <span
+                style={{
+                  fontFamily: "var(--font-jetbrains), monospace",
+                  fontSize: 11,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.14em",
+                  color: "var(--ink)",
+                  marginRight: 10,
+                }}
+              >
+                {item.label}
+              </span>
+              {item.body}
+            </li>
+          ))}
+        </ul>
+      </div>
+
       {/* Free-vs-paid boundary table */}
       <div>
         <h2 style={h2Style}>Free vs. paid boundary</h2>
         <p style={{ ...prose, marginBottom: 24 }}>
-          The control plane is AGPL-3.0 and ships in full. The GPU engine ships as
-          binaries. The table below is the single source of truth; it is also{" "}
+          The control plane is AGPL-3.0 and ships in full. The private engine is
+          intended to ship as binaries; none has been released yet. The table below is the single source of truth; it is also{" "}
           <Link href="/pricing" style={{ color: "var(--ink)" }}>
             referenced from Pricing
           </Link>
@@ -219,11 +261,12 @@ export default function DocsIndexPage() {
           The control plane (agent, loaders, recipes, site — all AGPL-3.0) speaks
           to the engine over a frozen seam: 28-char SHA3-256 object IDs in POSIX
           shared memory, line-delimited JSON-RPC 2.0. Raw tensors never reach
-          TypeScript or the browser. The engine ships as pre-compiled
-          binaries (<code style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 13 }}>omnipulse-mcp</code>)
-          — set <code style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 13 }}>OMNIPULSE_MCP_BIN</code> to
-          its path. The loaders are pure Python, require no engine, and are the
-          starting point for most analyses.
+          TypeScript or the browser. The engine binary (
+          <code style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 13 }}>omnipulse-mcp</code>)
+          is not released yet; once it is, set{" "}
+          <code style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 13 }}>OMNIPULSE_MCP_BIN</code> to
+          its path. The loaders and CLI recipes are pure Python, require no engine,
+          and are the starting point for most analyses today.
         </p>
       </div>
     </article>

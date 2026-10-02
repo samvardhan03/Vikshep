@@ -64,22 +64,26 @@ export default function RecipesPage() {
       <p style={eyebrow}>Recipes</p>
       <h1 style={h1Style}>CLI recipes and data loaders</h1>
       <p style={{ ...prose, marginBottom: 32 }}>
-        Recipes are declarative pipelines — a fixed sequence of ingest, scatter,
-        reduce, and (optionally) classify steps. CLI recipes are executable Python
-        scripts installed as console scripts; agent recipes are MCP tool sequences.
+        Recipes are declarative pipelines — a fixed sequence of ingest, feature,
+        and (optionally) classify steps. CLI recipes are executable Python
+        scripts installed as console scripts and are available now; they train on
+        the per-event aggregates in the manifest. Agent recipes are MCP tool
+        sequences whose scatter and reduce steps run on the open deterministic
+        scattering core, which is in development.
       </p>
 
       {/* CLI recipes */}
       <section style={{ borderBottom: "1px solid var(--rule)", paddingBottom: 32, marginBottom: 0 }}>
         <h2 style={{ ...h2Style, marginTop: 0 }}>vikshep-recipe calibrate</h2>
         <p style={prose}>
-          Fits a linear regression from aggregate features to a target scalar.
+          Fits a ridge-regularised linear regression from aggregate features to a
+          target scalar.
           Useful for detector calibration and response correction.
         </p>
         <pre style={codeBlock}>{`vikshep-recipe calibrate \\
   --features <manifest.json>   # required: path to the ingest manifest
   --target   <column_name>     # required: aggregate scalar to predict
-  --output   <report.json>     # optional: default = calibrate_report.json`}</pre>
+  --out      <dir>             # optional: default = manifest directory`}</pre>
         <div style={{ overflowX: "auto", marginTop: 16 }}>
           <table style={{ width: "100%", borderCollapse: "collapse", fontFamily: "var(--font-jetbrains), monospace", fontSize: 13 }}>
             <thead>
@@ -93,7 +97,7 @@ export default function RecipesPage() {
               {[
                 ["--features", "Yes", "Path to manifest.json from vikshep-ingest"],
                 ["--target", "Yes", "Aggregate column name to regress against"],
-                ["--output", "No", "Output report path (default: calibrate_report.json)"],
+                ["--out", "No", "Output directory for calibrate_report.json (default: manifest directory)"],
               ].map(([flag, req, desc], i) => (
                 <tr key={i} style={{ borderBottom: "1px solid var(--rule)" }}>
                   <td style={{ padding: "8px 12px", color: "var(--ink)" }}>{flag}</td>
@@ -107,18 +111,24 @@ export default function RecipesPage() {
 
         <h2 style={h2Style}>vikshep-recipe tag</h2>
         <p style={prose}>
-          Trains a classifier on aggregate features with optional DisCo
-          mass-decorrelation. The{" "}
+          Trains a logistic classifier on aggregate features with a weighted DisCo
+          penalty on the dependence between the score and the{" "}
           <code style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 13 }}>--protect</code>{" "}
-          flag enforces that the classifier score is statistically independent of
-          the named variable, suppressing mass sculpting.
+          variable on background events, to suppress mass sculpting. Training uses
+          a Pearson-correlation proxy for the penalty gradient; the dCorr² in the
+          report is the exact weighted value, evaluated once after training. The
+          report records both as{" "}
+          <code style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 13 }}>training_gradient: &quot;pearson_proxy&quot;</code>{" "}
+          and{" "}
+          <code style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 13 }}>reported_dcorr2: &quot;exact_weighted&quot;</code>.
         </p>
         <pre style={codeBlock}>{`vikshep-recipe tag \\
   --features <manifest.json>   # required
   --label    <column_name>     # required: binary target
-  --protect  <column_name>     # optional: variable to decorrelate from
-  --lambda   <float>           # optional: DisCo penalty (default 0.0)
-  --output   <report.json>     # optional: default = tag_report.json`}</pre>
+  --protect  <column_name>     # required: variable to decorrelate from
+  --weights  <column_name>     # optional: per-event weights
+  --lambda   <float>           # optional: DisCo penalty (default 1.0)
+  --out      <dir>             # optional: default = manifest directory`}</pre>
         <div style={{ overflowX: "auto", marginTop: 16 }}>
           <table style={{ width: "100%", borderCollapse: "collapse", fontFamily: "var(--font-jetbrains), monospace", fontSize: 13 }}>
             <thead>
@@ -132,9 +142,10 @@ export default function RecipesPage() {
               {[
                 ["--features", "Yes", "Path to manifest.json"],
                 ["--label", "Yes", "Binary label column (0/1 or bool)"],
-                ["--protect", "No", "Column whose correlation with the score must be zero"],
-                ["--lambda", "No", "DisCo penalty weight (0 = off, 1 = balanced, >1 = strict)"],
-                ["--output", "No", "Output report path (default: tag_report.json)"],
+                ["--protect", "Yes", "Column whose dependence on the score is penalised"],
+                ["--weights", "No", "Per-event weight column (default: uniform)"],
+                ["--lambda", "No", "DisCo penalty weight (0 = off, default 1.0, >1 = stricter)"],
+                ["--out", "No", "Output directory for tag_report.json (default: manifest directory)"],
               ].map(([flag, req, desc], i) => (
                 <tr key={i} style={{ borderBottom: "1px solid var(--rule)" }}>
                   <td style={{ padding: "8px 12px", color: "var(--ink)" }}>{flag}</td>
@@ -171,9 +182,9 @@ export default function RecipesPage() {
             <tbody>
               {[
                 ["g4", "Geant4 CSV (event_id, layer, phi, theta, momentum[, energy])", "vikshep-ingest g4"],
-                ["root-uproot", ".root (Geant4, CMS Open Data)", "vikshep-ingest root"],
-                ["hdf5", ".h5, generic HDF5", "vikshep-ingest hdf5"],
-                ["well", "The Well HDF5 (15 TB physics simulations dataset)", "vikshep-ingest well_slice"],
+                ["root-uproot", ".root (Geant4, CMS Open Data)", "Python API (vikshep.loaders entry point)"],
+                ["hdf5", ".h5, generic HDF5", "Python API (vikshep.loaders entry point)"],
+                ["well", "The Well HDF5 (15 TB physics simulations dataset)", "Python API (vikshep_ingest.well)"],
               ].map(([loader, format, cli], i) => (
                 <tr key={i} style={{ borderBottom: "1px solid var(--rule)" }}>
                   <td style={{ padding: "8px 12px", color: "var(--ink)" }}>{loader}</td>
@@ -198,9 +209,9 @@ export default function RecipesPage() {
         <p style={prose}>
           Agent recipes are declarative MCP tool sequences defined in{" "}
           <code style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 13 }}>agent/src/recipes/</code>.
-          They chain the same steps as the CLI recipes but run through the
-          TypeScript/Bun MCP orchestrator, enabling async streaming, provenance
-          logging, and the engine GPU paths.
+          They run through the TypeScript/Bun MCP orchestrator (async streaming,
+          provenance logging) and call the scatter and reduce tools, so they need
+          the open deterministic scattering core, which is in development.
         </p>
         <div style={{ overflowX: "auto", marginTop: 16 }}>
           <table style={{ width: "100%", borderCollapse: "collapse", fontFamily: "var(--font-jetbrains), monospace", fontSize: 13 }}>
@@ -213,7 +224,7 @@ export default function RecipesPage() {
             </thead>
             <tbody>
               {[
-                ["hep-tagging-disco", "G4 ingest → aggregates → r₂ → DisCo classifier"],
+                ["hep-tagging-disco", "ingest → scatter → r₂ → DisCo classifier"],
                 ["bsm-anomaly", "ingest → scatter → log-mean → HNSW → detect"],
                 ["general-feature", "ingest → scatter (Dim, Group from request) → reduce"],
               ].map(([recipe, pipeline], i) => (
