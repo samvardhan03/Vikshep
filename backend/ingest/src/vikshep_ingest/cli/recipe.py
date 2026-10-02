@@ -7,9 +7,15 @@ Usage
                               [--weights <col>] [--lambda <float>] [--out dir]
     vikshep-recipe calibrate --features manifest.json --target <col> [--out dir]
 
-Both commands read the aggregates from the manifest produced by
+Both commands read the per-event aggregates from the manifest produced by
 `vikshep-ingest g4` and train a lightweight model with the weighted DisCo
-penalty (tag) or a regression head (calibrate).
+penalty (tag) or a regression head (calibrate).  The rasterized grids
+referenced by `grid_oids` are not consumed by these recipes.
+
+The tag recipe trains with a Pearson-correlation proxy for the DisCo
+gradient; the dCorr^2 it reports is the exact weighted Szekely-Rizzo value
+from `vikshep_ingest.disco`.  The report states both facts explicitly in
+the `training_gradient` and `reported_dcorr2` fields.
 """
 
 from __future__ import annotations
@@ -20,6 +26,12 @@ import sys
 from pathlib import Path
 
 import numpy as np
+
+
+# Method labels written into every tag report so the numbers cannot be read
+# as something they are not.
+TRAINING_GRADIENT = "pearson_proxy"   # _train._pearson_dcorr2_grad
+REPORTED_DCORR2   = "exact_weighted"  # disco.weighted_dcorr2, evaluated once after training
 
 
 # ---------------------------------------------------------------------------
@@ -60,12 +72,11 @@ def _cmd_tag(args: argparse.Namespace) -> int:
 
     lam = args.lam
 
-    from vikshep_ingest.disco import weighted_dcorr2
-
-    # Simple logistic regression with weighted DisCo penalty
-    # Loss: wBCE + lambda * dCorr_w^2(score, protect | background)
-    # Implementation mirrors pilot/train_disco.py but uses the exact
-    # weighted_dcorr2 metric (Pearson-approx gradient is the pilot's fast path).
+    # Logistic regression with a DisCo-style decorrelation penalty.
+    # Objective: wBCE + lambda * dCorr_w^2(score, protect | background).
+    # The training gradient of the penalty is a Pearson-correlation proxy;
+    # the exact weighted dCorr^2 is evaluated once, after training, for the
+    # report (see _train.train_tag and disco.weighted_dcorr2).
     from vikshep_ingest.cli._train import train_tag
 
     result = train_tag(X, labels.astype(np.float32), protect, weights, lam=lam)
@@ -78,6 +89,8 @@ def _cmd_tag(args: argparse.Namespace) -> int:
         "lambda":     lam,
         "auc":        result["auc"],
         "dcorr2":     result["dcorr2_final"],
+        "training_gradient": TRAINING_GRADIENT,
+        "reported_dcorr2":   REPORTED_DCORR2,
         "n_events":   N,
         "label_col":  args.label,
         "protect_col": args.protect,
@@ -154,6 +167,8 @@ def _print_tag_report(r: dict) -> None:
     print(f"  lambda   : {r['lambda']}")
     print(f"  AUC      : {r['auc']:.4f}")
     print(f"  dCorr^2  : {r['dcorr2']:.4f}  (lower = better decorrelation)")
+    print(f"  training_gradient : {r['training_gradient']}")
+    print(f"  reported_dcorr2   : {r['reported_dcorr2']}")
     print(f"  n_events : {r['n_events']}")
 
 
