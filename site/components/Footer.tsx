@@ -140,7 +140,7 @@ export default function Footer({ onFeedback }: FooterProps) {
               { label: "License: AGPL-3.0 + Commercial", href: "https://github.com/samvardhan03/Vikshep/blob/main/LICENSING.md" },
               { label: "vikshep on PyPI", href: "https://pypi.org/project/vikshep/" },
               { label: "omni-wst-core on PyPI", href: "https://pypi.org/project/omni-wst-core/" },
-              { label: "omnipulse-mcp on crates.io", href: "https://crates.io/crates/omnipulse-mcp" },
+              { label: "vikshep-compute (open core)", href: "https://github.com/samvardhan03/vikshep-compute" },
             ].map((l) => (
               <a
                 key={l.href}

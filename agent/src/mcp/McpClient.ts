@@ -33,30 +33,51 @@ export interface McpBridgeConfig {
 
 // ── Default configuration ─────────────────────────────────────────────────────
 
-// Resolution order (no machine-specific fallback):
-//   1. $OMNIPULSE_MCP_BIN env var
-//   2. PATH lookup via `which omnipulse-mcp`
-//   3. throw with install instructions
+// Resolution order:
+//   1. $VIKSHEP_MCP_BIN env var
+//   2. PATH lookup via `which vikshep-mcp`
+//   3. $OMNIPULSE_MCP_BIN env var (deprecated alias — warns)
+//   4. PATH lookup via `which omnipulse-mcp` (deprecated — warns)
+//   5. throw with build instructions
 function resolveMcpBin(): string {
+  const { execSync } = require("child_process") as typeof import("child_process");
+  const which = (name: string): string | null => {
+    try {
+      const out = execSync(`which ${name}`, { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }).trim();
+      return out || null;
+    } catch {
+      return null;
+    }
+  };
+
+  if (process.env.VIKSHEP_MCP_BIN) return process.env.VIKSHEP_MCP_BIN;
+  const onPath = which("vikshep-mcp");
+  if (onPath) return onPath;
+
   if (process.env.OMNIPULSE_MCP_BIN) {
+    console.warn(
+      "[McpBridge] OMNIPULSE_MCP_BIN is deprecated; set VIKSHEP_MCP_BIN instead.",
+    );
     return process.env.OMNIPULSE_MCP_BIN;
   }
-  try {
-    const { execSync } = require("child_process") as typeof import("child_process");
-    const found = execSync("which omnipulse-mcp", { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }).trim();
-    if (found) return found;
-  } catch {
-    // `which` not found or omnipulse-mcp not on PATH — fall through to error
+  const legacyPath = which("omnipulse-mcp");
+  if (legacyPath) {
+    console.warn(
+      "[McpBridge] omnipulse-mcp is superseded by vikshep-mcp; set VIKSHEP_MCP_BIN.",
+    );
+    return legacyPath;
   }
+
   throw new Error(
-    "[McpBridge] omnipulse-mcp not found.\n" +
-    "  Download the binary from the Vikshep Releases page and set:\n" +
-    "  export OMNIPULSE_MCP_BIN=/path/to/omnipulse-mcp"
+    "[McpBridge] vikshep-mcp not found.\n" +
+    "  Build from the open core and set:\n" +
+    "  export VIKSHEP_MCP_BIN=/path/to/vikshep-mcp\n" +
+    "  Build: cargo build --release -p vikshep-mcp  (in samvardhan03/vikshep-compute)",
   );
 }
 
 const DEFAULT_CONFIG: Required<McpBridgeConfig> = {
-  pythonCommand: resolveMcpBin(), // field name retained; now points to the Rust bin
+  pythonCommand: resolveMcpBin(), // field name retained; resolves to the vikshep-mcp Rust binary
   serverArgs: [],
   clientName: "vikshep-agent",
   clientVersion: "0.3.0",

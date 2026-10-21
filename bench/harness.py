@@ -1,5 +1,5 @@
 """
-bench/harness.py — the benchmark harness, the sales artifact.
+bench/harness.py — the benchmark harness.
 
 Inputs : a features manifest (from vikshep-ingest g4), plus column names for
          label, protect, and optional weights, plus a lambda grid.
@@ -9,16 +9,18 @@ Outputs: (a) Asimov significance proxy [NOT-WILKS: see note below],
          (d) report.json + report.md stating Delta-sigma and Delta-JSD against
              the lambda=0 baseline, with the win condition evaluated honestly.
 
-NOTE on significance path: The pilot benchmark implements Asimov significance
-as S/sqrt(B) after a score cut.  This is NOT the Wilks delta-chi-squared
-likelihood-ratio significance; it is an approximation used when no unbinned
-likelihood fit is available.  The spec instructs us to label this path clearly
-rather than misrepresent it.  All Delta-sigma values in the report are
-labeled "Asimov proxy significance".
+NOTE on significance path: Asimov significance is S/sqrt(B+1) after a score
+cut.  This is NOT the Wilks delta-chi-squared likelihood-ratio significance.
+All Delta-sigma values in the report are labeled "Asimov proxy significance".
+
+Statistics backend: when vikshep_compute is installed (see
+backend/ingest[scattering]), the harness uses vc.dcorr2_w (exact weighted
+dCorr^2) and vc.train_tag (Adam, exact gradient) for all metrics.  When it
+is not installed, the harness falls back to the pure-Python/NumPy
+implementations in vikshep_ingest.cli._train and vikshep_ingest.disco.
 
 Determinism: given the same manifest and seed, this harness produces
-byte-identical report.json.  The random seed controls only data splitting for
-cross-validation; all other operations are deterministic.
+byte-identical report.json regardless of which backend is active.
 """
 
 from __future__ import annotations
@@ -30,13 +32,19 @@ from pathlib import Path
 import numpy as np
 from scipy.spatial.distance import jensenshannon
 
+try:
+    import vikshep_compute as vc
+    _VC_AVAILABLE = True
+except ImportError:
+    _VC_AVAILABLE = False
+
 
 # ---------------------------------------------------------------------------
-# Metric helpers (ported from pilot/benchmark.py; see ground truth note)
+# Metric helpers
 # ---------------------------------------------------------------------------
 
 def _asimov_sigma(scores: np.ndarray, labels: np.ndarray, threshold: float = 0.5) -> float:
-    """Asimov significance proxy: S / sqrt(B) after score cut.
+    """Asimov significance proxy: S / sqrt(B+1) after score cut.
 
     NOT-WILKS: this is NOT a Wilks delta-chi-squared significance.
     Labeled 'Asimov proxy' throughout the report.
@@ -56,6 +64,55 @@ def _jsd_bins(a: np.ndarray, b: np.ndarray, n_bins: int = 30) -> float:
     ha = ha + 1e-10; hb = hb + 1e-10
     ha /= ha.sum(); hb /= hb.sum()
     return float(jensenshannon(ha, hb))
+
+
+def _dcorr2(scores: np.ndarray, protect: np.ndarray, weights: np.ndarray) -> float:
+    """Exact weighted dCorr^2 via vikshep_compute when available, else disco."""
+    if _VC_AVAILABLE:
+        return float(vc.dcorr2_w(
+            scores.astype(np.float64),
+            protect.astype(np.float64),
+            weights.astype(np.float64),
+        ))
+    from vikshep_ingest.disco import weighted_dcorr2
+    return weighted_dcorr2(scores, protect, weights)
+
+
+def _train_tag_fn(X, labels, protect, weights, lam, seed=42):
+    """Train a tag head; uses vikshep_compute (exact gradient) when available."""
+    if _VC_AVAILABLE:
+        bin_labels = labels.astype(np.float64)
+        if not np.all(np.isin(np.unique(labels), [0, 1, 0.0, 1.0])):
+            bin_labels = (labels != 0).astype(np.float64)
+        model = vc.train_tag(
+            X.astype(np.float64),
+            bin_labels,
+            w=weights.astype(np.float64),
+            m=protect.astype(np.float64),
+            lam=lam,
+            gradient="exact",
+            seed=seed,
+        )
+        scores = model.predict(X.astype(np.float64))
+        bkg = labels == 0
+        dc2 = 0.0
+        if bkg.sum() >= 4:
+            dc2 = _dcorr2(scores[bkg], protect[bkg], weights[bkg])
+        try:
+            from sklearn.metrics import roc_auc_score
+            auc = float(roc_auc_score(bin_labels.astype(int), scores))
+        except Exception:
+            auc = float("nan")
+        predict = lambda Xnew: model.predict(np.asarray(Xnew, dtype=np.float64))
+        return {"auc": auc, "dcorr2_final": dc2, "predict": predict}
+    from vikshep_ingest.cli._train import train_tag
+    return train_tag(
+        X.astype(np.float32),
+        labels.astype(np.float32),
+        protect.astype(np.float32),
+        weights.astype(np.float32),
+        lam=lam,
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -115,10 +172,8 @@ def run(
     protect = _col(protect_col)
     weights = _col(weights_col) if weights_col else np.ones(N, dtype=np.float32)
 
-    from vikshep_ingest.cli._train import train_tag
-
     # Baseline: lambda = 0 (no decorrelation)
-    res0 = train_tag(X, labels, protect, weights, lam=0.0)
+    res0 = _train_tag_fn(X, labels, protect, weights, lam=0.0, seed=seed)
     sc0  = res0["predict"](X)
     sigma_baseline = _asimov_sigma(sc0, labels, threshold)
 
@@ -130,7 +185,7 @@ def run(
     # Sweep lambda
     frontier: list[dict] = []
     for lam in lambdas:
-        res = train_tag(X, labels, protect, weights, lam=lam)
+        res = _train_tag_fn(X, labels, protect, weights, lam=lam, seed=seed)
         sc  = res["predict"](X)
         sigma = _asimov_sigma(sc, labels, threshold)
         jsd_after = _jsd_bins(bkg_protect, bkg_protect[sc[bkg] > threshold]) \
@@ -163,6 +218,8 @@ def run(
         "sigma_baseline_asimov": sigma_baseline,
         "jsd_baseline":      jsd_baseline,
         "significance_method": "Asimov proxy S/sqrt(B+1) [NOT-WILKS]",
+        "statistics_backend": "vikshep_compute" if _VC_AVAILABLE else "pure_python",
+        "training_gradient": "exact_weighted" if _VC_AVAILABLE else "pearson_proxy",
         "frontier":          frontier,
         # Win condition: evaluated at the best lambda (highest delta_sigma with delta_jsd <= 0)
         "win_condition":     _evaluate_win(frontier),

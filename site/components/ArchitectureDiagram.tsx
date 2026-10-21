@@ -10,22 +10,22 @@ const LAYERS = [
     lines: ["Coordinator · MCP client · Recipe library", "React preview dashboard"],
   },
   {
-    icon: "E",
-    title: "omnipulse-mcp  (Rust — Data Plane)",
-    label: "engine — private, ships as binaries",
-    lines: ["shm_open + mmap · spawn_blocking", "HNSW + Sliced-Wasserstein"],
+    icon: "O",
+    title: "vikshep-mcp  (Rust — open MCP data plane)",
+    label: "open — AGPL-3.0 (samvardhan03/vikshep-compute)",
+    lines: ["shm_open + mmap · JSON-RPC 2.0 over stdio", "HNSW + Sliced-Wasserstein · provenance manifests"],
+  },
+  {
+    icon: "O",
+    title: "vikshep-scatter + vikshep-stats  (Rust CPU core)",
+    label: "open — AGPL-3.0 (samvardhan03/vikshep-compute)",
+    lines: ["Stockham FFT · Morlet filter bank · S0/S1/S2 cascade", "Exact weighted dCorr² · Adam DisCo training"],
   },
   {
     icon: "E",
-    title: "omni-ffi  (Rust ↔ C++ bridge)",
-    label: "engine — private, ships as binaries",
-    lines: ['cxx 1.0 — unsafe extern "C++"', "CPU and CUDA dispatch paths"],
-  },
-  {
-    icon: "E",
-    title: "omni-wst-core  (C++/CUDA)",
-    label: "engine — private, ships as binaries",
-    lines: ["ScatteringEngine<Arch, Dim, Group, J, Q, L>", "Morlet bank · Solid-harmonic bank"],
+    title: "GPU backends  (in development)",
+    label: "proprietary — not yet released",
+    lines: ["CUDA/Metal scattering kernels", "Steerable/tile-policy GPU paths"],
   },
 ];
 

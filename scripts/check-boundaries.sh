@@ -131,6 +131,47 @@ else
 fi
 
 # ---------------------------------------------------------------------------
+# 7. omnipulse-mcp must not appear in install instructions.
+#    The binary is superseded by vikshep-mcp from the open core.
+# ---------------------------------------------------------------------------
+echo "[check] 7. No omnipulse-mcp in install instructions…"
+# docs/ is a private untracked directory (strategy docs); excluded from this check.
+OMNI_HITS=$(
+  grep -RnE 'omnipulse-mcp' \
+       README.md examples/ site/ \
+       --include="*.md" --include="*.html" --include="*.tsx" --include="*.ts" \
+       --exclude-dir=node_modules --exclude-dir=.next \
+       2>/dev/null | grep -v '^Binary: ' || true
+)
+if [ -n "$OMNI_HITS" ]; then
+  echo "FAIL: omnipulse-mcp found in install instructions:"
+  echo "$OMNI_HITS"
+  FAIL=1
+else
+  echo "  PASS"
+fi
+
+# ---------------------------------------------------------------------------
+# 8. No GPU performance numbers in docs.
+#    GPU acceleration is in development; no numbers may be claimed.
+# ---------------------------------------------------------------------------
+echo "[check] 8. No GPU performance numbers in docs…"
+GPU_HITS=$(
+  grep -RniE 'GPU[^a-zA-Z].{0,60}[0-9]+\s*(ms|s|FPS|tok|M[Bb]/s|GB/s|TFLOP)' \
+       README.md examples/ site/ \
+       --include="*.md" --include="*.html" --include="*.tsx" \
+       --exclude-dir=node_modules --exclude-dir=.next \
+       2>/dev/null || true
+)
+if [ -n "$GPU_HITS" ]; then
+  echo "FAIL: GPU performance numbers found in docs:"
+  echo "$GPU_HITS"
+  FAIL=1
+else
+  echo "  PASS"
+fi
+
+# ---------------------------------------------------------------------------
 # Result
 # ---------------------------------------------------------------------------
 echo ""

@@ -103,9 +103,7 @@ cd Vikshep
 pip install -e backend/ingest`}</pre>
         <p style={note}>
           <code style={code}>vikshep-ingest</code> is not yet on PyPI — install
-          from the repo clone only. Do not{" "}
-          <code style={code}>cargo install omnipulse-mcp</code>; that path does
-          not exist on crates.io.
+          from the repo clone only.
         </p>
 
         <h2 style={h2Style}>Verify the install</h2>
@@ -114,47 +112,49 @@ vikshep-recipe --help`}</pre>
         <p style={prose}>Both commands should print usage without errors.</p>
       </section>
 
-      {/* Path 2 — engine wheel */}
+      {/* Path 2 — scattering features */}
       <section style={{ borderBottom: "1px solid var(--rule)", paddingBottom: 32 }}>
-        <h2 style={h2Style}>Path 2 — Engine wheel (not yet released)</h2>
+        <h2 style={h2Style}>Path 2 — Scattering features (requires Rust)</h2>
         <p style={prose}>
-          The <code style={code}>vikshep</code> wheel is intended to bundle the
-          compiled engine. It does not run the scattering transform today: the
-          open deterministic scattering core is in development and GPU
-          acceleration is planned.
+          To use the wavelet scattering transform, install the open core from
+          source. A Rust toolchain is required for the build step.
         </p>
-        <pre style={codeBlock}>{`pip install vikshep`}</pre>
-        <p style={note}>
-          The first tagged engine binary release is pending. Until it ships, pilot
-          access is available via{" "}
-          <a href="mailto:shekhawatsamvardhan@gmail.com?subject=Vikshep%20pilot" style={{ color: "var(--ink)" }}>
-            shekhawatsamvardhan@gmail.com
-          </a>
-          . The PyPI wheel (0.2.0) is available but carries stale metadata; a
-          corrected release will follow the first GitHub Release.
-        </p>
+        <pre style={codeBlock}>{`# Install Rust (skip if already present)
+curl -sSf https://sh.rustup.rs | sh -s -- -y && source "$HOME/.cargo/env"
 
-        <h2 style={h2Style}>Engine binary (<code style={{ ...code, fontSize: 18 }}>omnipulse-mcp</code>)</h2>
-        <p style={prose}>
-          Once the first release ships, download the{" "}
-          <code style={code}>omnipulse-mcp</code> binary from the{" "}
+pip install maturin
+pip install -e "backend/ingest[scattering]"`}</pre>
+        <p style={note}>
+          The <code style={code}>[scattering]</code> extra builds{" "}
+          <code style={code}>vikshep_compute</code> from the open core (
           <a
-            href="https://github.com/samvardhan03/Vikshep/releases"
+            href="https://github.com/samvardhan03/vikshep-compute"
             target="_blank"
             rel="noopener noreferrer"
             style={{ color: "var(--ink)" }}
           >
-            Releases page
-          </a>{" "}
-          and point the environment variable at it:
+            samvardhan03/vikshep-compute
+          </a>
+          ) at a pinned commit. First build takes 2–4 minutes; subsequent builds
+          use the cargo cache. Without it, the CLI falls back to per-event
+          aggregates; the report states which path ran.
         </p>
-        <pre style={codeBlock}>{`export OMNIPULSE_MCP_BIN=/path/to/omnipulse-mcp`}</pre>
+
+        <h2 style={h2Style}>MCP data plane (<code style={{ ...code, fontSize: 18 }}>vikshep-mcp</code>)</h2>
+        <p style={prose}>
+          Build the MCP data plane binary from the open core and set{" "}
+          <code style={code}>VIKSHEP_MCP_BIN</code>:
+        </p>
+        <pre style={codeBlock}>{`git clone https://github.com/samvardhan03/vikshep-compute.git
+cd vikshep-compute
+cargo build --release -p vikshep-mcp
+export VIKSHEP_MCP_BIN=$PWD/target/release/vikshep-mcp`}</pre>
         <p style={note}>
-          Add this to your shell profile (<code style={code}>~/.zshrc</code>,{" "}
-          <code style={code}>~/.bashrc</code>) or place it in a{" "}
-          <code style={code}>.env</code> file loaded by your analysis script. The
-          agent reads this variable on every invocation; if it is absent the
-          agent fails loudly with install instructions.
+          Add the export to your shell profile (<code style={code}>~/.zshrc</code>,{" "}
+          <code style={code}>~/.bashrc</code>). The agent reads{" "}
+          <code style={code}>VIKSHEP_MCP_BIN</code> on every invocation; if it is
+          absent the agent fails with build instructions. GPU backends are in
+          development and not yet released.
         </p>
       </section>
 
@@ -210,8 +210,8 @@ vikshep-recipe --help`}</pre>
               a: "Run pip install -e backend/ingest from the repo root. Ensure the active Python environment is the same one you installed into (check which pip).",
             },
             {
-              q: "OMNIPULSE_MCP_BIN not set — engine calls will fail",
-              a: "Download omnipulse-mcp from the Releases page and export OMNIPULSE_MCP_BIN=/path/to/omnipulse-mcp. The variable is read at agent startup, not at import time.",
+              q: "VIKSHEP_MCP_BIN not set — agent MCP calls will fail",
+              a: "Build vikshep-mcp from the open core (cargo build --release -p vikshep-mcp in samvardhan03/vikshep-compute) and export VIKSHEP_MCP_BIN=/path/to/vikshep-mcp. The variable is read at agent startup, not at import time.",
             },
             {
               q: "ImportError: No module named 'vikshep_ingest'",

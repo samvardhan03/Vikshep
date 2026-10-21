@@ -259,14 +259,16 @@ export default function DocsIndexPage() {
         <h2 style={{ ...h2Style, marginTop: 0 }}>How it fits together</h2>
         <p style={prose}>
           The control plane (agent, loaders, recipes, site — all AGPL-3.0) speaks
-          to the engine over a frozen seam: 28-char SHA3-256 object IDs in POSIX
-          shared memory, line-delimited JSON-RPC 2.0. Raw tensors never reach
-          TypeScript or the browser. The engine binary (
-          <code style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 13 }}>omnipulse-mcp</code>)
-          is not released yet; once it is, set{" "}
-          <code style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 13 }}>OMNIPULSE_MCP_BIN</code> to
-          its path. The loaders and CLI recipes are pure Python, require no engine,
-          and are the starting point for most analyses today.
+          to the open MCP data plane over a frozen seam: 28-char SHA3-256 object
+          IDs in POSIX shared memory, line-delimited JSON-RPC 2.0. Raw tensors
+          never reach TypeScript or the browser. Build the MCP binary (
+          <code style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 13 }}>vikshep-mcp</code>)
+          from the open core and set{" "}
+          <code style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 13 }}>VIKSHEP_MCP_BIN</code> to
+          its path. The loaders and CLI recipes are pure Python; the scattering
+          path requires the{" "}
+          <code style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 13 }}>[scattering]</code>
+          {" "}extra and a Rust toolchain.
         </p>
       </div>
     </article>

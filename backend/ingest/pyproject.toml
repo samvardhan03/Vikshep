@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "vikshep-ingest"
-version = "0.2.0"
+version = "0.3.0"
 description = "Vikshep ingest service — Geant4 Direct Interface, loader plugins, POSIX shm staging."
 requires-python = ">=3.10"
 dependencies = [
@@ -17,6 +17,14 @@ dependencies = [
     "fastapi",
     "uvicorn",
     "h5py>=3",
+]
+
+[project.optional-dependencies]
+# Scattering extra: requires a Rust toolchain (rustup + cargo).
+# Install: pip install maturin && pip install -e "backend/ingest[scattering]"
+# Rust toolchain: curl -sSf https://sh.rustup.rs | sh -s -- -y
+scattering = [
+    "vikshep-compute @ git+https://github.com/samvardhan03/vikshep-compute@b55468bbb2fb8d1225fa3563e94addfe642b3d5a#subdirectory=crates/vikshep-py",
 ]
 
 [project.scripts]
