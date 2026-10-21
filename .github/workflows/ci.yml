@@ -76,6 +76,9 @@ jobs:
         working-directory: vikshep-compute
       - name: Run all Python tests (including scattering)
         run: python -m pytest backend/ingest/tests/ -v
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
       - name: Run agent integration test
         working-directory: agent
         run: |

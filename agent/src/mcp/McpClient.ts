@@ -77,7 +77,7 @@ function resolveMcpBin(): string {
 }
 
 const DEFAULT_CONFIG: Required<McpBridgeConfig> = {
-  pythonCommand: resolveMcpBin(), // field name retained; resolves to the vikshep-mcp Rust binary
+  pythonCommand: "", // resolved lazily in connect() via resolveMcpBin()
   serverArgs: [],
   clientName: "vikshep-agent",
   clientVersion: "0.3.0",
@@ -128,12 +128,13 @@ export class McpBridge {
       return;
     }
 
+    const command = this.config.pythonCommand || resolveMcpBin();
     console.log(
-      `[McpBridge] Spawning MCP server: ${this.config.pythonCommand} ${this.config.serverArgs.join(" ")}`,
+      `[McpBridge] Spawning MCP server: ${command} ${this.config.serverArgs.join(" ")}`,
     );
 
     this.transport = new StdioClientTransport({
-      command: this.config.pythonCommand,
+      command,
       args: this.config.serverArgs,
     });
 

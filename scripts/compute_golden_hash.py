@@ -40,11 +40,20 @@ def main() -> int:
     hashes: dict[str, str | None] = {}
     for name in FILES:
         p = QS_DIR / name
-        if p.exists():
-            hashes[name] = sha3_file(p)
-        else:
+        if not p.exists():
             hashes[name] = None
             print(f"WARNING: {name} not found at {p}", file=sys.stderr)
+            continue
+        if name == "provenance.json":
+            # provenance.json contains wall_clock and platform fields that
+            # differ per run/OS.  The VDS-1 manifest_hash inside the file
+            # is the platform-independent canonical identifier.
+            prov = json.loads(p.read_bytes())
+            hashes[name] = prov.get("manifest_hash")
+            if hashes[name] is None:
+                print(f"WARNING: manifest_hash missing from {p}", file=sys.stderr)
+        else:
+            hashes[name] = sha3_file(p)
 
     try:
         import vikshep_compute as vc
