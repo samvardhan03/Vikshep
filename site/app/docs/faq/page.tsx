@@ -48,7 +48,7 @@ const FAQ = [
       },
       {
         q: "Does the license apply to the engine binaries?",
-        a: "The engine binaries (vikshep wheel, omnipulse-mcp) ship under a separate proprietary license — the Vikshep Engine Binary Terms. Research and evaluation use of the binaries is free. Commercial deployment of the binaries requires a license. See LICENSING.md in the repo.",
+        a: "The CPU scattering core (vikshep-compute) is AGPL-3.0. GPU backends are proprietary and not yet released. Commercial deployments that cannot comply with AGPL-3.0 source-disclosure requirements need a commercial license. See LICENSING.md in the repo.",
       },
     ],
   },

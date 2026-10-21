@@ -17,11 +17,13 @@ regressor, or generative model. Its feature plane is the wavelet scattering tran
 detectors, likelihood fits) consume those coefficients as input features. Nothing is learned
 during feature extraction, so nothing can adapt to leak the quantity you are trying to measure.
 
-The scattering transform is being delivered by the open deterministic core, which is in
-development (see [Engine status](#engine-status)). The released CLI does not run it yet: today it
-ingests Geant4 output, rasterizes each event to a 2-D grid in shared memory, computes per-event
-aggregates, and trains calibration and DisCo-penalised tagging models on those aggregates with an
-honest report.
+The scattering transform is computed by the open deterministic core
+[`samvardhan03/vikshep-compute`](https://github.com/samvardhan03/vikshep-compute).
+The released CLI ingests Geant4 output, rasterizes each event to a 2-D (phi × theta) grid,
+computes the full scattering cascade (S0/S1/S2), the scale-free r2 = S2/S1 ratios, and
+trains calibration and DisCo-penalised tagging models on those features with the exact weighted
+dCorr² gradient.  When `vikshep_compute` is not installed, the CLI falls back to per-event
+aggregate scalars with a Pearson-proxy gradient; the report states which path ran.
 
 The transform is a multiscale, oriented wavelet cascade: convolve, modulus, convolve, modulus,
 low-pass. The filters are fixed analytic Morlet wavelets chosen by the (J, Q, L) geometry — not
@@ -32,16 +34,19 @@ properties of the transform, not empirical claims about a trained model.
 
 ## Engine status
 
-- **Available now** — the `vikshep-ingest` / `vikshep-recipe` CLI in `backend/ingest`: Geant4 CSV
-  ingest, per-event 2-D rasterization into shared memory, per-event aggregates, calibration
-  regression, DisCo-penalised tagging on the aggregates (training gradient: Pearson proxy;
-  reported dCorr²: exact weighted), and the benchmark harness. Tested today: byte-identical
-  reports under a fixed seed on the same machine.
-- **In development** — the open deterministic scattering core
-  ([`samvardhan03/vikshep-compute`](https://github.com/samvardhan03/vikshep-compute)), which
-  computes S0/S1/S2 and r2 on the ingested grids. It is built against a written determinism
-  specification (VDS-1) with a cross-platform conformance suite.
-- **Planned** — desktop app; GPU acceleration.
+- **Available now** — the `vikshep-ingest` / `vikshep-recipe` CLI in `backend/ingest`:
+  Geant4 CSV ingest, per-event 2-D rasterization (phi × theta, 64 × 64, OID-named POSIX shm),
+  wavelet scattering transform (S0/S1/S2) and r2 ratios via the open core
+  ([`samvardhan03/vikshep-compute`](https://github.com/samvardhan03/vikshep-compute) — requires
+  a Rust toolchain; install with `pip install -e "backend/ingest[scattering]"`), DisCo-penalised
+  tagging and calibration with the exact weighted dCorr² gradient, and the benchmark harness.
+  Cross-platform bit identity: proven on Linux x86_64 and macOS arm64 by CI (see the
+  [vikshep-compute conformance workflow](https://github.com/samvardhan03/vikshep-compute/actions)).
+  When `vikshep_compute` is not installed, the CLI falls back to per-event aggregates with the
+  Pearson-proxy gradient; the report states which path ran.
+- **In development** — desktop app; GPU acceleration (proprietary backends).
+- The private engine is no longer required for CPU scattering.  GPU backends are proprietary and
+  not yet released.
 
 ---
 
@@ -70,9 +75,10 @@ The table compares the method. What ships today is listed under [Engine status](
 | Reproducibility | Run-dependent | Deterministic by design (see below) |
 | Provenance | Black box | SHA3-256 OID per tensor, logged |
 
-Deterministic by design. Tested today: byte-identical reports under a fixed seed on the same
-machine. Cross-platform bit identity is the target of the VDS-1 conformance suite, verified in
-public CI once released.
+Deterministic by design. The open core's conformance suite (VDS-1) proves bit identity on
+Linux x86_64, Linux AArch64, macOS arm64, and Windows x86_64.  The quickstart golden-hash CI
+job additionally verifies that `tag_report.json` and `provenance.json` are byte-identical across
+Linux and macOS runners on the same vikshep-compute commit.
 
 ---
 
@@ -82,18 +88,16 @@ The seam is public and frozen, so downstream tooling can be written and audited 
 contract without the engine source. The private engine behind it is intended to ship as
 binaries; no engine binary has been released yet.
 
-| Open (AGPL-3.0, this repo) | Engine (private; binaries not yet released) |
-|---|---|
-| `contract/` — frozen seam (OID, MCP, WS preview) | CUDA scattering kernels for 1-D/2-D/SE(2)/SO(3) |
-| `agent/` — TypeScript/Bun MCP orchestrator | Steerable/tile-policy GPU paths |
-| `backend/ingest/` — G4 and Well data loaders | Rust MCP data plane (`omnipulse-mcp`) |
-| `backend/ingest/disco.py` — weighted DisCo | Wheel packaging (`vikshep`) |
-| `bench/` — benchmark harness | Pilot data and analysis scripts |
-| `examples/` — quickstart and sample data | |
-| `site/` — marketing site and client-side demos | |
-| All math and statistical methods | |
+| Open (AGPL-3.0, this repo) | Open core ([`vikshep-compute`](https://github.com/samvardhan03/vikshep-compute), AGPL-3.0) | Proprietary (not yet released) |
+|---|---|---|
+| `contract/` — frozen seam (OID, MCP, WS preview) | Rust CPU scattering (`vikshep-scatter`) | CUDA/Metal GPU kernels |
+| `agent/` — TypeScript/Bun MCP orchestrator | Exact dCorr² gradient (`vikshep-stats`) | Steerable/tile-policy GPU paths |
+| `backend/ingest/` — G4 and Well data loaders | MCP data plane binary (`vikshep-mcp`) | Wheel packaging (`vikshep`) |
+| `bench/` — benchmark harness | Provenance manifests (VDS-1) | Pilot data |
+| `examples/` — quickstart and sample data | Conformance suite (VDS-1) | |
+| `site/` — marketing site | | |
 
-See [LICENSING.md](LICENSING.md) for engine binary terms.
+See [LICENSING.md](LICENSING.md) for terms.
 
 ---
 
@@ -106,50 +110,61 @@ See [LICENSING.md](LICENSING.md) for engine binary terms.
 │    └─ recipes/   hep-tagging-disco · bsm-anomaly · …         │
 │  web/            React preview dashboard                       │
 │  contract/       frozen seam: OID · MCP · WS preview          │
-│  backend/        thin Rust launcher + Python loaders           │
+│  backend/ingest/ Python G4 loader + CLI recipes               │
 │  site/           Next.js marketing site                        │
 │                                                                │
 └───────────────────────┬────────────────────────────────────────┘
                         │  28-hex shm OID  ·  JSON-RPC 2.0
                         ▼
-              ┌── vikshep-engine (private repo, installed as binaries) ──┐
-              │ omnipulse-mcp  (Rust — Data Plane)                       │
-              │         │  u64 host pointer  ·  cxx zero-marshalling     │
-              │ omni-ffi  (Rust ↔ C++ bridge)                            │
-              │         │  pinned host page                               │
-              │ omni-wst-core  (C++/CUDA)                                │
-              │ ScatteringEngine<Arch, Dim, Group, J, Q, L>              │
-              └──────────────────────────────────────────────────────────┘
+  ┌── vikshep-compute (open, AGPL-3.0 — samvardhan03/vikshep-compute) ──┐
+  │ vikshep-mcp   (Rust MCP data plane; build: cargo build -p vikshep-mcp) │
+  │ vikshep-scatter  (Stockham FFT, Morlet filters, S0/S1/S2 cascade)   │
+  │ vikshep-stats    (exact weighted dCorr², JSD, Asimov proxy)          │
+  │ vikshep-train    (DisCo training, Adam, exact gradient, calibration) │
+  │ vikshep-py       (Python package vikshep_compute via PyO3/maturin)   │
+  └──────────────────────────────────────────────────────────────────────┘
+                        │  (GPU backends: proprietary, not yet released)
+                        ▼
+  ┌── proprietary GPU backends (in development) ──────────────────────┐
+  │  CUDA/Metal scattering kernels; steerable/tile-policy GPU paths   │
+  └───────────────────────────────────────────────────────────────────┘
 ```
 
-Four things cross the boundary: a 28-char hex object name, line-delimited JSON-RPC 2.0 frames,
-a `u64` host pointer (C++ ↔ Rust only), and downsampled previews. Raw tensors never reach
-TypeScript or the browser.
+Three things cross the seam: a 28-char hex OID, line-delimited JSON-RPC 2.0 frames, and
+downsampled previews. Raw tensors stay in shared memory and never reach TypeScript or the
+browser. The private engine is no longer required for CPU scattering; it is needed only for
+GPU backends, which are in development.
 
 ---
 
 ## Install
 
-**Python SDK** (`vikshep` wheel; the first engine release is pending and the current PyPI upload
-carries stale metadata):
-```bash
-pip install vikshep
-```
-
-**Engine MCP binary** (`omnipulse-mcp`): download from the
-[Releases page](https://github.com/samvardhan03/Vikshep/releases) of this repo
-(built by the private release workflow) and set `OMNIPULSE_MCP_BIN` to its path.
-
-> Engine binaries: first public release pending — pilot access via
-> shekhawatsamvardhan@gmail.com until the first tagged release ships.
-
-**Geant4 Direct Interface** (repo-local install; not yet on PyPI):
+**Geant4 Direct Interface** (repo-local install):
 ```bash
 git clone https://github.com/samvardhan03/Vikshep.git
 pip install -e Vikshep/backend/ingest
 ```
 
-Do not `cargo install omnipulse-mcp` — crates.io would publish the engine source.
+**With scattering features** (requires a Rust toolchain):
+```bash
+# Install Rust (if not already present)
+curl -sSf https://sh.rustup.rs | sh -s -- -y && source "$HOME/.cargo/env"
+
+pip install maturin
+pip install -e "Vikshep/backend/ingest[scattering]"
+```
+
+The `[scattering]` extra builds `vikshep_compute` from the open core at a pinned
+commit (`b55468b`).  Building the Rust crates takes 2–4 minutes on first install;
+subsequent installs use the cargo cache.
+
+**MCP data plane** (`vikshep-mcp`): build from the open core:
+```bash
+git clone https://github.com/samvardhan03/vikshep-compute.git
+cd vikshep-compute
+cargo build --release -p vikshep-mcp
+export VIKSHEP_MCP_BIN=$PWD/target/release/vikshep-mcp
+```
 
 ---
 
@@ -158,27 +173,28 @@ Do not `cargo install omnipulse-mcp` — crates.io would publish the engine sour
 From Geant4 CSV output to physics answer in four commands:
 
 ```bash
-# 1. Install (repo-local)
+# 1. Install with scattering features (requires Rust — see Install above)
 git clone https://github.com/samvardhan03/Vikshep.git && cd Vikshep
-pip install -e backend/ingest
+pip install maturin && pip install -e "backend/ingest[scattering]"
 
 # 2. Ingest your Geant4 CSV
 vikshep-ingest g4 examples/g4_quickstart/sample.csv --schema komal_v1
 
 # 3. Calibrate detector response
-vikshep-recipe calibrate --features manifest.json --target layer1_e_mean
+vikshep-recipe calibrate --features examples/g4_quickstart/manifest.json \
+  --target layer1_e_mean
 
-# 4. Tag particles with DisCo decorrelation
-vikshep-recipe tag --features manifest.json --label is_signal --protect mass --lambda 1.0
+# 4. Tag particles with DisCo decorrelation (exact dCorr² gradient)
+vikshep-recipe tag --features examples/g4_quickstart/manifest.json \
+  --label layer1_n_hits --protect layer2_phi_mean --lambda 1.0
 ```
 
-Time to first value: **under 30 seconds** on a fresh machine, no GPU.
-See `examples/g4_quickstart/README.md` for a full walkthrough.
+Steps 3 and 4 run the wavelet scattering transform on the 64 × 64 (phi × theta) grids
+(J=3, Q=1, L=8, pad=[Circular, ZeroPad]) via the open core, compute S0/S1/S2 and r2 ratios,
+and train with the exact weighted dCorr² gradient.  Without `[scattering]`, the CLI falls back
+to per-event aggregates and the Pearson-proxy gradient; the report states which path ran.
 
-Steps 3 and 4 train on the per-event aggregates in the manifest; the rasterized grids are staged
-for the scattering core but not consumed yet. The tag report states its method in two fields:
-`training_gradient: "pearson_proxy"` (the DisCo gradient used during training) and
-`reported_dcorr2: "exact_weighted"` (the dCorr² it reports).
+See `examples/g4_quickstart/README.md` for the full walkthrough including TTFV measurements.
 
 ---
 
@@ -186,11 +202,12 @@ for the scattering core but not consumed yet. The tag report states its method i
 
 | Recipe | Entry point | Pipeline | Status |
 |---|---|---|---|
-| CLI tag | `vikshep-recipe tag` | G4 ingest → per-event aggregates → DisCo-penalised classifier | Available now |
-| CLI calibrate | `vikshep-recipe calibrate` | G4 ingest → per-event aggregates → calibration regression | Available now |
-| `hep-tagging-disco` | agent recipe | ingest → scatter → r₂ → DisCo classifier | Needs the scattering core (in development) |
-| `bsm-anomaly` | agent recipe | ingest → scatter → log-mean → HNSW → detect | Needs the scattering core (in development) |
-| `general-feature` | agent recipe | ingest → scatter (Dim, Group from request) → reduce | Needs the scattering core (in development) |
+| CLI tag | `vikshep-recipe tag` | G4 ingest → scattering features → exact dCorr² DisCo classifier | Available now (scattering extra) |
+| CLI calibrate | `vikshep-recipe calibrate` | G4 ingest → scattering features → calibration regression | Available now (scattering extra) |
+| CLI tag (fallback) | `vikshep-recipe tag --feature-set aggregates` | G4 ingest → per-event aggregates → DisCo (Pearson proxy) | Available now |
+| `hep-tagging-disco` | agent recipe | ingest → scatter → r₂ → DisCo classifier | Available (needs vikshep-mcp) |
+| `bsm-anomaly` | agent recipe | ingest → scatter → log-mean → HNSW → detect | Available (needs vikshep-mcp) |
+| `general-feature` | agent recipe | ingest → scatter (Dim, Group from request) → reduce | Available (needs vikshep-mcp) |
 
 Agent recipes are declarative MCP tool sequences; CLI recipes are executable
 Python scripts installable from `backend/ingest`.
@@ -231,8 +248,8 @@ Three-tier model:
 
 - **GNU AGPL-3.0** — all source in this repository: free for research, academic, and open-source
   use (see [LICENSE](LICENSE))
-- **Engine binaries gratis** — the `vikshep` wheel and `omnipulse-mcp` binary: free for
-  research/evaluation use under the Vikshep Engine Binary Terms
+- **Open core** — [`samvardhan03/vikshep-compute`](https://github.com/samvardhan03/vikshep-compute):
+  CPU scattering, exact dCorr², MCP data plane (`vikshep-mcp`), all AGPL-3.0
 - **Commercial license** — required for proprietary production deployments (AGPL compliance)
   or for the premium engine components (3-D SO(3)/solid-harmonic kernels, high-throughput
   batch scatter, on-premise appliance) — contact shekhawatsamvardhan@gmail.com

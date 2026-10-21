@@ -1,6 +1,6 @@
 const MODULES = [
   { name: "vikshep", version: "0.3", channel: "PyPI" },
-  { name: "omnipulse-mcp", version: null, channel: "binary" },
+  { name: "vikshep-mcp", version: null, channel: "open core" },
   { name: "omni-wst-core", version: "0.1", channel: "PyPI" },
   { name: "vector-index", version: "0.1", channel: "crate" },
   { name: "sliced-wasserstein", version: "0.1", channel: "crate" },

@@ -52,6 +52,106 @@ jobs:
       - name: Run tests
         run: python -m pytest backend/ingest/tests/ -v
 
+  python-scattering:
+    name: Python tests with scattering extra
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: false
+      - name: Checkout vikshep-compute at pinned commit
+        run: |
+          git clone https://github.com/samvardhan03/vikshep-compute.git vikshep-compute
+          cd vikshep-compute && git checkout b55468bbb2fb8d1225fa3563e94addfe642b3d5a
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install maturin and vikshep-ingest[scattering]
+        run: |
+          pip install maturin pytest
+          pip install -e "backend/ingest[scattering]"
+      - name: Build vikshep-mcp
+        run: cargo build --release -p vikshep-mcp
+        working-directory: vikshep-compute
+      - name: Run all Python tests (including scattering)
+        run: python -m pytest backend/ingest/tests/ -v
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - name: Run agent integration test
+        working-directory: agent
+        run: |
+          bun install
+          VIKSHEP_MCP_BIN=${{ github.workspace }}/vikshep-compute/target/release/vikshep-mcp \
+            bun test tests/mcp-integration.test.ts
+
+  quickstart-golden:
+    name: Quickstart golden-hash check (${{ matrix.os }})
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-14]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Checkout vikshep-compute at pinned commit
+        run: |
+          git clone https://github.com/samvardhan03/vikshep-compute.git vikshep-compute
+          cd vikshep-compute && git checkout b55468bbb2fb8d1225fa3563e94addfe642b3d5a
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install maturin and vikshep-ingest[scattering]
+        run: pip install maturin && pip install -e "backend/ingest[scattering]"
+      - name: Ingest sample CSV
+        run: |
+          START_MS=$(python3 -c "import time; print(int(time.time()*1000))")
+          vikshep-ingest g4 examples/g4_quickstart/sample.csv --schema komal_v1
+          END_MS=$(python3 -c "import time; print(int(time.time()*1000))")
+          echo "ingest_ms=$((END_MS - START_MS))" >> "$GITHUB_STEP_SUMMARY"
+      - name: Calibrate
+        run: |
+          vikshep-recipe calibrate \
+            --features examples/g4_quickstart/manifest.json \
+            --target layer1_e_mean \
+            --feature-set scattering \
+            --out examples/g4_quickstart/
+      - name: Tag
+        run: |
+          vikshep-recipe tag \
+            --features examples/g4_quickstart/manifest.json \
+            --label    layer1_n_hits \
+            --protect  layer2_phi_mean \
+            --lambda   1.0 \
+            --feature-set scattering \
+            --out examples/g4_quickstart/
+          END_MS=$(python3 -c "import time; print(int(time.time()*1000))")
+          echo "TTFV measured on ${{ matrix.os }} (2026-10-22, Python 3.11, vikshep-compute commit b55468b)"
+      - name: Compute golden hashes
+        run: python scripts/compute_golden_hash.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: golden-hashes-${{ matrix.os }}
+          path: golden/
+
+  compare-golden:
+    name: Compare golden hashes across platforms
+    needs: quickstart-golden
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: golden-hashes-*
+          path: golden/
+          merge-multiple: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Compare hashes
+        run: python scripts/compare_golden_hashes.py
+
   boundaries:
     name: Boundary checks
     runs-on: ubuntu-latest
@@ -59,3 +159,20 @@ jobs:
       - uses: actions/checkout@v4
       - name: check-boundaries.sh
         run: bash scripts/check-boundaries.sh
+
+  build-wheel:
+    name: Build vikshep-ingest wheel (artifact only)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Build wheel
+        run: |
+          pip install build
+          python -m build backend/ingest --outdir dist/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: vikshep-ingest-wheel
+          path: dist/

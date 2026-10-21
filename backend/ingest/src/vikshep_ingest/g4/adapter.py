@@ -32,11 +32,20 @@ def _oid_from_buf(buf: bytes) -> str:
 
 
 def _register_shm(data: np.ndarray) -> tuple[str, shm_module.SharedMemory]:
-    """Write array into a new POSIX shared-memory segment; return (oid, shm)."""
-    buf  = data.tobytes()
-    oid  = _oid_from_buf(buf)
-    sm   = shm_module.SharedMemory(create=True, size=max(len(buf), 1))
-    sm.buf[:len(buf)] = buf
+    """Write array into a named POSIX shared-memory segment; return (oid, shm).
+
+    The segment name equals the OID so downstream tools (vikshep-mcp, recipes)
+    can look it up without additional tracking.  If a segment with the same
+    name already exists (identical grid content across events) we open it
+    read-only rather than re-creating it.
+    """
+    buf = data.tobytes()
+    oid = _oid_from_buf(buf)
+    try:
+        sm = shm_module.SharedMemory(name=oid, create=True, size=max(len(buf), 1))
+        sm.buf[:len(buf)] = buf
+    except FileExistsError:
+        sm = shm_module.SharedMemory(name=oid, create=False)
     return oid, sm
 
 
@@ -145,6 +154,8 @@ class G4Adapter:
         path: str | Path | None = None,
         source: str | None = None,
         out_dir: str | Path | None = None,
+        *,
+        include_source_path: bool = True,
     ) -> dict:
         """Parse the CSV, build grids + aggregates, register in shared memory.
 
@@ -161,7 +172,7 @@ class G4Adapter:
         events_hits, stats = _parse_csv(path, self.profile, source)
 
         if not events_hits:
-            return {
+            empty: dict = {
                 "source": "g4",
                 "profile": self.profile.name,
                 **stats,
@@ -174,6 +185,9 @@ class G4Adapter:
                 },
                 "channel_names": ["hits" if not stats["has_energy"] else "energy"],
             }
+            if include_source_path and path is not None:
+                empty["source_path"] = str(Path(path).resolve())
+            return empty
 
         phi_range, theta_range = compute_ranges(events_hits)
         pad_policy = {k: v.value for k, v in pad_policy_for_g4().items()}
@@ -216,6 +230,8 @@ class G4Adapter:
             "aggregate_names":     aggregate_names,
             "aggregates":          aggregates,
         }
+        if include_source_path and path is not None:
+            manifest["source_path"] = str(Path(path).resolve())
 
         if out_dir is not None:
             import json

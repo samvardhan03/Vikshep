@@ -40,11 +40,12 @@ def test_tag_report_states_gradient_and_metric(capsys):
 
         rc = recipe_main([
             "tag",
-            "--features", str(manifest_path),
-            "--label",    "is_signal",
-            "--protect",  "mass",
-            "--lambda",   "1.0",
-            "--out",      str(tmp_p),
+            "--features",     str(manifest_path),
+            "--label",        "is_signal",
+            "--protect",      "mass",
+            "--lambda",       "1.0",
+            "--feature-set",  "aggregates",
+            "--out",          str(tmp_p),
         ])
         assert rc == 0
 

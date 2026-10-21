@@ -1,0 +1,10 @@
+{
+  "vikshep_compute_commit": "b55468bbb2fb8d1225fa3563e94addfe642b3d5a",
+  "numerics_version": 3,
+  "platform": "darwin-x86_64",
+  "hashes": {
+    "tag_report.json": "eb39842522ea204b2227bc6430da38a3f42e0c936897cd27dc6414174ea17773",
+    "calibrate_report.json": "b0ab7ef5050b7c8eaf7cbb7d451d8d7bf9de344915c1e84d0ff960b24feb2192",
+    "provenance.json": "1e16f1b0a8b5a781492af3ba938393611b3bf413c210585bc3c1b7a0e58d553c"
+  }
+}
