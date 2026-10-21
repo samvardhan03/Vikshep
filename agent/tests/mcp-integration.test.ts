@@ -113,7 +113,7 @@ describe("vikshep-mcp integration", () => {
 
     expect(result.isError).toBe(false);
     const body = JSON.parse(result.content) as Record<string, unknown>;
-    expect(isOid(body["output_oid"] ?? body["oid"])).toBe(true);
+    expect(isOid(body["coeff_oid"] ?? body["output_oid"] ?? body["oid"])).toBe(true);
     expect(typeof body["numerics_version"]).toBe("number");
   });
 });
