@@ -2,6 +2,9 @@ import Link from "next/link";
 
 const NAV = [
   { label: "Overview", href: "/docs" },
+  { label: "Studio", href: "/docs/studio" },
+  { label: "Simulate", href: "/docs/simulate" },
+  { label: "Verify", href: "/docs/verify" },
   { label: "Install", href: "/docs/install" },
   { label: "Quickstart", href: "/docs/quickstart" },
   { label: "Recipes", href: "/docs/recipes" },
@@ -60,7 +63,7 @@ export default function DocsLayout({ children }: { children: React.ReactNode }) 
             {item.label}
           </Link>
         ))}
-        <div style={{ marginTop: 32 }}>
+        <div style={{ marginTop: 32, display: "flex", flexDirection: "column", gap: 8 }}>
           <Link
             href="/pricing"
             style={{
@@ -73,6 +76,19 @@ export default function DocsLayout({ children }: { children: React.ReactNode }) 
             }}
           >
             Pricing →
+          </Link>
+          <Link
+            href="/download"
+            style={{
+              fontFamily: "var(--font-jetbrains), monospace",
+              fontSize: 11,
+              textTransform: "uppercase",
+              letterSpacing: "0.12em",
+              color: "var(--accent)",
+              textDecoration: "none",
+            }}
+          >
+            Download →
           </Link>
         </div>
       </aside>
