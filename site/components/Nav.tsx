@@ -3,8 +3,8 @@
 import Link from "next/link";
 
 const navLinks = [
-  { label: "Platform", href: "/#recipes" },
-  { label: "Math", href: "/math" },
+  { label: "Studio", href: "/studio" },
+  { label: "Determinism", href: "/determinism" },
   { label: "Docs", href: "/docs" },
   { label: "Pricing", href: "/pricing" },
   { label: "GitHub ↗", href: "https://github.com/samvardhan03/Vikshep", external: true },
@@ -76,11 +76,11 @@ export default function Nav() {
             </a>
           )}
           <a
-            href="/docs"
+            href="/download"
             className="font-mono text-[12px] uppercase tracking-[0.12em] px-4 py-2 border transition-opacity hover:opacity-70"
             style={{ borderColor: "var(--rule)", color: "var(--ink)" }}
           >
-            Docs
+            Download
           </a>
           <a
             href="mailto:shekhawatsamvardhan@gmail.com?subject=Vikshep%20inquiry"
