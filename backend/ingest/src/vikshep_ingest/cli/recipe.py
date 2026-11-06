@@ -59,8 +59,7 @@ def _resolve_feature_set(requested: str) -> str:
         return "scattering"
     print(
         "Notice: vikshep_compute not installed — using aggregates feature set. "
-        "Install with: pip install maturin && "
-        'pip install -e "backend/ingest[scattering]"',
+        "Install with: pip install vikshep-compute",
         file=sys.stderr,
     )
     return "aggregates"

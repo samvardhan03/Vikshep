@@ -1,5 +1,18 @@
 # Changelog — vikshep-ingest
 
+## 0.4.0
+
+- **First PyPI release** (`pip install vikshep-ingest`), published by
+  `.github/workflows/release-ingest.yml` from an `ingest-v*` tag.
+- **The open core is a regular dependency**: `vikshep-compute==0.1.0` from
+  PyPI (prebuilt wheels; no Rust toolchain) on Linux x86_64 and aarch64,
+  macOS and Windows x86_64. Elsewhere the recipes fall back to aggregates as
+  before; the `[scattering]` extra now requests the PyPI core rather than a
+  git build. `vikshep-compute` 0.1.0 equals the previously pinned commit
+  `b55468b` numerically (`numerics_version = 3`); it adds the certificate
+  verifier.
+- Package metadata: README, licence expression, project URLs, classifiers.
+
 ## 0.3.0
 
 - **Scattering extra** (`pip install -e "backend/ingest[scattering]"`): wires
