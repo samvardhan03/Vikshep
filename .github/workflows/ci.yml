@@ -40,15 +40,17 @@ jobs:
         run: bun run build
 
   python:
-    name: Python tests (pytest backend/ingest)
+    name: Python tests without the open core (aggregates fallback)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - name: Install vikshep-ingest
-        run: pip install pytest -e backend/ingest
+      - name: Install vikshep-ingest, then remove the core to test the fallback
+        run: |
+          pip install pytest -e backend/ingest
+          pip uninstall -y vikshep-compute
       - name: Run tests
         run: python -m pytest backend/ingest/tests/ -v
 
@@ -67,9 +69,9 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - name: Install maturin and vikshep-ingest[scattering]
+      - name: Install vikshep-ingest[scattering] (open core from PyPI)
         run: |
-          pip install maturin pytest
+          pip install pytest
           pip install -e "backend/ingest[scattering]"
       - name: Build vikshep-mcp
         run: cargo build --release -p vikshep-mcp
@@ -90,20 +92,15 @@ jobs:
     name: Quickstart golden-hash check (${{ matrix.os }})
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-14]
+        os: [ubuntu-latest, macos-15]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
-      - name: Checkout vikshep-compute at pinned commit
-        run: |
-          git clone https://github.com/samvardhan03/vikshep-compute.git vikshep-compute
-          cd vikshep-compute && git checkout b55468bbb2fb8d1225fa3563e94addfe642b3d5a
-      - uses: dtolnay/rust-toolchain@stable
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - name: Install maturin and vikshep-ingest[scattering]
-        run: pip install maturin && pip install -e "backend/ingest[scattering]"
+      - name: Install vikshep-ingest (open core from PyPI, as a user would)
+        run: pip install -e backend/ingest
       - name: Ingest sample CSV
         run: |
           START_MS=$(python3 -c "import time; print(int(time.time()*1000))")
@@ -127,7 +124,7 @@ jobs:
             --feature-set scattering \
             --out examples/g4_quickstart/
           END_MS=$(python3 -c "import time; print(int(time.time()*1000))")
-          echo "TTFV measured on ${{ matrix.os }} (2026-10-22, Python 3.11, vikshep-compute commit b55468b)"
+          echo "TTFV measured on ${{ matrix.os }} (Python 3.11, vikshep-compute 0.1.0 from PyPI)"
       - name: Compute golden hashes
         run: python scripts/compute_golden_hash.py
       - uses: actions/upload-artifact@v4

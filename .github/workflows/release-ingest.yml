@@ -1,0 +1,71 @@
+name: Release vikshep-ingest
+
+# Builds the sdist and wheel of backend/ingest, installs the wheel into a clean
+# environment (open core from PyPI) and runs the quickstart with it.  Publishes
+# to PyPI only from a tag ingest-vX.Y.Z equal to the pyproject version
+# (trusted publishing, environment "pypi"; no stored token).  A manual run
+# (Actions, Release vikshep-ingest, Run workflow) is a dry run.
+#
+# One-time setup: on pypi.org add a pending publisher for project
+# "vikshep-ingest": owner samvardhan03, repository Vikshep, workflow
+# release-ingest.yml, environment pypi.  Then create the "pypi" environment
+# in Settings, Environments (optionally with yourself as required reviewer).
+
+on:
+  push:
+    tags: ["ingest-v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Tag must equal the package version
+        run: |
+          version="$(python -c "import tomllib; print(tomllib.load(open('backend/ingest/pyproject.toml','rb'))['project']['version'])")"
+          echo "package version: $version"
+          if [[ "$GITHUB_REF" == refs/tags/* && "$GITHUB_REF_NAME" != "ingest-v$version" ]]; then
+            echo "tag $GITHUB_REF_NAME does not match version $version"; exit 1
+          fi
+      - name: Build sdist and wheel
+        run: |
+          pip install build
+          python -m build backend/ingest --outdir dist/
+      - name: Quickstart with the built wheel in a clean environment
+        run: |
+          python -m venv /tmp/qs
+          /tmp/qs/bin/pip install dist/*.whl
+          /tmp/qs/bin/python -c "import vikshep_compute"   # the core came from PyPI
+          cd "$(mktemp -d)"
+          cp "$GITHUB_WORKSPACE/examples/g4_quickstart/sample.csv" .
+          /tmp/qs/bin/vikshep-ingest g4 sample.csv --schema komal_v1 --out run/
+          /tmp/qs/bin/vikshep-recipe calibrate --features run/manifest.json --target layer1_e_mean --feature-set scattering
+          /tmp/qs/bin/vikshep-recipe tag --features run/manifest.json \
+            --label layer1_n_hits --protect layer2_phi_mean --lambda 1.0 --feature-set scattering
+          ls -R run
+      - uses: actions/upload-artifact@v4
+        with:
+          name: vikshep-ingest-dist
+          path: dist/
+          if-no-files-found: error
+
+  pypi:
+    if: startsWith(github.ref, 'refs/tags/ingest-v')
+    needs: build
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write   # trusted publishing
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: vikshep-ingest-dist
+          path: dist
+      - uses: pypa/gh-action-pypi-publish@release/v1
