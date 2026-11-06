@@ -1,12 +1,20 @@
 [build-system]
-requires = ["setuptools>=61"]
+requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "vikshep-ingest"
-version = "0.3.0"
-description = "Vikshep ingest service — Geant4 Direct Interface, loader plugins, POSIX shm staging."
+version = "0.4.0"
+description = "Vikshep Geant4 Direct Interface: Geant4 CSV to deterministic scattering features, calibration and DisCo-decorrelated tagging"
+readme = "README.md"
 requires-python = ">=3.10"
+license = "AGPL-3.0-or-later"
+authors = [{ name = "Samvardhan Singh" }]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Topic :: Scientific/Engineering :: Physics",
+    "Intended Audience :: Science/Research",
+]
 dependencies = [
     "uproot>=5",
     "awkward>=2",
@@ -17,17 +25,21 @@ dependencies = [
     "fastapi",
     "uvicorn",
     "h5py>=3",
+    # The open deterministic core, exact version (results depend on it), on the
+    # platforms with prebuilt wheels.  Elsewhere the CLI falls back to
+    # per-event aggregates and says so; the extra below forces the core.
+    'vikshep-compute==0.1.0; (sys_platform == "linux" and (platform_machine == "x86_64" or platform_machine == "aarch64")) or sys_platform == "darwin" or (sys_platform == "win32" and platform_machine == "AMD64")',
 ]
 
 [project.optional-dependencies]
-# Scattering extra: requires a Rust toolchain (rustup + cargo).
-# Install: pip install maturin && pip install -e "backend/ingest[scattering]"
-# Rust toolchain: curl -sSf https://sh.rustup.rs | sh -s -- -y
-scattering = [
-    "vikshep-compute @ git+https://github.com/samvardhan03/vikshep-compute@b55468bbb2fb8d1225fa3563e94addfe642b3d5a#subdirectory=crates/vikshep-py",
-]
+scattering = ["vikshep-compute==0.1.0"]
 # Reading vikshep-sim output folders (hits.arrow, Arrow IPC): vikshep-ingest sim
 sim = ["pyarrow>=14"]
+
+[project.urls]
+Homepage = "https://vikshep.vercel.app"
+Repository = "https://github.com/samvardhan03/Vikshep"
+"Open core" = "https://github.com/samvardhan03/vikshep-compute"
 
 [project.scripts]
 "vikshep-ingest" = "vikshep_ingest.cli.ingest_g4:dispatch"
