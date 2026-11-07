@@ -58,3 +58,30 @@ def test_tag_report_states_gradient_and_metric(capsys):
     out = capsys.readouterr().out
     assert "training_gradient : pearson_proxy" in out
     assert "reported_dcorr2   : exact_weighted" in out
+
+
+def test_label_protect_target_and_event_columns_are_not_features():
+    """Columns named as --label, --protect or --target, and event columns from
+    the CSV, never reach the feature matrix: they would leak the answer."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_p = Path(tmp)
+        manifest_path = _make_manifest(tmp_p)
+        manifest = json.loads(manifest_path.read_text())
+        manifest["event_column_names"] = ["mass"]
+        manifest_path.write_text(json.dumps(manifest))
+
+        assert recipe_main([
+            "tag", "--features", str(manifest_path), "--label", "is_signal",
+            "--protect", "layer1_phi_mean", "--feature-set", "aggregates", "--out", str(tmp_p),
+        ]) == 0
+        tag_features = json.loads((tmp_p / "tag_report.json").read_text())["feature_names"]
+
+        assert recipe_main([
+            "calibrate", "--features", str(manifest_path), "--target", "layer1_e_mean",
+            "--feature-set", "aggregates", "--out", str(tmp_p),
+        ]) == 0
+        cal_features = json.loads((tmp_p / "calibrate_report.json").read_text())["feature_names"]
+
+    assert not {"is_signal", "layer1_phi_mean", "mass"} & set(tag_features)
+    assert not {"layer1_e_mean", "mass"} & set(cal_features)
+    assert "n_hits_total" in tag_features and "n_hits_total" in cal_features

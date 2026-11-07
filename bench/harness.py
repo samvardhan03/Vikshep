@@ -157,8 +157,14 @@ def run(
         raise ValueError("Manifest contains no aggregates. Run vikshep-ingest g4 first.")
 
     agg_names = manifest.get("aggregate_names", sorted(aggregates[0].keys()))
+    # Never train on the label, the protected variable, the weights or an event
+    # column from the CSV (truth or bookkeeping): any of them leaks the answer.
+    drop = set(manifest.get("event_column_names", [])) | {
+        c for c in (label_col, protect_col, weights_col) if c
+    }
+    feat_names = [k for k in agg_names if k not in drop]
     X = np.array(
-        [[ev.get(k, 0.0) for k in agg_names] for ev in aggregates],
+        [[ev.get(k, 0.0) for k in feat_names] for ev in aggregates],
         dtype=np.float32,
     )
     N = len(X)

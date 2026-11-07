@@ -180,19 +180,23 @@ pip install maturin && pip install -e "backend/ingest[scattering]"
 # 2. Ingest your Geant4 CSV
 vikshep-ingest g4 examples/g4_quickstart/sample.csv --schema komal_v1
 
-# 3. Calibrate detector response
+# 3. Calibrate: reconstruct the incident energy from the detector images
 vikshep-recipe calibrate --features examples/g4_quickstart/manifest.json \
-  --target layer1_e_mean
+  --target true_energy
 
-# 4. Tag particles with DisCo decorrelation (exact dCorr² gradient)
+# 4. Tag particles, decorrelated from energy with DisCo (exact weighted dCorr² gradient)
 vikshep-recipe tag --features examples/g4_quickstart/manifest.json \
-  --label layer1_n_hits --protect layer2_phi_mean --lambda 1.0
+  --label is_signal --protect true_energy --weights weight --lambda 1.0
 ```
 
-Steps 3 and 4 run the wavelet scattering transform on the 64 × 64 (phi × theta) grids
-(J=3, Q=1, L=8, pad=[Circular, ZeroPad]) via the open core, compute S0/S1/S2 and r2 ratios,
-and train with the exact weighted dCorr² gradient.  Without `[scattering]`, the CLI falls back
-to per-event aggregates and the Pearson-proxy gradient; the report states which path ran.
+The sample is a synthetic 1000-event toy in the `komal_v1` shape with three per-event truth
+columns (`is_signal`, `true_energy`, `weight`); any extra CSV column with one value per event
+is kept the same way and is never used as a feature. Steps 3 and 4 run the wavelet scattering
+transform on the 64 × 64 (phi × theta) grids (J=3, Q=1, L=8, pad=[Circular, ZeroPad]) via the
+open core, compute S0/S1/S2 and r2 ratios, and train with the exact weighted dCorr² gradient:
+on the sample, calibrate reaches R² 0.56 and tag AUC 0.974 with dCorr² 0.018 at `--lambda 1`
+(0.037 at `--lambda 0`). Without `[scattering]`, the CLI falls back to per-event aggregates
+and the Pearson-proxy gradient; the report states which path ran.
 
 See `examples/g4_quickstart/README.md` for the full walkthrough including TTFV measurements.
 

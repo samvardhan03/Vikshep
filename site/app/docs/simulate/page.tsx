@@ -161,9 +161,10 @@ export default function SimulateDocsPage() {
         </p>
         <pre style={codeBlock}>{`vikshep-ingest g4 examples/g4_quickstart/sample.csv --schema komal_v1`}</pre>
         <p style={note}>
-          Writes <code style={mono}>manifest.json</code> and{" "}
-          <code style={mono}>provenance.json</code> to the current directory.
-          The manifest lists every output OID and the per-layer aggregate values.
+          Writes <code style={mono}>manifest.json</code> next to the CSV (or to{" "}
+          <code style={mono}>--out</code>); the recipes add{" "}
+          <code style={mono}>provenance.json</code>. The manifest lists every output OID,
+          the per-layer aggregate values and the event columns.
         </p>
 
         <h2 style={h2Style}>Non-standard column names</h2>
@@ -273,11 +274,11 @@ export default function SimulateDocsPage() {
           open core from vikshep-compute) and then to a recipe:
         </p>
         <pre style={codeBlock}>{`# Calibrate detector response
-vikshep-recipe calibrate --features manifest.json --target layer1_e_mean
+vikshep-recipe calibrate --features manifest.json --target true_energy
 
 # Tag with DisCo decorrelation
 vikshep-recipe tag --features manifest.json \\
-  --label is_signal --protect mass --lambda 1.0`}</pre>
+  --label is_signal --protect true_energy --weights weight --lambda 1.0`}</pre>
         <p style={{ ...note }}>
           The <code style={mono}>scattering</code> extra must be installed (see{" "}
           <Link href="/docs/install" style={{ color: "var(--ink)" }}>Install → Path 2</Link>

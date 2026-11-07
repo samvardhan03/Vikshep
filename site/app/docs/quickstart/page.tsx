@@ -89,7 +89,7 @@ export default function QuickstartPage() {
       </p>
       <p style={{ ...prose, marginBottom: 32 }}>
         <strong style={{ color: "var(--ink)" }}>Prerequisites:</strong> Python 3.10+, Git.
-        Install time (first run): ~20 s. Pipeline time on sample data: ~22 s.
+        Install time (first run): ~20 s. Pipeline time on the 1000-event sample: ~7 s.
       </p>
 
       {/* Clone + install */}
@@ -121,12 +121,13 @@ pip install -e backend/ingest`}</pre>
         </p>
         <pre style={outputBlock}>{`Geant4 Direct Interface — profile: komal_v1
   CSV            : examples/g4_quickstart/sample.csv
-  Events parsed  : 10
-  Hits total     : 45
+  Events parsed  : 1000
+  Hits total     : 13808
   Malformed rows : 0
   Grid channels  : 1  (energy)
   Aggregate scalars: 32 per event
-  Grid OIDs      : 10 (28-char SHA3-256)
+  Event columns  : is_signal, true_energy, weight  (usable as --label, --protect, --weights, --target)
+  Grid OIDs      : 1000 (28-char SHA3-256)
   Manifest written: examples/g4_quickstart/manifest.json`}</pre>
         <p style={{ ...note, marginTop: 16 }}>
           The <code style={code}>komal_v1</code> schema expects per-hit rows:{" "}
@@ -150,14 +151,14 @@ pip install -e backend/ingest`}</pre>
 import json, sys
 m = json.load(sys.stdin)
 print('Events:', m['n_events'])
-print('Aggregates per event:', len(m['aggregate_names']))
+print('Event columns:', m['event_column_names'])
 print('Grid OIDs (first 3):', m['grid_oids'][:3])
 "`}</pre>
         <p style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 11, textTransform: "uppercase", letterSpacing: "0.14em", color: "var(--ink-mute)", marginTop: 16, marginBottom: 4 }}>
           Expected output
         </p>
-        <pre style={outputBlock}>{`Events: 10
-Aggregates per event: 32
+        <pre style={outputBlock}>{`Events: 1000
+Event columns: ['is_signal', 'true_energy', 'weight']
 Grid OIDs (first 3): ['...28 hex chars...', '...', '...']`}</pre>
       </section>
 
@@ -168,32 +169,35 @@ Grid OIDs (first 3): ['...28 hex chars...', '...', '...']`}</pre>
           Calibrate detector response
         </h2>
         <p style={prose}>
-          Fit a regression from aggregate features to a target scalar (e.g.
-          energy deposited in a layer). Outputs a calibration report with R² and
-          residual std.
+          Fit a regression from the per-event features to a target: here the
+          incident energy, <code style={code}>true_energy</code>, one of the sample&apos;s
+          event columns. Outputs a calibration report with R² and residual std.
         </p>
         <pre style={codeBlock}>{`vikshep-recipe calibrate \\
   --features examples/g4_quickstart/manifest.json \\
-  --target layer1_e_mean`}</pre>
+  --target true_energy`}</pre>
         <p style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 11, textTransform: "uppercase", letterSpacing: "0.14em", color: "var(--ink-mute)", marginTop: 16, marginBottom: 4 }}>
           Expected output
         </p>
         <pre style={outputBlock}>{`  Report written: examples/g4_quickstart/calibrate_report.json
-  target   : layer1_e_mean
-  R^2      : 1.0000
-  residual std: 0.0001
-  n_events : 10`}</pre>
+vikshep-recipe calibrate
+  feature_set  : aggregates
+  target       : true_energy
+  R^2          : 0.9865
+  residual std : 0.6130
+  n_events     : 1000`}</pre>
       </section>
 
       {/* Step 4 */}
       <section style={{ borderBottom: "1px solid var(--rule)", paddingBottom: 32 }}>
         <h2 style={h2Style}>
           <span style={stepNum}>Step 4</span>
-          Tag with DisCo mass-decorrelation
+          Tag with DisCo decorrelation
         </h2>
         <p style={prose}>
           Train a classifier on the per-event aggregates with a DisCo penalty on
-          the dependence between its score and a protected variable (e.g. mass).
+          the dependence between its score and a protected variable (here
+          <code style={code}>true_energy</code>), with Monte Carlo event weights.
           The <code style={code}>--lambda</code> flag controls the penalty
           strength. Higher = stricter decorrelation. Training uses a
           Pearson-correlation proxy for the penalty gradient; the reported
@@ -201,26 +205,30 @@ Grid OIDs (first 3): ['...28 hex chars...', '...', '...']`}</pre>
         </p>
         <pre style={codeBlock}>{`vikshep-recipe tag \\
   --features examples/g4_quickstart/manifest.json \\
-  --label    layer1_n_hits \\
-  --protect  layer2_phi_mean \\
+  --label    is_signal \\
+  --protect  true_energy \\
+  --weights  weight \\
   --lambda   1.0`}</pre>
         <p style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 11, textTransform: "uppercase", letterSpacing: "0.14em", color: "var(--ink-mute)", marginTop: 16, marginBottom: 4 }}>
           Expected output
         </p>
         <pre style={outputBlock}>{`  Report written: examples/g4_quickstart/tag_report.json
 vikshep-recipe tag
-  lambda   : 1.0
-  AUC      : 1.0000
-  dCorr^2  : 0.0000  (lower = better decorrelation)
+  feature_set       : aggregates
+  lambda            : 1.0
+  AUC               : 0.9999
+  dCorr^2           : 0.2540  (lower = better decorrelation)
   training_gradient : pearson_proxy
   reported_dcorr2   : exact_weighted
-  n_events : 10`}</pre>
+  n_events          : 1000`}</pre>
         <p style={{ ...note, marginTop: 16 }}>
-          <strong style={{ color: "var(--ink)" }}>dCorr² = 0.0000</strong> means no
-          measurable dependence between the tagger score and the protected variable
-          on background events in this 10-event sample. Distance correlation is zero
-          only under independence, but a sample this small cannot establish it;
-          check dCorr² on your full sample.
+          <strong style={{ color: "var(--ink)" }}>dCorr² = 0.2540</strong>: on background
+          events the tagger score still depends on <code style={code}>true_energy</code>.
+          The Pearson-proxy gradient of this aggregates path barely decorrelates (0.2594
+          at <code style={code}>--lambda 0</code>). With the open core installed, the same
+          command trains on scattering features with the exact weighted gradient: AUC
+          0.9743 and dCorr² 0.0182 (0.0374 at <code style={code}>--lambda 0</code>). The
+          sample is synthetic; see <code style={code}>examples/g4_quickstart/README.md</code>.
         </p>
       </section>
 

@@ -95,12 +95,13 @@ pip install -e backend/ingest
 # 2. Ingest your Geant4 CSV
 vikshep-ingest g4 examples/g4_quickstart/sample.csv --schema komal_v1
 
-# 3. Calibrate detector response
-vikshep-recipe calibrate --features manifest.json --target layer1_e_mean
+# 3. Calibrate: reconstruct the incident energy
+vikshep-recipe calibrate --features examples/g4_quickstart/manifest.json \\
+  --target true_energy
 
-# 4. Tag particles with DisCo decorrelation
-vikshep-recipe tag --features manifest.json \\
-  --label is_signal --protect mass --lambda 1.0`;
+# 4. Tag particles, decorrelated from energy (DisCo)
+vikshep-recipe tag --features examples/g4_quickstart/manifest.json \\
+  --label is_signal --protect true_energy --weights weight --lambda 1.0`;
 
 // ─────────────────────────────────────────────────────────────────
 export default function Home() {
