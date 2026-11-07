@@ -90,7 +90,7 @@ jobs:
     name: Quickstart golden-hash check (${{ matrix.os }})
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-14]
+        os: [ubuntu-latest, macos-15]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -114,15 +114,16 @@ jobs:
         run: |
           vikshep-recipe calibrate \
             --features examples/g4_quickstart/manifest.json \
-            --target layer1_e_mean \
+            --target true_energy \
             --feature-set scattering \
             --out examples/g4_quickstart/
       - name: Tag
         run: |
           vikshep-recipe tag \
             --features examples/g4_quickstart/manifest.json \
-            --label    layer1_n_hits \
-            --protect  layer2_phi_mean \
+            --label    is_signal \
+            --protect  true_energy \
+            --weights  weight \
             --lambda   1.0 \
             --feature-set scattering \
             --out examples/g4_quickstart/

@@ -82,7 +82,7 @@ export default function RecipesPage() {
         </p>
         <pre style={codeBlock}>{`vikshep-recipe calibrate \\
   --features <manifest.json>   # required: path to the ingest manifest
-  --target   <column_name>     # required: aggregate scalar to predict
+  --target   <column_name>     # required: aggregate or event column to predict
   --out      <dir>             # optional: default = manifest directory`}</pre>
         <div style={{ overflowX: "auto", marginTop: 16 }}>
           <table style={{ width: "100%", borderCollapse: "collapse", fontFamily: "var(--font-jetbrains), monospace", fontSize: 13 }}>
@@ -96,7 +96,7 @@ export default function RecipesPage() {
             <tbody>
               {[
                 ["--features", "Yes", "Path to manifest.json from vikshep-ingest"],
-                ["--target", "Yes", "Aggregate column name to regress against"],
+                ["--target", "Yes", "Aggregate or event column to regress against (never a feature)"],
                 ["--out", "No", "Output directory for calibrate_report.json (default: manifest directory)"],
               ].map(([flag, req, desc], i) => (
                 <tr key={i} style={{ borderBottom: "1px solid var(--rule)" }}>
@@ -141,7 +141,7 @@ export default function RecipesPage() {
             <tbody>
               {[
                 ["--features", "Yes", "Path to manifest.json"],
-                ["--label", "Yes", "Binary label column (0/1 or bool)"],
+                ["--label", "Yes", "Binary label column (0/1 or bool), e.g. an is_signal event column"],
                 ["--protect", "Yes", "Column whose dependence on the score is penalised"],
                 ["--weights", "No", "Per-event weight column (default: uniform)"],
                 ["--lambda", "No", "DisCo penalty weight (0 = off, default 1.0, >1 = stricter)"],
@@ -243,12 +243,16 @@ export default function RecipesPage() {
         <h2 style={h2Style}>Manifest anatomy</h2>
         <p style={prose}>
           The manifest is the control-plane payload produced by any loader. It
-          contains OIDs and scalar metadata — no raw tensors.
+          contains OIDs and scalar metadata — no raw tensors. Extra CSV columns with
+          one numeric value per event (truth labels, true energy, MC weights) become
+          event columns. Recipes never use event columns, or the columns named by
+          --label, --protect, --weights and --target, as features.
         </p>
         <pre style={codeBlock}>{`{
-  "n_events": 10,
-  "schema": "komal_v1",
-  "aggregate_names": ["layer1_n_hits", "layer1_e_mean", ...],  // 32 scalars/event
+  "n_events": 1000,
+  "profile": "komal_v1",
+  "aggregate_names": ["layer1_n_hits", "layer1_e_mean", ...],  // 32 per event + event columns
+  "event_column_names": ["is_signal", "true_energy", "weight"],  // one value per event, from the CSV
   "grid_oids": ["a3f1...", ...],  // 28-char SHA3-256 hex, one per event
   "pad_policy_per_axis": {
     "phi": "Circular",     // correct for azimuthal angle
@@ -272,6 +276,7 @@ export default function RecipesPage() {
   --manifest manifest.json \\
   --label    <signal_col> \\
   --protect  <mass_col> \\
+  --weights  <weight_col> \\
   --lambdas  0,0.1,1,10`}</pre>
         <p style={prose}>
           The harness outputs a sweep table and computes the Asimov proxy and
