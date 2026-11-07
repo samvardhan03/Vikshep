@@ -2,34 +2,22 @@
 
 From Geant4 output to physics answer in four commands.
 
-## Prerequisites
-
-Python 3.10+.  No GPU required.
-
-To use the scattering feature path (default when `vikshep_compute` is installed),
-a Rust toolchain is required to build the open core:
-
-```bash
-# Install Rust (skip if already present)
-curl -sSf https://sh.rustup.rs | sh -s -- -y && source "$HOME/.cargo/env"
-```
-
 ## Install
 
+Python 3.10+, no GPU, no Rust toolchain:
+
 ```bash
-git clone https://github.com/samvardhan03/Vikshep.git
-cd Vikshep
-pip install maturin
-pip install -e "backend/ingest[scattering]"
+pip install vikshep-ingest
 ```
 
-The `[scattering]` extra builds `vikshep_compute` from the open core
-([`samvardhan03/vikshep-compute`](https://github.com/samvardhan03/vikshep-compute),
-pinned to commit `b55468b`).  First build takes 2–4 minutes; subsequent builds use the
-cargo cache.
+On Linux (x86_64, aarch64), macOS and Windows (x86_64) this installs the open core
+[`vikshep-compute`](https://github.com/samvardhan03/vikshep-compute) 0.1.0 as a prebuilt wheel,
+and the recipes run on wavelet scattering features. Elsewhere they fall back to per-event
+aggregates and the Pearson-proxy gradient; the report states which path ran.
 
-Without the `[scattering]` extra (`pip install -e backend/ingest`), the CLI falls back to
-per-event aggregates and the Pearson-proxy gradient; the report states which path ran.
+The commands below run from a clone of this repository. Without one, download the sample
+(`curl -LO https://raw.githubusercontent.com/samvardhan03/Vikshep/main/examples/g4_quickstart/sample.csv`)
+and drop the `examples/g4_quickstart/` prefix.
 
 ## The sample
 
@@ -80,7 +68,7 @@ vikshep-recipe tag \
 
 ## What you should see
 
-Scattering path (with the `[scattering]` extra), measured 2026-11-07; results are
+Scattering path (the default with the open core), measured 2026-11-07; results are
 bit-identical across platforms (see the `quickstart-golden` CI job):
 
 | Recipe | Result |
@@ -149,8 +137,8 @@ Pipeline, measured 2026-11-07 on an **Intel Mac (x86_64), macOS 13, Python 3.12,
 | `vikshep-recipe tag` (reuses the cached features) | 4.5 s |
 | Same three commands without the open core (aggregates path) | 7.3 s |
 
-Install, measured 2026-10-22 (Python 3.11, clean venv): `pip install -e "backend/ingest[scattering]"`
-about 3 min with a cold cargo cache, about 8 s cached.
+Install, measured 2026-11-07 on the same machine: `pip install vikshep-ingest` in a fresh
+virtual environment, all dependencies included, about 93 s.
 
 CI TTFV (ubuntu-latest, 2026-10-22): measured by the `quickstart-golden` workflow — see the
 workflow run summary for the current CI runner times.

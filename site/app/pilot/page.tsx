@@ -491,13 +491,13 @@ export default function PilotPage() {
           <p style={eyebrow}>Geant4 Direct Interface</p>
           <h2 style={h2}>Run this on your own data.</h2>
           <p style={{ ...monoSm, fontSize: 14, color: "var(--ink-mute)", lineHeight: 1.7, maxWidth: 600, marginBottom: 28 }}>
-            No hosted compute required. Clone the repo, install the ingest package,
-            and go from Geant4 CSV export to features and calibration plots locally —
-            under 30 seconds on a fresh machine, no GPU.
+            No hosted compute required. Install the ingest package and go from Geant4 CSV
+            export to features, calibration and a decorrelated tagger locally, no GPU: about
+            four minutes from install to report for the 1000-event sample on an Intel Mac.
           </p>
 
           <p style={{ ...monoSm, fontSize: 12, color: "var(--ink-mute)", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 8 }}>
-            Install (repo-local; not yet on PyPI)
+            Install
           </p>
           <pre style={{
             background: "var(--surface)",
@@ -510,9 +510,7 @@ export default function PilotPage() {
             overflowX: "auto",
             maxWidth: 620,
             marginBottom: 24,
-          }}>{`git clone https://github.com/samvardhan03/Vikshep
-cd Vikshep
-pip install -e backend/ingest`}</pre>
+          }}>{`pip install vikshep-ingest`}</pre>
 
           <p style={{ ...monoSm, fontSize: 12, color: "var(--ink-mute)", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 8 }}>
             Four-command pipeline

@@ -87,20 +87,18 @@ const FOUNDERS = [
 
 // ── quickstart steps — Geant4 Direct Interface ────────────────────
 // Four commands from Geant4 CSV output to physics answer.
-// Install vikshep-ingest repo-local (not yet on PyPI).
-const QUICKSTART = `# 1. Clone and install (repo-local)
-git clone https://github.com/samvardhan03/Vikshep && cd Vikshep
-pip install -e backend/ingest
+const QUICKSTART = `# 1. Install (the open core comes as a prebuilt wheel) and get the sample
+pip install vikshep-ingest
+curl -LO https://raw.githubusercontent.com/samvardhan03/Vikshep/main/examples/g4_quickstart/sample.csv
 
 # 2. Ingest your Geant4 CSV
-vikshep-ingest g4 examples/g4_quickstart/sample.csv --schema komal_v1
+vikshep-ingest g4 sample.csv --schema komal_v1
 
 # 3. Calibrate: reconstruct the incident energy
-vikshep-recipe calibrate --features examples/g4_quickstart/manifest.json \\
-  --target true_energy
+vikshep-recipe calibrate --features manifest.json --target true_energy
 
 # 4. Tag particles, decorrelated from energy (DisCo)
-vikshep-recipe tag --features examples/g4_quickstart/manifest.json \\
+vikshep-recipe tag --features manifest.json \\
   --label is_signal --protect true_energy --weights weight --lambda 1.0`;
 
 // ─────────────────────────────────────────────────────────────────
@@ -439,7 +437,7 @@ export default function Home() {
           <h2 style={{ ...sectionH2, maxWidth: 640, marginBottom: 16 }}>From Geant4 output to physics answer.</h2>
           <p style={{ fontSize: 15, lineHeight: 1.6, color: "var(--ink-mute)", maxWidth: 580, marginBottom: 32 }}>
             Four commands from a Geant4 CSV export to calibrated, mass-decorrelated tagger features.
-            No GPU required. No PyPI install — repo-local only.
+            No GPU required: <code style={{ fontFamily: "var(--font-jetbrains), monospace" }}>pip install vikshep-ingest</code>.
           </p>
 
           {/* Loaders table */}

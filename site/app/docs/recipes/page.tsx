@@ -168,7 +168,7 @@ export default function RecipesPage() {
           OID. All loaders are in{" "}
           <code style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 13 }}>backend/ingest</code>{" "}
           and installed with{" "}
-          <code style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 13 }}>pip install -e backend/ingest</code>.
+          <code style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 13 }}>pip install vikshep-ingest</code>.
         </p>
         <div style={{ overflowX: "auto", marginTop: 16 }}>
           <table style={{ width: "100%", borderCollapse: "collapse", fontFamily: "var(--font-jetbrains), monospace", fontSize: 13 }}>
