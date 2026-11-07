@@ -48,7 +48,7 @@ jobs:
         with:
           python-version: "3.11"
       - name: Install vikshep-ingest
-        run: pip install pytest -e backend/ingest
+        run: pip install pytest -e "backend/ingest[sim]"
       - name: Run tests
         run: python -m pytest backend/ingest/tests/ -v
 
@@ -70,7 +70,7 @@ jobs:
       - name: Install maturin and vikshep-ingest[scattering]
         run: |
           pip install maturin pytest
-          pip install -e "backend/ingest[scattering]"
+          pip install -e "backend/ingest[scattering,sim]"
       - name: Build vikshep-mcp
         run: cargo build --release -p vikshep-mcp
         working-directory: vikshep-compute

@@ -74,27 +74,45 @@ def _shm_grid(oid: str, grid_shape: tuple[int, int]) -> np.ndarray | None:
         return None
 
 
-def _rasterize_from_csv(manifest: dict) -> list[np.ndarray]:
-    """Re-rasterize all events from the source CSV recorded in the manifest."""
-    source_path = manifest.get("source_path")
-    if not source_path or not Path(source_path).exists():
-        raise RuntimeError(
-            "Shared-memory segments are gone and no readable source_path is "
-            "recorded in the manifest.  Re-run `vikshep-ingest g4 <csv>` to "
-            "rebuild the segments before calling the scattering recipe."
-        )
-    from vikshep_ingest.g4.schema import get_profile
+def _rasterize_again(manifest: dict) -> list[np.ndarray]:
+    """Re-rasterize all events from the source the manifest records: the CSV
+    (source_path) of a Geant4 ingest, or the run folders of a vikshep-sim ingest."""
     from vikshep_ingest.g4.adapter import G4Adapter
-    profile_name = manifest.get("profile", "komal_v1")
+    from vikshep_ingest.g4.schema import G4Profile, get_profile
     grid_cfg = manifest.get("grid", {})
     grid_shape = tuple(grid_cfg.get("shape", [64, 64]))
-    profile = get_profile(profile_name)
+
+    if manifest.get("source") == "vikshep-sim":
+        from vikshep_ingest.sim import ingest_runs
+        runs = manifest.get("runs", [])
+        profile = G4Profile(name=manifest.get("profile", "sim_hits_v1"))
+        origin = "the vikshep-sim runs"
+        rerun = "vikshep-ingest sim"
+
+        def rebuild(adapter: G4Adapter) -> dict:
+            return ingest_runs([r["path"] for r in runs],
+                               [r["path"] for r in runs if r.get("signal")], adapter=adapter)
+    else:
+        source_path = manifest.get("source_path")
+        if not source_path or not Path(source_path).exists():
+            raise RuntimeError(
+                "Shared-memory segments are gone and no readable source_path is "
+                "recorded in the manifest.  Re-run `vikshep-ingest g4 <csv>` to "
+                "rebuild the segments before calling the scattering recipe."
+            )
+        profile = get_profile(manifest.get("profile", "komal_v1"))
+        origin = str(source_path)
+        rerun = "vikshep-ingest g4"
+
+        def rebuild(adapter: G4Adapter) -> dict:
+            return adapter.ingest(path=source_path)
+
     with G4Adapter(profile, grid_shape=grid_shape) as adapter:
-        m = adapter.ingest(path=source_path)
+        m = rebuild(adapter)
         if m["grid_oids"] != manifest.get("grid_oids"):
             raise RuntimeError(
-                f"{source_path} no longer produces the grids this manifest names "
-                "(the CSV changed after ingest).  Re-run `vikshep-ingest g4` on it."
+                f"{origin} no longer produce(s) the grids this manifest names "
+                f"(the input changed after ingest).  Re-run `{rerun}` on it."
             )
         # Read while the adapter is open: leaving the block unlinks the segments.
         grids = [_shm_grid(oid, grid_shape) for oid in m["grid_oids"]]
@@ -125,7 +143,7 @@ def load_grids(manifest: dict) -> np.ndarray:
         grids.append(g)
 
     if missing:
-        grids = _rasterize_from_csv(manifest)
+        grids = _rasterize_again(manifest)
 
     return np.stack(grids, axis=0)  # (N, H, W) float32
 

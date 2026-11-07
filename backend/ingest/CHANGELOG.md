@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+- **`vikshep-ingest sim RUN [RUN ...] [--signal RUN ...] [--out DIR]`**: reads
+  vikshep-sim output folders (hits.arrow format v1, through pyarrow:
+  `pip install "vikshep-ingest[sim]"`), checks each run's OID against its
+  run_summary.json, maps hits to the grid and aggregates of the CSV path (phi
+  and theta from the gun position, momentum and energy in GeV) and adds the
+  event columns run_index, primary_energy_GeV, primary_pdg and, with
+  `--signal`, is_signal. The scattering recipes rebuild the grids from the run
+  folders when the shared-memory segments are gone. Checked against the
+  vikshep-sim golden files (their recorded OIDs are reproduced).
 - **Fix: the scattering recipes trained on blank images.** When the ingest
   process had exited (always the case from the CLI), `load_grids`
   re-rasterized from `source_path` but read the grids back after the adapter

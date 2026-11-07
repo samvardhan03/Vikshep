@@ -175,7 +175,49 @@ export default function SimulateDocsPage() {
         </p>
         <pre style={codeBlock}>{`vikshep-ingest g4 data/sim_output.csv \\
   --schema generic \\
-  --column-map "event_id=evtId,layer=layerNo,energy_dep=eDep,hit_x=x,hit_y=y,hit_z=z"`}</pre>
+  --column-map '{"event_id": "evtId", "layer": "layerNo", "phi": "hitPhi",
+                 "theta": "hitTheta", "momentum": "p", "energy": "eDep"}'`}</pre>
+        <p style={note}>
+          The map is JSON (or a JSON file) from the roles{" "}
+          <code style={mono}>event_id, layer, phi, theta, momentum, energy</code> to your
+          column headers.
+        </p>
+      </section>
+
+      {/* vikshep-sim runs */}
+      <section style={{ borderBottom: "1px solid var(--rule)", paddingBottom: 32 }}>
+        <h2 style={h2Style}>CLI — vikshep-sim runs</h2>
+        <p style={{ ...prose, marginBottom: 8 }}>
+          <code style={mono}>vikshep-sim</code> (open, AGPL) drives Geant4 from a JSON spec
+          and writes a run folder: <code style={mono}>hits.arrow</code>,{" "}
+          <code style={mono}>provenance.json</code>, <code style={mono}>run_summary.json</code>.
+          Build it as its README describes (a conda environment with Geant4 and its data
+          sets), then ingest one or more run folders. Each run&apos;s OID is checked
+          against its <code style={mono}>run_summary.json</code>; needs{" "}
+          <code style={mono}>pip install -e &quot;backend/ingest[sim]&quot;</code> (pyarrow).
+        </p>
+        <pre style={codeBlock}>{`# electron and pion showers at three energies (specs from vikshep-sim/docs/examples)
+mkdir -p runs
+for E in 2 5 10; do
+  for P in electron pion; do
+    sed "s/\\"energy_GeV\\": 5/\\"energy_GeV\\": $E/" \${P}_shower.json > \${P}_\${E}.json
+    vikshep-sim run --spec \${P}_\${E}.json --out runs/\${P}_\${E}
+  done
+done
+
+vikshep-ingest sim runs/* --signal runs/electron_* --out ana
+vikshep-recipe calibrate --features ana/manifest.json --target primary_energy_GeV
+vikshep-recipe tag --features ana/manifest.json \\
+  --label is_signal --protect primary_energy_GeV --lambda 1.0`}</pre>
+        <p style={note}>
+          Event columns: <code style={mono}>run_index</code>,{" "}
+          <code style={mono}>primary_energy_GeV</code>, <code style={mono}>primary_pdg</code>,
+          and <code style={mono}>is_signal</code> (1 for the <code style={mono}>--signal</code>{" "}
+          runs). Hits map to the same grid and aggregates as a CSV: phi and theta from the
+          gun position, momentum and energy in GeV, layer from the geometry. A Geant4 run is
+          reproducible on the same build, platform and seed; it is not promised to be
+          identical across platforms.
+        </p>
       </section>
 
       {/* Studio ingest */}

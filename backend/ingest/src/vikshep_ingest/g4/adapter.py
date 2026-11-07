@@ -200,10 +200,33 @@ class G4Adapter:
         manifest dict — the control-plane payload (no float tensors).
         """
         events_hits, stats = _parse_csv(path, self.profile, source)
+        extra = (
+            {"source_path": str(Path(path).resolve())}
+            if include_source_path and path is not None else {}
+        )
+        return self.build(events_hits, stats, source_kind="g4", extra=extra, out_dir=out_dir)
 
+    def build(
+        self,
+        events_hits: list[list[dict]],
+        stats: dict,
+        *,
+        source_kind: str = "g4",
+        extra: dict | None = None,
+        out_dir: str | Path | None = None,
+    ) -> dict:
+        """Grids, aggregates and the manifest from parsed events.
+
+        Shared by the CSV reader (ingest) and the vikshep-sim reader
+        (vikshep_ingest.sim).  events_hits holds, per event, hit dicts with
+        layer, phi, theta, momentum and (when stats["has_energy"]) energy;
+        stats holds n_events, n_hits_total, n_malformed_rows, has_energy and
+        event_columns.  extra: reader-specific manifest keys (source_path, runs).
+        """
+        extra = extra or {}
         if not events_hits:
             empty: dict = {
-                "source": "g4",
+                "source": source_kind,
                 "profile": self.profile.name,
                 **stats,
                 "grid_oids": [],
@@ -215,8 +238,7 @@ class G4Adapter:
                 },
                 "channel_names": ["hits" if not stats["has_energy"] else "energy"],
             }
-            if include_source_path and path is not None:
-                empty["source_path"] = str(Path(path).resolve())
+            empty.update(extra)
             return empty
 
         phi_range, theta_range = compute_ranges(events_hits)
@@ -253,7 +275,7 @@ class G4Adapter:
         aggregate_names = sorted(aggregates[0].keys()) if aggregates else []
 
         manifest = {
-            "source":             "g4",
+            "source":             source_kind,
             "profile":            self.profile.name,
             "n_events":           stats["n_events"],
             "n_hits_total":       stats["n_hits_total"],
@@ -271,8 +293,7 @@ class G4Adapter:
             "event_column_names":  event_column_names,
             "aggregates":          aggregates,
         }
-        if include_source_path and path is not None:
-            manifest["source_path"] = str(Path(path).resolve())
+        manifest.update(extra)
 
         if out_dir is not None:
             import json

@@ -107,21 +107,24 @@ def main(argv: list[str] | None = None) -> int:
 def dispatch(argv: list[str] | None = None) -> int:
     """Top-level dispatcher for `vikshep-ingest <subcommand>`.
 
-    Currently supports subcommand: g4
+    Subcommands: g4 (Geant4 CSV), sim (vikshep-sim run folders)
     """
     if argv is None:
         argv = sys.argv[1:]
 
     if not argv or argv[0] in {"-h", "--help"}:
         print("Usage: vikshep-ingest <subcommand> [args]")
-        print("Subcommands: g4")
+        print("Subcommands: g4 (Geant4 CSV export), sim (vikshep-sim run folders)")
         return 0
 
     sub = argv[0]
     if sub == "g4":
         return main(argv[1:])
+    if sub == "sim":
+        from vikshep_ingest.cli.ingest_sim import main as sim_main
+        return sim_main(argv[1:])
 
-    print(f"ERROR: unknown subcommand '{sub}'. Available: g4", file=sys.stderr)
+    print(f"ERROR: unknown subcommand '{sub}'. Available: g4, sim", file=sys.stderr)
     return 1
 
 
