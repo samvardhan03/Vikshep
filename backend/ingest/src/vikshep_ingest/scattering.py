@@ -20,6 +20,9 @@ takes an additional pass over the file.
 
 from __future__ import annotations
 
+import hashlib
+import json
+import os
 from pathlib import Path
 
 import numpy as np
@@ -88,10 +91,16 @@ def _rasterize_from_csv(manifest: dict) -> list[np.ndarray]:
     profile = get_profile(profile_name)
     with G4Adapter(profile, grid_shape=grid_shape) as adapter:
         m = adapter.ingest(path=source_path)
-    return [
-        _shm_grid(oid, grid_shape) or np.zeros(grid_shape, dtype=np.float32)
-        for oid in m["grid_oids"]
-    ]
+        if m["grid_oids"] != manifest.get("grid_oids"):
+            raise RuntimeError(
+                f"{source_path} no longer produces the grids this manifest names "
+                "(the CSV changed after ingest).  Re-run `vikshep-ingest g4` on it."
+            )
+        # Read while the adapter is open: leaving the block unlinks the segments.
+        grids = [_shm_grid(oid, grid_shape) for oid in m["grid_oids"]]
+    if any(g is None for g in grids):
+        raise RuntimeError("Re-rasterized grids could not be read back from shared memory.")
+    return grids
 
 
 def load_grids(manifest: dict) -> np.ndarray:
@@ -121,9 +130,33 @@ def load_grids(manifest: dict) -> np.ndarray:
     return np.stack(grids, axis=0)  # (N, H, W) float32
 
 
+def _cache_path(manifest: dict, cfg: dict, cache_dir: Path) -> Path | None:
+    """Content-addressed file for the features of this manifest's grids.
+
+    The grids (by OID), the grid geometry, the scattering configuration and the
+    core's version and numerics fully determine the features, so a hit returns
+    the same bytes a recomputation would.  None (no caching) when the core's
+    version cannot be read.
+    """
+    from importlib.metadata import PackageNotFoundError, version
+    try:
+        core_version = version("vikshep-compute")
+    except PackageNotFoundError:
+        return None
+    key = json.dumps({
+        "grid_oids":        manifest.get("grid_oids", []),
+        "grid":             manifest.get("grid", {}),
+        "cfg":              cfg,
+        "vikshep_compute":  core_version,
+        "numerics_version": getattr(vc, "NUMERICS_VERSION", None),
+    }, sort_keys=True).encode()
+    return cache_dir / ".vikshep-cache" / f"scatter-{hashlib.sha3_256(key).hexdigest()[:28]}.npz"
+
+
 def extract_scattering_features(
     manifest: dict,
     cfg: dict | None = None,
+    cache_dir: str | Path | None = None,
 ) -> tuple[np.ndarray, str, str]:
     """Return (features, coeffs_oid, prov_json) for all events in the manifest.
 
@@ -131,6 +164,9 @@ def extract_scattering_features(
                concatenated with spatially-averaged r2 ratios.
     coeffs_oid : 28-char hex OID of the scattering coefficient batch.
     prov_json  : JSON string of the VDS-1 provenance manifest.
+
+    With cache_dir, the result is kept in cache_dir/.vikshep-cache/ and reused
+    by later calls on the same grids and configuration (calibrate, then tag).
     """
     if not _SCATTER_AVAILABLE:
         raise ImportError(
@@ -139,6 +175,11 @@ def extract_scattering_features(
         )
 
     scatter_cfg = cfg or SCATTER_CFG_G4
+    cache = _cache_path(manifest, scatter_cfg, Path(cache_dir)) if cache_dir is not None else None
+    if cache is not None and cache.exists():
+        with np.load(cache, allow_pickle=False) as z:
+            return z["features"], str(z["coeffs_oid"]), str(z["prov_json"])
+
     batch = load_grids(manifest)   # (N, H, W) float32
     N = batch.shape[0]
 
@@ -150,5 +191,11 @@ def extract_scattering_features(
     features = np.concatenate([fp, r2_mean], axis=1)     # (N, n_paths + n_pairs)
 
     prov_json, _ = vc.provenance_manifest(batch, scatter_cfg, coeffs_oid)
+
+    if cache is not None:
+        cache.parent.mkdir(parents=True, exist_ok=True)
+        tmp = cache.with_suffix(".tmp.npz")
+        np.savez(tmp, features=features, coeffs_oid=np.array(coeffs_oid), prov_json=np.array(prov_json))
+        os.replace(tmp, cache)
 
     return features, coeffs_oid, prov_json

@@ -84,7 +84,7 @@ def main(argv: list[str] | None = None) -> int:
     n_hits     = manifest["n_hits_total"]
     n_malformed = manifest["n_malformed_rows"]
     n_channels  = len(manifest.get("channel_names", []))
-    n_aggs      = len(manifest.get("aggregate_names", []))
+    n_aggs      = len(manifest.get("aggregate_names", [])) - len(manifest.get("event_column_names", []))
     has_energy  = manifest.get("has_energy", False)
     manifest_path = out_dir / "manifest.json"
 
@@ -95,6 +95,9 @@ def main(argv: list[str] | None = None) -> int:
     print(f"  Malformed rows : {n_malformed}")
     print(f"  Grid channels  : {n_channels}  ({'energy' if has_energy else 'hit-count'})")
     print(f"  Aggregate scalars: {n_aggs} per event")
+    event_cols = manifest.get("event_column_names", [])
+    if event_cols:
+        print(f"  Event columns  : {', '.join(event_cols)}  (usable as --label, --protect, --weights, --target)")
     print(f"  Grid OIDs      : {len(manifest.get('grid_oids', []))} (28-char SHA3-256)")
     print(f"  Manifest written: {manifest_path}")
 
