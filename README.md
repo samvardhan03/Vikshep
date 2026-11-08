@@ -152,7 +152,7 @@ clone, with a Rust toolchain). For development: `pip install -e "backend/ingest[
 clone of this repository.
 
 **The open core on its own:** `pip install vikshep-compute` (Python), `cargo add vikshep`
-(Rust), or the C/C++ archives (headers, static and shared C API library, `vikshep-mcp`,
+(Rust 1.97 or newer), or the C/C++ archives (headers, static and shared C API library, `vikshep-mcp`,
 `vikshep-conformance`) on the [vikshep-compute releases page](https://github.com/samvardhan03/vikshep-compute/releases).
 
 **MCP data plane** (`vikshep-mcp`): from the release archive for your platform:

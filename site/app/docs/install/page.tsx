@@ -131,7 +131,8 @@ pip install maturin && pip install ./vikshep-compute/crates/vikshep-py`}</pre>
 
         <h2 style={h2Style}>Rust, C and C++</h2>
         <p style={prose}>
-          The same core is on crates.io (<code style={code}>cargo add vikshep</code>) and,
+          The same core is on crates.io (<code style={code}>cargo add vikshep</code>, Rust 1.97
+          or newer) and,
           for C and C++, as prebuilt archives on the{" "}
           <a
             href="https://github.com/samvardhan03/vikshep-compute/releases"
