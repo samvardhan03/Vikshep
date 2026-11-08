@@ -38,6 +38,8 @@ yarn-error.log*
 examples/g4_quickstart/manifest.json
 examples/g4_quickstart/calibrate_report.json
 examples/g4_quickstart/tag_report.json
+# Scattering-feature cache written next to a manifest by vikshep-recipe
+.vikshep-cache/
 
 # Environment variables
 .env

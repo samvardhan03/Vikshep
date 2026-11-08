@@ -57,8 +57,13 @@ def _parse_csv(
     """Parse a Geant4 CSV file into per-event hit lists.
 
     Returns (events, stats) where stats has n_events, n_hits_total,
-    n_malformed_rows.  Malformed rows are counted and warned, never silently
-    dropped without accounting.
+    n_malformed_rows and event_columns.  Malformed rows are counted and
+    warned, never silently dropped without accounting.
+
+    Extra columns that hold one numeric value per event (the same on every
+    hit row of the event: a truth label, the incident energy, an MC weight)
+    are kept as event columns, {name: [value per event, in event order]}.
+    Other extra columns are ignored with a warning.
     """
     if path is None and source is not None:
         lines = io.StringIO(source)
@@ -72,20 +77,23 @@ def _parse_csv(
     n_malformed  = 0
     n_hits_total = 0
     has_energy   = False
+    # Candidate event columns: {column: {event_id: value}}; dropped from the
+    # candidates on the first non-numeric value or a value that varies within an event.
+    candidates: dict[str, dict[int, float]] = {}
 
     try:
         reader = csv.DictReader(reader_src)
         if reader.fieldnames is None:
-            return [], {"n_events": 0, "n_hits_total": 0, "n_malformed_rows": 0, "has_energy": False}
+            return [], {"n_events": 0, "n_hits_total": 0, "n_malformed_rows": 0,
+                        "has_energy": False, "event_columns": {}}
 
-        # Detect energy column; warn about extra columns
+        # Detect energy column; extra columns are event-column candidates
         all_cols     = set(reader.fieldnames)
         canonical    = {profile.event_id, profile.layer, profile.phi, profile.theta, profile.momentum}
         if profile.energy and profile.energy in all_cols:
             has_energy = True
         extra = all_cols - canonical - ({profile.energy} if profile.energy else set())
-        if extra:
-            warnings.warn(f"[G4Adapter] Extra columns ignored: {sorted(extra)}", stacklevel=3)
+        candidates = {c: {} for c in sorted(extra)}
 
         for row_num, row in enumerate(reader, start=2):
             try:
@@ -104,6 +112,15 @@ def _parse_csv(
                     hit["energy"] = float(row[profile.energy])
                 events.setdefault(event_id, []).append(hit)
                 n_hits_total += 1
+                for col in list(candidates):
+                    try:
+                        value = float(row[col])
+                    except (TypeError, ValueError):
+                        del candidates[col]
+                        continue
+                    seen = candidates[col].setdefault(event_id, value)
+                    if seen != value:
+                        del candidates[col]
             except (KeyError, ValueError, TypeError) as exc:
                 n_malformed += 1
                 if n_malformed <= 5:
@@ -119,12 +136,25 @@ def _parse_csv(
             f"[G4Adapter] {n_malformed} total malformed rows (showing first 5).", stacklevel=3
         )
 
-    sorted_events = [events[k] for k in sorted(events)]
+    event_ids = sorted(events)
+    sorted_events = [events[k] for k in event_ids]
+    event_columns = {
+        col: [values[k] for k in event_ids]
+        for col, values in candidates.items()
+        if len(values) == len(event_ids)
+    }
+    ignored = sorted(extra - set(event_columns))
+    if ignored:
+        warnings.warn(
+            f"[G4Adapter] Extra columns ignored (not one numeric value per event): {ignored}",
+            stacklevel=3,
+        )
     stats = {
         "n_events":       len(sorted_events),
         "n_hits_total":   n_hits_total,
         "n_malformed_rows": n_malformed,
         "has_energy":     has_energy,
+        "event_columns":  event_columns,
     }
     return sorted_events, stats
 
@@ -170,10 +200,33 @@ class G4Adapter:
         manifest dict — the control-plane payload (no float tensors).
         """
         events_hits, stats = _parse_csv(path, self.profile, source)
+        extra = (
+            {"source_path": str(Path(path).resolve())}
+            if include_source_path and path is not None else {}
+        )
+        return self.build(events_hits, stats, source_kind="g4", extra=extra, out_dir=out_dir)
 
+    def build(
+        self,
+        events_hits: list[list[dict]],
+        stats: dict,
+        *,
+        source_kind: str = "g4",
+        extra: dict | None = None,
+        out_dir: str | Path | None = None,
+    ) -> dict:
+        """Grids, aggregates and the manifest from parsed events.
+
+        Shared by the CSV reader (ingest) and the vikshep-sim reader
+        (vikshep_ingest.sim).  events_hits holds, per event, hit dicts with
+        layer, phi, theta, momentum and (when stats["has_energy"]) energy;
+        stats holds n_events, n_hits_total, n_malformed_rows, has_energy and
+        event_columns.  extra: reader-specific manifest keys (source_path, runs).
+        """
+        extra = extra or {}
         if not events_hits:
             empty: dict = {
-                "source": "g4",
+                "source": source_kind,
                 "profile": self.profile.name,
                 **stats,
                 "grid_oids": [],
@@ -185,8 +238,7 @@ class G4Adapter:
                 },
                 "channel_names": ["hits" if not stats["has_energy"] else "energy"],
             }
-            if include_source_path and path is not None:
-                empty["source_path"] = str(Path(path).resolve())
+            empty.update(extra)
             return empty
 
         phi_range, theta_range = compute_ranges(events_hits)
@@ -210,10 +262,20 @@ class G4Adapter:
             agg = compute_aggregates(hits, self.profile.name, stats["has_energy"])
             aggregates.append(agg)
 
+        # Event columns sit beside the aggregates under their own names (prefixed
+        # event_ only if a name collides), so the recipes can use them as
+        # --label, --protect, --weights or --target.
+        event_column_names: list[str] = []
+        for col, values in stats["event_columns"].items():
+            name = f"event_{col}" if col in aggregates[0] else col
+            event_column_names.append(name)
+            for agg, value in zip(aggregates, values):
+                agg[name] = value
+
         aggregate_names = sorted(aggregates[0].keys()) if aggregates else []
 
         manifest = {
-            "source":             "g4",
+            "source":             source_kind,
             "profile":            self.profile.name,
             "n_events":           stats["n_events"],
             "n_hits_total":       stats["n_hits_total"],
@@ -228,10 +290,10 @@ class G4Adapter:
             "channel_names":       ["energy" if stats["has_energy"] else "hits"],
             "grid_oids":           grid_oids,
             "aggregate_names":     aggregate_names,
+            "event_column_names":  event_column_names,
             "aggregates":          aggregates,
         }
-        if include_source_path and path is not None:
-            manifest["source_path"] = str(Path(path).resolve())
+        manifest.update(extra)
 
         if out_dir is not None:
             import json

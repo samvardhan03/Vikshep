@@ -138,3 +138,63 @@ def test_scattering_features_deterministic():
 
     assert oid_a == oid_b, "OIDs differ between runs on identical input"
     np.testing.assert_array_equal(feat_a, feat_b)
+
+
+def test_grids_survive_the_ingest_process():
+    """The CLI ingests in one process and runs the recipe in another, after the
+    adapter has unlinked its segments.  load_grids must re-rasterize the real
+    grids from source_path; it used to return blank grids here."""
+    from vikshep_ingest.g4.adapter import _oid_from_buf
+    from vikshep_ingest.scattering import load_grids
+
+    with tempfile.TemporaryDirectory() as tmp:
+        manifest_path, _ = _make_manifest_with_path(Path(tmp))  # adapter already closed
+        manifest = json.loads(manifest_path.read_text())
+        grids = load_grids(manifest)
+
+    assert grids.shape == (20, 64, 64)
+    assert (grids.sum(axis=(1, 2)) > 0).all(), "a grid came back blank"
+    assert [_oid_from_buf(np.ascontiguousarray(g).tobytes()) for g in grids] == manifest["grid_oids"]
+
+
+def test_scattering_features_vary_across_events():
+    from vikshep_ingest.scattering import extract_scattering_features
+
+    with tempfile.TemporaryDirectory() as tmp:
+        manifest_path, _ = _make_manifest_with_path(Path(tmp))
+        manifest = json.loads(manifest_path.read_text())
+        features, _, _ = extract_scattering_features(manifest)
+
+    varying = (features.std(axis=0) > 1e-6).mean()
+    assert varying > 0.5, f"only {varying:.0%} of scattering features vary across events"
+
+
+def test_csv_changed_after_ingest_is_refused():
+    from vikshep_ingest.scattering import load_grids
+
+    with tempfile.TemporaryDirectory() as tmp:
+        manifest_path, csv_path = _make_manifest_with_path(Path(tmp))
+        manifest = json.loads(manifest_path.read_text())
+        csv_path.write_text(csv_path.read_text() + "999,1,0.1,0.2,1.0,1.0\n")
+        with pytest.raises(RuntimeError, match="changed after ingest"):
+            load_grids(manifest)
+
+
+def test_feature_cache_returns_the_same_bytes(monkeypatch):
+    """calibrate then tag on one manifest: the second call reuses the features."""
+    import vikshep_ingest.scattering as scattering
+
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_p = Path(tmp)
+        manifest_path, _ = _make_manifest_with_path(tmp_p)
+        manifest = json.loads(manifest_path.read_text())
+        first = scattering.extract_scattering_features(manifest, cache_dir=tmp_p)
+        assert list((tmp_p / ".vikshep-cache").glob("scatter-*.npz")), "no cache file written"
+
+        def no_scatter(*_a, **_k):
+            raise AssertionError("scatter recomputed despite a cache hit")
+        monkeypatch.setattr(scattering.vc, "scatter", no_scatter)
+        second = scattering.extract_scattering_features(manifest, cache_dir=tmp_p)
+
+    np.testing.assert_array_equal(first[0], second[0])
+    assert first[1:] == second[1:]

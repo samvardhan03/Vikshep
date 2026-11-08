@@ -186,6 +186,62 @@ def test_extra_columns_warned_not_failed():
     extra_warnings = [w for w in caught if "Extra columns" in str(w.message)]
     assert len(extra_warnings) >= 1
     assert manifest["n_events"] == 5
+    # extra_col varies from hit to hit, so it is not an event column
+    assert manifest["event_column_names"] == []
+
+
+# ---------------------------------------------------------------------------
+# Tests: event columns (one numeric value per event, e.g. truth labels)
+# ---------------------------------------------------------------------------
+
+_EVENT_COLS_CSV = """event_id,layer,phi,theta,momentum,energy,is_signal,true_energy,n_hits_total,note
+1,1,0.10,1.0,5.0,0.5,1,12.5,99,a
+1,2,0.11,1.1,4.0,0.4,1,12.5,99,b
+2,1,-1.0,2.0,3.0,0.1,0,4.25,99,a
+2,3,-1.1,2.1,2.0,0.2,0,4.25,99,a
+3,2,2.0,0.5,1.0,0.3,0,7.0,99,c
+"""
+
+
+def test_event_columns_are_kept_per_event():
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        with G4Adapter(get_profile("komal_v1")) as adapter:
+            manifest = adapter.ingest(source=_EVENT_COLS_CSV)
+
+    # is_signal and true_energy are constant within each event; note is text.
+    # n_hits_total collides with an aggregate name, so it gets the event_ prefix.
+    assert manifest["event_column_names"] == ["is_signal", "event_n_hits_total", "true_energy"]
+    aggs = manifest["aggregates"]
+    assert [a["is_signal"] for a in aggs] == [1.0, 0.0, 0.0]
+    assert [a["true_energy"] for a in aggs] == [12.5, 4.25, 7.0]
+    assert [a["event_n_hits_total"] for a in aggs] == [99.0, 99.0, 99.0]
+    assert [a["n_hits_total"] for a in aggs] == [2, 2, 1]  # the aggregate is untouched
+    assert "is_signal" in manifest["aggregate_names"]
+    ignored = [str(w.message) for w in caught if "Extra columns ignored" in str(w.message)]
+    assert ignored and "note" in ignored[0] and "is_signal" not in ignored[0]
+
+
+def test_event_column_varying_within_an_event_is_ignored():
+    csv_str = _EVENT_COLS_CSV.replace("1,2,0.11,1.1,4.0,0.4,1,12.5", "1,2,0.11,1.1,4.0,0.4,0,12.5")
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        with G4Adapter(get_profile("komal_v1")) as adapter:
+            manifest = adapter.ingest(source=csv_str)
+    assert "is_signal" not in manifest["event_column_names"]
+    assert "is_signal" not in manifest["aggregates"][0]
+    assert any("is_signal" in str(w.message) for w in caught if "Extra columns ignored" in str(w.message))
+
+
+def test_event_columns_do_not_change_grids():
+    plain = "\n".join(",".join(line.split(",")[:6]) for line in _EVENT_COLS_CSV.strip().splitlines())
+    with G4Adapter(get_profile("komal_v1")) as a, G4Adapter(get_profile("komal_v1")) as b:
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            with_cols = a.ingest(source=_EVENT_COLS_CSV)
+            without = b.ingest(source=plain + "\n")
+    assert with_cols["grid_oids"] == without["grid_oids"]
+    assert without["event_column_names"] == []
 
 
 # ---------------------------------------------------------------------------

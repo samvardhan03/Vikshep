@@ -83,6 +83,7 @@ def _cmd_tag(args: argparse.Namespace) -> int:
         return 1
 
     agg_names = manifest.get("aggregate_names", sorted(aggregates[0].keys()))
+    feat_names = _feature_names(manifest, agg_names, args.label, args.protect, args.weights)
 
     labels = _extract_col(aggregates, args.label, N)
     if labels is None:
@@ -114,13 +115,15 @@ def _cmd_tag(args: argparse.Namespace) -> int:
     if feature_set in ("scattering", "both"):
         from vikshep_ingest.scattering import extract_scattering_features
         try:
-            s_features, _, prov_json = extract_scattering_features(manifest)
+            s_features, _, prov_json = extract_scattering_features(
+                manifest, cache_dir=Path(args.features).parent
+            )
         except Exception as exc:
             print(f"ERROR loading scattering features: {exc}", file=sys.stderr)
             return 1
         if feature_set == "both":
             agg_X = np.array(
-                [[ev.get(k, 0.0) for k in agg_names] for ev in aggregates],
+                [[ev.get(k, 0.0) for k in feat_names] for ev in aggregates],
                 dtype=np.float64,
             )
             X = np.concatenate([s_features, agg_X], axis=1)
@@ -130,7 +133,7 @@ def _cmd_tag(args: argparse.Namespace) -> int:
         result = _train_tag_core(X, labels, protect, weights, lam)
     else:
         X = np.array(
-            [[ev.get(k, 0.0) for k in agg_names] for ev in aggregates],
+            [[ev.get(k, 0.0) for k in feat_names] for ev in aggregates],
             dtype=np.float32,
         )
         training_gradient = "pearson_proxy"
@@ -152,7 +155,7 @@ def _cmd_tag(args: argparse.Namespace) -> int:
         "label_col":         args.label,
         "protect_col":       args.protect,
         "weights_col":       args.weights,
-        "feature_names":     agg_names if feature_set == "aggregates" else None,
+        "feature_names":     feat_names if feature_set == "aggregates" else None,
     }
     _write_json(out_dir / "tag_report.json", report)
     _print_tag_report(report)
@@ -170,6 +173,7 @@ def _cmd_calibrate(args: argparse.Namespace) -> int:
         return 1
 
     agg_names = manifest.get("aggregate_names", sorted(aggregates[0].keys()))
+    feat_names = _feature_names(manifest, agg_names, args.target)
 
     target = _extract_col(aggregates, args.target, N)
     if target is None:
@@ -184,13 +188,15 @@ def _cmd_calibrate(args: argparse.Namespace) -> int:
     if feature_set in ("scattering", "both"):
         from vikshep_ingest.scattering import extract_scattering_features
         try:
-            s_features, _, prov_json = extract_scattering_features(manifest)
+            s_features, _, prov_json = extract_scattering_features(
+                manifest, cache_dir=Path(args.features).parent
+            )
         except Exception as exc:
             print(f"ERROR loading scattering features: {exc}", file=sys.stderr)
             return 1
         if feature_set == "both":
             agg_X = np.array(
-                [[ev.get(k, 0.0) for k in agg_names] for ev in aggregates],
+                [[ev.get(k, 0.0) for k in feat_names] for ev in aggregates],
                 dtype=np.float64,
             )
             X = np.concatenate([s_features, agg_X], axis=1)
@@ -199,7 +205,7 @@ def _cmd_calibrate(args: argparse.Namespace) -> int:
         result = _calibrate_core(X, target.astype(np.float64))
     else:
         X = np.array(
-            [[ev.get(k, 0.0) for k in agg_names] for ev in aggregates],
+            [[ev.get(k, 0.0) for k in feat_names] for ev in aggregates],
             dtype=np.float32,
         )
         from vikshep_ingest.cli._train import train_calibrate
@@ -215,7 +221,7 @@ def _cmd_calibrate(args: argparse.Namespace) -> int:
         "r2_score":      result["r2_score"],
         "residual_std":  result["residual_std"],
         "n_events":      N,
-        "feature_names": agg_names if feature_set == "aggregates" else None,
+        "feature_names": feat_names if feature_set == "aggregates" else None,
     }
     _write_json(out_dir / "calibrate_report.json", report)
     _print_calibrate_report(report)
@@ -279,6 +285,15 @@ def _load_manifest(path_str: str) -> dict:
         sys.exit(1)
     with open(p) as f:
         return json.load(f)
+
+
+def _feature_names(manifest: dict, agg_names: list[str], *named: str | None) -> list[str]:
+    """Aggregate columns used as features.  Never an event column from the CSV
+    (truth or bookkeeping such as is_signal, true_energy, weight) and never a
+    column named as --label, --protect, --weights or --target: either would put
+    the answer, or the variable to stay independent of, into the inputs."""
+    drop = set(manifest.get("event_column_names", [])) | {c for c in named if c}
+    return [k for k in agg_names if k not in drop]
 
 
 def _extract_col(aggregates: list[dict], col: str, N: int) -> np.ndarray | None:

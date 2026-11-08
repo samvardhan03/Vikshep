@@ -549,6 +549,11 @@ python -m bench.run \\
             The <code style={{ color: "var(--ink)" }}>komal_v1</code> schema expects per-hit CSV rows with{" "}
             <code style={{ color: "var(--ink)" }}>event_id, layer, phi, theta, momentum[, energy]</code>.
             Use <code style={{ color: "var(--ink)" }}>--schema generic --column-map</code> for other ntuple exports.
+            Add your truth and bookkeeping as extra columns with one value per event
+            (here <code style={{ color: "var(--ink)" }}>is_signal</code>,{" "}
+            <code style={{ color: "var(--ink)" }}>mass</code>,{" "}
+            <code style={{ color: "var(--ink)" }}>energy_mean</code>): they are kept as event
+            columns, usable as label, protected variable, weights or target, and never as features.
             A working sample CSV and step-by-step walkthrough live in{" "}
             <code style={{ color: "var(--ink)" }}>examples/g4_quickstart/</code>.
           </p>

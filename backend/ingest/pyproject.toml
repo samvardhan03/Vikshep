@@ -26,6 +26,8 @@ dependencies = [
 scattering = [
     "vikshep-compute @ git+https://github.com/samvardhan03/vikshep-compute@b55468bbb2fb8d1225fa3563e94addfe642b3d5a#subdirectory=crates/vikshep-py",
 ]
+# Reading vikshep-sim output folders (hits.arrow, Arrow IPC): vikshep-ingest sim
+sim = ["pyarrow>=14"]
 
 [project.scripts]
 "vikshep-ingest" = "vikshep_ingest.cli.ingest_g4:dispatch"

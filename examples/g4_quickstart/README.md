@@ -31,6 +31,24 @@ cargo cache.
 Without the `[scattering]` extra (`pip install -e backend/ingest`), the CLI falls back to
 per-event aggregates and the Pearson-proxy gradient; the report states which path ran.
 
+## The sample
+
+`sample.csv` is **synthetic** (a toy, not Geant4 output), written by
+[`make_sample.py`](make_sample.py): 1000 events, 13 808 hits, in the `komal_v1` shape plus
+three per-event truth columns.
+
+| Column | Meaning |
+|--------|---------|
+| `is_signal` | 1 for electron-like events (a compact shower that deposits most of the energy), 0 for pion-like events (a few hits per layer; almost half shower early, so the classes overlap) |
+| `true_energy` | incident energy in GeV, uniform in [2, 20]; the calibration target |
+| `weight` | MC event weight: 1 for signal, log-normal for background |
+
+Pion hit multiplicity grows with `true_energy`, so a tagger trained without decorrelation
+leans on energy and its background score tracks `true_energy`: the sculpting the DisCo
+penalty removes. Any extra CSV column with one numeric value per event becomes such an
+event column; the recipes never use event columns, or the columns named by `--label`,
+`--protect`, `--weights` and `--target`, as features.
+
 ## The four commands
 
 ```bash
@@ -41,23 +59,42 @@ vikshep-ingest g4 examples/g4_quickstart/sample.csv --schema komal_v1
 python3 -c "
 import json
 m = json.load(open('examples/g4_quickstart/manifest.json'))
-print('Events:',      m['n_events'])
-print('Grid OIDs:',   m['grid_oids'][:3])
-print('Aggregates:',  len(m['aggregate_names']), 'per event')
+print('Events:',        m['n_events'])
+print('Grid OIDs:',     m['grid_oids'][:3])
+print('Event columns:', m['event_column_names'])
 "
 
-# 3. Calibrate: scattering features → calibration regression
+# 3. Calibrate: reconstruct the incident energy from the detector images
 vikshep-recipe calibrate \
   --features examples/g4_quickstart/manifest.json \
-  --target layer1_e_mean
+  --target true_energy
 
-# 4. Tag: classify with exact weighted DisCo decorrelation
+# 4. Tag: electron-like vs pion-like, decorrelated from true_energy (exact weighted DisCo)
 vikshep-recipe tag \
   --features examples/g4_quickstart/manifest.json \
-  --label    layer1_n_hits \
-  --protect  layer2_phi_mean \
+  --label    is_signal \
+  --protect  true_energy \
+  --weights  weight \
   --lambda   1.0
 ```
+
+## What you should see
+
+Scattering path (with the `[scattering]` extra), measured 2026-11-07; results are
+bit-identical across platforms (see the `quickstart-golden` CI job):
+
+| Recipe | Result |
+|--------|--------|
+| `calibrate --target true_energy` | R² 0.5589, residual std 3.50 GeV |
+| `tag --lambda 0` | AUC 0.9781, dCorr² 0.0374 |
+| `tag --lambda 1` | AUC 0.9743, dCorr² 0.0182 |
+| `tag --lambda 10` | AUC 0.8734, dCorr² 0.0084 |
+
+dCorr² is the weighted distance correlation between the tagger score and `true_energy` on
+background events: raising `--lambda` trades a little AUC for independence from energy.
+Without the open core (aggregates path): calibrate R² 0.9865; tag at `--lambda 1` AUC 0.9999
+and dCorr² 0.2540. Its Pearson-proxy training gradient barely decorrelates; the exact
+gradient of the scattering path is what moves dCorr².
 
 ## What each command does
 
@@ -83,7 +120,9 @@ core and train with the exact weighted dCorr² gradient.  The scattering config 
 - `grid_oids`: 28-character SHA3-256 hex OIDs naming POSIX shm segments (`/<oid>`) that hold
   the 64×64 float32 grids.  Segments are created during `vikshep-ingest`; if the shell session
   ends before the recipe runs, the recipe re-rasterizes from `source_path`.
-- `aggregates`: per-event scalars (hit multiplicity, mean/sum energy, phi/theta means and stds).
+- `aggregates`: per-event scalars (hit multiplicity, mean/sum energy, phi/theta means and stds),
+  plus the event columns.
+- `event_column_names`: the extra CSV columns kept per event (`is_signal`, `true_energy`, `weight`).
 - `pad_policy_per_axis`: phi → Circular, theta → ZeroPad.
 - `source_path`: absolute path to the source CSV (recorded for shm-recovery fallback).
 
@@ -100,16 +139,18 @@ for other Geant4 ntuple exports.
 
 ## Time to first value
 
-Measured on **Apple M-series, macOS 22.6, Python 3.11, no GPU** (2026-10-22, clean venv):
+Pipeline, measured 2026-11-07 on an **Intel Mac (x86_64), macOS 13, Python 3.12, no GPU**,
+1000-event sample, scattering path:
 
 | Step | Time |
 |------|------|
-| `pip install maturin` | ~5 s (cached) |
-| `pip install -e "backend/ingest[scattering]"` (first build) | ~3 min (cargo cache cold) |
-| `pip install -e "backend/ingest[scattering]"` (cached) | ~8 s |
-| `vikshep-ingest g4 sample.csv` (10 events) | ~0.3 s |
-| `vikshep-recipe calibrate` + `vikshep-recipe tag` (10 events) | ~1.5 s |
-| **End-to-end (cached build) from `git clone` to `tag_report.json`** | **under 30 s** |
+| `vikshep-ingest g4 sample.csv` | 2.4 s |
+| `vikshep-recipe calibrate` (computes the scattering features and caches them next to the manifest, in `.vikshep-cache/`) | 140 s |
+| `vikshep-recipe tag` (reuses the cached features) | 4.5 s |
+| Same three commands without the open core (aggregates path) | 7.3 s |
+
+Install, measured 2026-10-22 (Python 3.11, clean venv): `pip install -e "backend/ingest[scattering]"`
+about 3 min with a cold cargo cache, about 8 s cached.
 
 CI TTFV (ubuntu-latest, 2026-10-22): measured by the `quickstart-golden` workflow — see the
 workflow run summary for the current CI runner times.
@@ -119,7 +160,7 @@ workflow run summary for the current CI runner times.
 - Run the benchmark harness:
   ```bash
   python -m bench.run --manifest examples/g4_quickstart/manifest.json \
-    --label layer1_n_hits --protect layer2_phi_mean --lambdas 0,0.1,1,10
+    --label is_signal --protect true_energy --weights weight --lambdas 0,0.1,1,10
   ```
 - The benchmark harness uses `vikshep_compute` (exact gradient and dCorr²) when installed.
 - Cross-platform bit identity: the `quickstart-golden` CI job verifies that `tag_report.json`

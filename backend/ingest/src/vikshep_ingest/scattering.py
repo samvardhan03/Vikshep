@@ -20,6 +20,9 @@ takes an additional pass over the file.
 
 from __future__ import annotations
 
+import hashlib
+import json
+import os
 from pathlib import Path
 
 import numpy as np
@@ -71,27 +74,51 @@ def _shm_grid(oid: str, grid_shape: tuple[int, int]) -> np.ndarray | None:
         return None
 
 
-def _rasterize_from_csv(manifest: dict) -> list[np.ndarray]:
-    """Re-rasterize all events from the source CSV recorded in the manifest."""
-    source_path = manifest.get("source_path")
-    if not source_path or not Path(source_path).exists():
-        raise RuntimeError(
-            "Shared-memory segments are gone and no readable source_path is "
-            "recorded in the manifest.  Re-run `vikshep-ingest g4 <csv>` to "
-            "rebuild the segments before calling the scattering recipe."
-        )
-    from vikshep_ingest.g4.schema import get_profile
+def _rasterize_again(manifest: dict) -> list[np.ndarray]:
+    """Re-rasterize all events from the source the manifest records: the CSV
+    (source_path) of a Geant4 ingest, or the run folders of a vikshep-sim ingest."""
     from vikshep_ingest.g4.adapter import G4Adapter
-    profile_name = manifest.get("profile", "komal_v1")
+    from vikshep_ingest.g4.schema import G4Profile, get_profile
     grid_cfg = manifest.get("grid", {})
     grid_shape = tuple(grid_cfg.get("shape", [64, 64]))
-    profile = get_profile(profile_name)
+
+    if manifest.get("source") == "vikshep-sim":
+        from vikshep_ingest.sim import ingest_runs
+        runs = manifest.get("runs", [])
+        profile = G4Profile(name=manifest.get("profile", "sim_hits_v1"))
+        origin = "the vikshep-sim runs"
+        rerun = "vikshep-ingest sim"
+
+        def rebuild(adapter: G4Adapter) -> dict:
+            return ingest_runs([r["path"] for r in runs],
+                               [r["path"] for r in runs if r.get("signal")], adapter=adapter)
+    else:
+        source_path = manifest.get("source_path")
+        if not source_path or not Path(source_path).exists():
+            raise RuntimeError(
+                "Shared-memory segments are gone and no readable source_path is "
+                "recorded in the manifest.  Re-run `vikshep-ingest g4 <csv>` to "
+                "rebuild the segments before calling the scattering recipe."
+            )
+        profile = get_profile(manifest.get("profile", "komal_v1"))
+        origin = str(source_path)
+        rerun = "vikshep-ingest g4"
+
+        def rebuild(adapter: G4Adapter) -> dict:
+            return adapter.ingest(path=source_path)
+
     with G4Adapter(profile, grid_shape=grid_shape) as adapter:
-        m = adapter.ingest(path=source_path)
-    return [
-        _shm_grid(oid, grid_shape) or np.zeros(grid_shape, dtype=np.float32)
-        for oid in m["grid_oids"]
-    ]
+        m = rebuild(adapter)
+        if m["grid_oids"] != manifest.get("grid_oids"):
+            raise RuntimeError(
+                f"{origin} no longer produce(s) the grids this manifest names "
+                f"(the input changed after ingest).  Re-run `{rerun}` on it."
+            )
+        # Read while the adapter is open: leaving the block unlinks the segments.
+        grids = [_shm_grid(oid, grid_shape) for oid in m["grid_oids"]]
+    if any(g is None for g in grids):
+        raise RuntimeError("Re-rasterized grids could not be read back from shared memory.")
+    return grids
 
 
 def load_grids(manifest: dict) -> np.ndarray:
@@ -116,14 +143,38 @@ def load_grids(manifest: dict) -> np.ndarray:
         grids.append(g)
 
     if missing:
-        grids = _rasterize_from_csv(manifest)
+        grids = _rasterize_again(manifest)
 
     return np.stack(grids, axis=0)  # (N, H, W) float32
+
+
+def _cache_path(manifest: dict, cfg: dict, cache_dir: Path) -> Path | None:
+    """Content-addressed file for the features of this manifest's grids.
+
+    The grids (by OID), the grid geometry, the scattering configuration and the
+    core's version and numerics fully determine the features, so a hit returns
+    the same bytes a recomputation would.  None (no caching) when the core's
+    version cannot be read.
+    """
+    from importlib.metadata import PackageNotFoundError, version
+    try:
+        core_version = version("vikshep-compute")
+    except PackageNotFoundError:
+        return None
+    key = json.dumps({
+        "grid_oids":        manifest.get("grid_oids", []),
+        "grid":             manifest.get("grid", {}),
+        "cfg":              cfg,
+        "vikshep_compute":  core_version,
+        "numerics_version": getattr(vc, "NUMERICS_VERSION", None),
+    }, sort_keys=True).encode()
+    return cache_dir / ".vikshep-cache" / f"scatter-{hashlib.sha3_256(key).hexdigest()[:28]}.npz"
 
 
 def extract_scattering_features(
     manifest: dict,
     cfg: dict | None = None,
+    cache_dir: str | Path | None = None,
 ) -> tuple[np.ndarray, str, str]:
     """Return (features, coeffs_oid, prov_json) for all events in the manifest.
 
@@ -131,6 +182,9 @@ def extract_scattering_features(
                concatenated with spatially-averaged r2 ratios.
     coeffs_oid : 28-char hex OID of the scattering coefficient batch.
     prov_json  : JSON string of the VDS-1 provenance manifest.
+
+    With cache_dir, the result is kept in cache_dir/.vikshep-cache/ and reused
+    by later calls on the same grids and configuration (calibrate, then tag).
     """
     if not _SCATTER_AVAILABLE:
         raise ImportError(
@@ -139,6 +193,11 @@ def extract_scattering_features(
         )
 
     scatter_cfg = cfg or SCATTER_CFG_G4
+    cache = _cache_path(manifest, scatter_cfg, Path(cache_dir)) if cache_dir is not None else None
+    if cache is not None and cache.exists():
+        with np.load(cache, allow_pickle=False) as z:
+            return z["features"], str(z["coeffs_oid"]), str(z["prov_json"])
+
     batch = load_grids(manifest)   # (N, H, W) float32
     N = batch.shape[0]
 
@@ -150,5 +209,11 @@ def extract_scattering_features(
     features = np.concatenate([fp, r2_mean], axis=1)     # (N, n_paths + n_pairs)
 
     prov_json, _ = vc.provenance_manifest(batch, scatter_cfg, coeffs_oid)
+
+    if cache is not None:
+        cache.parent.mkdir(parents=True, exist_ok=True)
+        tmp = cache.with_suffix(".tmp.npz")
+        np.savez(tmp, features=features, coeffs_oid=np.array(coeffs_oid), prov_json=np.array(prov_json))
+        os.replace(tmp, cache)
 
     return features, coeffs_oid, prov_json
