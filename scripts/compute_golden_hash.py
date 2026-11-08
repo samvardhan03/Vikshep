@@ -57,15 +57,17 @@ def main() -> int:
 
     try:
         import vikshep_compute as vc
-        import inspect
+        from importlib.metadata import version as dist_version
         numerics_version = getattr(vc, "NUMERICS_VERSION", None)
         if numerics_version is None:
             numerics_version = "unknown"
+        compute_version = dist_version("vikshep-compute")
     except ImportError:
         numerics_version = "absent"
+        compute_version = "absent"
 
     record = {
-        "vikshep_compute_commit": "b55468bbb2fb8d1225fa3563e94addfe642b3d5a",
+        "vikshep_compute_version": compute_version,
         "numerics_version": numerics_version,
         "platform": platform_tag,
         "hashes": hashes,

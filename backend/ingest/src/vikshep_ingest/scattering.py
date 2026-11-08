@@ -1,7 +1,7 @@
 """
 vikshep_ingest/scattering.py — scattering feature extraction for CLI recipes.
 
-When vikshep_compute is importable (pip install -e "backend/ingest[scattering]"),
+When vikshep_compute is importable (installed with vikshep-ingest on supported platforms),
 loads event grids by OID from shared memory and runs the 2-D scattering
 transform on the assembled batch.  Falls back to re-rasterization from the
 source CSV if shm segments are gone, using the source_path recorded in the
@@ -189,7 +189,7 @@ def extract_scattering_features(
     if not _SCATTER_AVAILABLE:
         raise ImportError(
             "vikshep_compute is not installed.  "
-            "pip install maturin && pip install -e \"backend/ingest[scattering]\""
+            "pip install vikshep-compute (prebuilt wheels: Linux x86_64/aarch64, macOS, Windows x86_64)"
         )
 
     scatter_cfg = cfg or SCATTER_CFG_G4
