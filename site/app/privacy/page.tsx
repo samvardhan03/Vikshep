@@ -1,4 +1,4 @@
-export const metadata = { title: "Privacy Policy — Vikshep" };
+export const metadata = { title: "Privacy Policy" };
 
 const eyebrow: React.CSSProperties = {
   fontFamily: "var(--font-jetbrains), monospace",

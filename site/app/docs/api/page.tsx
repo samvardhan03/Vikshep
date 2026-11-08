@@ -1,4 +1,4 @@
-export const metadata = { title: "API Reference — Vikshep Docs" };
+export const metadata = { title: "API Reference — Docs" };
 
 const eyebrow: React.CSSProperties = {
   fontFamily: "var(--font-jetbrains), monospace",
@@ -153,6 +153,7 @@ export default function ApiReferencePage() {
   }'`}
           </pre>
           <p style={{ ...prose, marginBottom: 8 }}>Request body:</p>
+          <div style={{ overflowX: "auto" }}>
           <table style={table}>
             <thead>
               <tr>
@@ -177,6 +178,7 @@ export default function ApiReferencePage() {
               ))}
             </tbody>
           </table>
+          </div>
 
           <p style={{ ...prose, marginBottom: 8 }}>Response (202 Accepted):</p>
           <pre style={pre}>
@@ -223,6 +225,7 @@ export default function ApiReferencePage() {
             GPU-accelerated scattering ops are pending hardware provisioning. CPU recipe ops are
             available now.
           </p>
+          <div style={{ overflowX: "auto" }}>
           <table style={{ ...table, marginTop: 24 }}>
             <thead>
               <tr>
@@ -249,6 +252,7 @@ export default function ApiReferencePage() {
               ))}
             </tbody>
           </table>
+          </div>
         </div>
       </section>
 
@@ -256,6 +260,7 @@ export default function ApiReferencePage() {
       <section style={sec}>
         <div style={wrap}>
           <h2 style={h2Style}>Error vocabulary</h2>
+          <div style={{ overflowX: "auto" }}>
           <table style={{ ...table, marginTop: 16 }}>
             <thead>
               <tr>
@@ -284,6 +289,7 @@ export default function ApiReferencePage() {
               ))}
             </tbody>
           </table>
+          </div>
         </div>
       </section>
 

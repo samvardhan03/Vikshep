@@ -15,26 +15,16 @@ const NAV = [
 export default function DocsLayout({ children }: { children: React.ReactNode }) {
   return (
     <div
+      // One column below lg: the sidebar becomes a row of links above the page.
+      className="grid grid-cols-1 gap-10 lg:grid-cols-[200px_1fr] lg:gap-16 items-start"
       style={{
         maxWidth: 1280,
         margin: "0 auto",
         padding: "96px 24px 80px",
-        display: "grid",
-        gridTemplateColumns: "200px 1fr",
-        gap: 64,
-        alignItems: "start",
       }}
     >
       {/* Sidebar */}
-      <aside
-        style={{
-          position: "sticky",
-          top: 88,
-          display: "flex",
-          flexDirection: "column",
-          gap: 4,
-        }}
-      >
+      <aside className="flex flex-row flex-wrap gap-x-5 gap-y-1 lg:flex-col lg:gap-1 lg:sticky lg:top-[88px]">
         <p
           style={{
             fontFamily: "var(--font-jetbrains), monospace",
@@ -42,8 +32,8 @@ export default function DocsLayout({ children }: { children: React.ReactNode }) 
             textTransform: "uppercase",
             letterSpacing: "0.18em",
             color: "var(--ink-mute)",
-            marginBottom: 12,
           }}
+          className="w-full mb-1 lg:mb-3"
         >
           Docs
         </p>
@@ -51,19 +41,20 @@ export default function DocsLayout({ children }: { children: React.ReactNode }) 
           <Link
             key={item.href}
             href={item.href}
+            className="lg:border-b"
             style={{
               fontFamily: "var(--font-jetbrains), monospace",
               fontSize: 13,
               color: "var(--ink-mute)",
               textDecoration: "none",
               padding: "6px 0",
-              borderBottom: "1px solid var(--rule)",
+              borderColor: "var(--rule)",
             }}
           >
             {item.label}
           </Link>
         ))}
-        <div style={{ marginTop: 32, display: "flex", flexDirection: "column", gap: 8 }}>
+        <div className="flex flex-row gap-5 lg:flex-col lg:gap-2 lg:mt-8 w-full lg:w-auto pt-2 lg:pt-0">
           <Link
             href="/pricing"
             style={{

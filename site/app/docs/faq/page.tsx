@@ -57,7 +57,7 @@ const FAQ = [
     items: [
       {
         q: "Does the Free tier include GPU acceleration?",
-        a: "CPU inference is available in the Free tier — all loaders, the ingest pipeline, DisCo recipes, and the benchmark harness run without GPU. No tier runs the scattering transform yet: the open deterministic scattering core is in development, and GPU acceleration is planned.",
+        a: "No. The Free tier is the CPU path: all loaders, the ingest pipeline, the scattering transform from the open core, the DisCo recipes and the benchmark harness run without a GPU. GPU backends are in development for Studio and the hosted Lab plan.",
       },
       {
         q: "What is the trial and how does it work?",
@@ -78,7 +78,7 @@ const FAQ = [
     items: [
       {
         q: "What does 'nothing learned' mean exactly?",
-        a: "It describes the feature plane. The wavelet filters are analytic Morlets — their shape is determined by three geometry parameters (J, Q, L) chosen before any data is seen. No gradient step, no training loop, no adaptation. Translation invariance and stability under deformations are theorems about the scattering transform, not empirical claims about a trained model. The scattering transform is being delivered by the open deterministic core, which is in development; the released CLI does not run it yet. Today the CLI ingests Geant4 output, computes per-event aggregates, and trains calibration and DisCo-penalised tagging models on those aggregates. Those models are learned, and the tag report says how: training_gradient \"pearson_proxy\", reported_dcorr2 \"exact_weighted\".",
+        a: "It describes the feature plane. The wavelet filters are analytic Morlets — their shape is determined by three geometry parameters (J, Q, L) chosen before any data is seen. No gradient step, no training loop, no adaptation. Translation invariance and stability under deformations are theorems about the scattering transform, not empirical claims about a trained model. The scattering transform is computed by the open deterministic core, vikshep-compute, which installs with the CLI. The calibration and tagging models trained on top of those features are learned, and the reports say how: feature_set records whether scattering features or per-event aggregates were used, and the tag report records training_gradient \"exact_weighted\" on the scattering path (\"pearson_proxy\" on the aggregates fallback) and reported_dcorr2 \"exact_weighted\".",
       },
       {
         q: "What is a 28-char OID and why does it appear in the manifest?",
@@ -138,7 +138,7 @@ export default function FaqPage() {
                 >
                   {item.q}
                 </p>
-                <p style={{ ...prose, fontSize: 14, lineHeight: 1.7 }}>
+                <p style={{ ...prose, fontSize: 14, lineHeight: 1.7, overflowWrap: "anywhere" }}>
                   {item.a.split(/(`[^`]+`)/).map((part, j) =>
                     part.startsWith("`") && part.endsWith("`") ? (
                       <code key={j} style={code}>

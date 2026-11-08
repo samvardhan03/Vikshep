@@ -10,10 +10,11 @@ export default function HepTaggingPage() {
       tagline="Mass-decorrelated boosted-object tagging."
       status={
         <>
-          This page describes the designed agent pipeline. Its scattering steps run on the
-          open deterministic scattering core, which is in development. Available today:{" "}
+          This page describes the agent pipeline. Available today from the command line:{" "}
+          <code style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 12 }}>pip install vikshep-ingest</code>, then{" "}
           <code style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 12 }}>vikshep-recipe tag</code>{" "}
-          trains the DisCo-penalised classifier on per-event aggregates from Geant4 output.
+          computes scattering features from Geant4 output with the open core and trains the
+          DisCo-penalised classifier with the exact weighted dCorr² gradient.
           See <a href="/docs#engine-status" style={{ color: "var(--ink)" }}>engine status</a>.
         </>
       }

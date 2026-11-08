@@ -1,4 +1,4 @@
-export const metadata = { title: "Pricing — Vikshep" };
+export const metadata = { title: "Pricing" };
 
 const APP_BASE = process.env.NEXT_PUBLIC_VIKSHEP_API_BASE ?? null;
 

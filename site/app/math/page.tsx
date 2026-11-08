@@ -440,8 +440,8 @@ export default function MathPage() {
             is not a heuristic post-processing step, not an adversarial training trick, and not a
             planing procedure that requires re-optimisation of the cut. It is a single term in the
             loss that pushes the trained score toward that point. How close a trained tagger gets is
-            measured, not assumed: the released <code>vikshep-recipe tag</code> trains with a
-            Pearson-correlation proxy for the penalty gradient and reports the exact weighted dCorr².
+            measured, not assumed: <code>vikshep-recipe tag</code> trains with the exact weighted
+            dCorr² gradient from the open core and reports the exact weighted dCorr².
           </p>
 
           <div style={vizWrap}>

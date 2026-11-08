@@ -10,9 +10,9 @@ export default function FeatureExtractPage() {
       tagline="Cosmology, plasma, GW, hydrodynamics."
       status={
         <>
-          This page describes the designed agent pipeline. Its scattering steps run on the
-          open deterministic scattering core, which is in development, so this recipe does not
-          run yet. See <a href="/docs#engine-status" style={{ color: "var(--ink)" }}>engine status</a>.
+          This page describes an agent pipeline. Its scattering and anomaly tools ship in
+          vikshep-mcp (vikshep-compute release archives); the agent that chains them is not
+          packaged yet. See <a href="/docs#engine-status" style={{ color: "var(--ink)" }}>engine status</a>.
         </>
       }
       whenToUse={

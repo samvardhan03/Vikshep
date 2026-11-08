@@ -45,8 +45,9 @@ const rule: React.CSSProperties = {
 
 const FREE_ITEMS = [
   "G4 Direct Interface — Geant4 CSV → features in one command",
-  "All loaders: g4, root-uproot, hdf5, well (local CPU)",
-  "Per-event 2-D rasterization and aggregate features",
+  "All loaders: g4, sim, root-uproot, hdf5, well (local CPU)",
+  "Per-event 2-D rasterization, wavelet scattering and aggregate features",
+  "The open CPU core, vikshep-compute: Python, Rust, C/C++",
   "DisCo mass-decorrelation training and calibration CLIs",
   "Benchmark harness (Asimov proxy, JSD)",
   "Agent orchestrator and all recipes",
@@ -68,15 +69,15 @@ const PAID_ITEMS = [
 const ENGINE_STATUS = [
   {
     label: "Available now",
-    body: "The vikshep-ingest / vikshep-recipe CLI: Geant4 CSV ingest, per-event 2-D rasterization into shared memory, per-event aggregates, calibration regression, DisCo-penalised tagging on the aggregates (training gradient: Pearson proxy; reported dCorr²: exact weighted), and the benchmark harness. Tested today: byte-identical reports under a fixed seed on the same machine.",
+    body: "pip install vikshep-ingest (0.4.0): Geant4 CSV and vikshep-sim ingest, per-event 2-D rasterization, wavelet scattering features (S₀/S₁/S₂, J=3, Q=1, L=8) from the open core, calibration regression, DisCo-penalised tagging trained with the exact weighted dCorr² gradient, provenance records, and the benchmark harness. The quickstart gives byte-identical reports on Linux and macOS; CI compares the hashes. The open core itself, vikshep-compute 0.1.0, is on PyPI and crates.io and as C/C++ archives, with the VDS-1 conformance suite (434 cases, passing on Linux, macOS and Windows) and the certificate verifier.",
   },
   {
     label: "In development",
-    body: "The open deterministic scattering core (samvardhan03/vikshep-compute), which computes S₀/S₁/S₂ and r₂ = S₂/S₁ on the ingested grids. It is built against a written determinism specification (VDS-1) with a cross-platform conformance suite.",
+    body: "Studio, the desktop app, with Metal and CUDA backends; GPU workers for the hosted Lab plan; packaging of the agent pipelines (anomaly search, general feature extraction), whose tools already ship in vikshep-mcp; a conda package of vikshep-sim.",
   },
   {
     label: "Planned",
-    body: "Desktop app. GPU acceleration.",
+    body: "Fast-sim validation: a scattering-based fidelity metric for ML surrogates of Geant4.",
   },
 ];
 
@@ -101,9 +102,9 @@ export default function DocsIndexPage() {
           learned during feature extraction — the wavelet filters are fixed
           analytic Morlets chosen by geometry, not trained. Translation
           invariance and deformation stability are theorems about the
-          transform, not benchmarks. The transform is delivered by the open
-          deterministic core, in development; see Engine status below for what
-          the released CLI does today.
+          transform, not benchmarks. The transform is computed by the open
+          deterministic core, vikshep-compute, which the CLI installs from PyPI;
+          see Engine status below for what ships today.
         </p>
         <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
           {[
@@ -168,13 +169,14 @@ export default function DocsIndexPage() {
           .
         </p>
 
+        <div style={{ overflowX: "auto", marginBottom: 24 }}>
         <div
           style={{
             display: "grid",
             gridTemplateColumns: "repeat(3, 1fr)",
             gap: 1,
             backgroundColor: "var(--rule)",
-            marginBottom: 24,
+            minWidth: 600,
           }}
         >
           {/* Headers */}
@@ -244,6 +246,7 @@ export default function DocsIndexPage() {
               ))}
             </ul>
           </div>
+        </div>
         </div>
 
         <p style={{ ...prose, fontSize: 13, fontStyle: "italic" }}>

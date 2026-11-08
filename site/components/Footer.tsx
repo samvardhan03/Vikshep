@@ -138,8 +138,9 @@ export default function Footer({ onFeedback }: FooterProps) {
           <div className="flex flex-wrap gap-6">
             {[
               { label: "License: AGPL-3.0 + Commercial", href: "https://github.com/samvardhan03/Vikshep/blob/main/LICENSING.md" },
-              { label: "vikshep on PyPI", href: "https://pypi.org/project/vikshep/" },
-              { label: "omni-wst-core on PyPI", href: "https://pypi.org/project/omni-wst-core/" },
+              { label: "vikshep-ingest on PyPI", href: "https://pypi.org/project/vikshep-ingest/" },
+              { label: "vikshep-compute on PyPI", href: "https://pypi.org/project/vikshep-compute/" },
+              { label: "vikshep on crates.io", href: "https://crates.io/crates/vikshep" },
               { label: "vikshep-compute (open core)", href: "https://github.com/samvardhan03/vikshep-compute" },
             ].map((l) => (
               <a

@@ -29,8 +29,8 @@ export const metadata: Metadata = {
     default: "Vikshep — Deterministic feature extraction for scientific compute",
   },
   description:
-    "Mass-decorrelated jet tagging, template-free BSM anomaly detection, and rotation-invariant field inference — on-prem, GPU-accelerated, MCP-native.",
-  icons: { icon: "data:," },
+    "Deterministic wavelet-scattering features and mass-decorrelated (DisCo) tagging for Geant4 and physics data. Open source: pip install vikshep-ingest.",
+  metadataBase: new URL("https://vikshep.vercel.app"),
 };
 
 export default function RootLayout({
