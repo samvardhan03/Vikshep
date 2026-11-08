@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export const metadata = { title: "Quickstart — Docs" };
 
 const eyebrow: React.CSSProperties = {
@@ -88,19 +90,21 @@ export default function QuickstartPage() {
         mass-decorrelated tagger — no GPU, no account, no build step.
       </p>
       <p style={{ ...prose, marginBottom: 32 }}>
-        <strong style={{ color: "var(--ink)" }}>Prerequisites:</strong> Python 3.10+, Git.
-        Install time (first run): ~20 s. Pipeline time on the 1000-event sample: ~7 s.
+        <strong style={{ color: "var(--ink)" }}>Prerequisites:</strong> Python 3.10+.
+        Install in a fresh environment: about 1.5 min. The four commands on the 1000-event
+        sample: about 2.5 min on an Intel Mac, most of it computing the scattering features once.
       </p>
 
-      {/* Clone + install */}
-      <section style={{ borderBottom: "1px solid var(--rule)", paddingBottom: 32, marginBottom: 0 }}>
-        <h2 style={{ ...h2Style, marginTop: 0 }}>Clone and install</h2>
-        <pre style={codeBlock}>{`git clone https://github.com/samvardhan03/Vikshep.git
-cd Vikshep
-pip install -e backend/ingest`}</pre>
+      {/* Install */}
+      <section style={{ borderBottom: "1px solid var(--rule)", paddingBottom: 32 }}>
+        <h2 style={h2Style}>Install and get the sample</h2>
+        <pre style={codeBlock}>{`pip install vikshep-ingest
+curl -LO https://raw.githubusercontent.com/samvardhan03/Vikshep/main/examples/g4_quickstart/sample.csv`}</pre>
         <p style={note}>
-          <code style={code}>vikshep-ingest</code> is not yet on PyPI.
-          Install from the repo clone only.
+          On Linux (x86_64, aarch64), macOS and Windows (x86_64) this installs the open
+          deterministic core as a prebuilt wheel, and the recipes run on wavelet scattering
+          features. Elsewhere they fall back to per-event aggregates and say so; see{" "}
+          <Link href="/docs/install" style={{ color: "var(--ink)" }}>Install</Link>.
         </p>
       </section>
 
@@ -115,12 +119,12 @@ pip install -e backend/ingest`}</pre>
           event into a 2-D (phi, theta) grid, computes 32 aggregate scalars per
           event, and writes a manifest. No engine binary required.
         </p>
-        <pre style={codeBlock}>{`vikshep-ingest g4 examples/g4_quickstart/sample.csv --schema komal_v1`}</pre>
+        <pre style={codeBlock}>{`vikshep-ingest g4 sample.csv --schema komal_v1`}</pre>
         <p style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 11, textTransform: "uppercase", letterSpacing: "0.14em", color: "var(--ink-mute)", marginTop: 16, marginBottom: 4 }}>
           Expected output
         </p>
         <pre style={outputBlock}>{`Geant4 Direct Interface — profile: komal_v1
-  CSV            : examples/g4_quickstart/sample.csv
+  CSV            : sample.csv
   Events parsed  : 1000
   Hits total     : 13808
   Malformed rows : 0
@@ -128,7 +132,7 @@ pip install -e backend/ingest`}</pre>
   Aggregate scalars: 32 per event
   Event columns  : is_signal, true_energy, weight  (usable as --label, --protect, --weights, --target)
   Grid OIDs      : 1000 (28-char SHA3-256)
-  Manifest written: examples/g4_quickstart/manifest.json`}</pre>
+  Manifest written: manifest.json`}</pre>
         <p style={{ ...note, marginTop: 16 }}>
           The <code style={code}>komal_v1</code> schema expects per-hit rows:{" "}
           <code style={code}>event_id, layer (1|2|3), phi (rad), theta (rad), momentum (GeV/c)[, energy (GeV)]</code>.
@@ -147,7 +151,7 @@ pip install -e backend/ingest`}</pre>
           The manifest is the control-plane payload — OIDs and scalars, no raw
           tensors. Inspect it before running recipes.
         </p>
-        <pre style={codeBlock}>{`cat examples/g4_quickstart/manifest.json | python3 -c "
+        <pre style={codeBlock}>{`cat manifest.json | python3 -c "
 import json, sys
 m = json.load(sys.stdin)
 print('Events:', m['n_events'])
@@ -174,18 +178,24 @@ Grid OIDs (first 3): ['...28 hex chars...', '...', '...']`}</pre>
           event columns. Outputs a calibration report with R² and residual std.
         </p>
         <pre style={codeBlock}>{`vikshep-recipe calibrate \\
-  --features examples/g4_quickstart/manifest.json \\
+  --features manifest.json \\
   --target true_energy`}</pre>
         <p style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 11, textTransform: "uppercase", letterSpacing: "0.14em", color: "var(--ink-mute)", marginTop: 16, marginBottom: 4 }}>
           Expected output
         </p>
-        <pre style={outputBlock}>{`  Report written: examples/g4_quickstart/calibrate_report.json
+        <pre style={outputBlock}>{`  Provenance written: provenance.json
+  Report written: calibrate_report.json
 vikshep-recipe calibrate
-  feature_set  : aggregates
+  feature_set  : scattering
   target       : true_energy
-  R^2          : 0.9865
-  residual std : 0.6130
+  R^2          : 0.5589
+  residual std : 3.5026
   n_events     : 1000`}</pre>
+        <p style={note}>
+          This step computes the scattering features of the 1000 events (the slow part) and
+          keeps them next to the manifest in <code style={code}>.vikshep-cache/</code>; the tag
+          step reuses them.
+        </p>
       </section>
 
       {/* Step 4 */}
@@ -195,16 +205,15 @@ vikshep-recipe calibrate
           Tag with DisCo decorrelation
         </h2>
         <p style={prose}>
-          Train a classifier on the per-event aggregates with a DisCo penalty on
+          Train a classifier on the scattering features with a DisCo penalty on
           the dependence between its score and a protected variable (here
           <code style={code}>true_energy</code>), with Monte Carlo event weights.
           The <code style={code}>--lambda</code> flag controls the penalty
-          strength. Higher = stricter decorrelation. Training uses a
-          Pearson-correlation proxy for the penalty gradient; the reported
-          dCorr² is the exact weighted value, computed once after training.
+          strength. Higher = stricter decorrelation. Training uses the exact weighted
+          dCorr² gradient of the open core.
         </p>
         <pre style={codeBlock}>{`vikshep-recipe tag \\
-  --features examples/g4_quickstart/manifest.json \\
+  --features manifest.json \\
   --label    is_signal \\
   --protect  true_energy \\
   --weights  weight \\
@@ -212,23 +221,24 @@ vikshep-recipe calibrate
         <p style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 11, textTransform: "uppercase", letterSpacing: "0.14em", color: "var(--ink-mute)", marginTop: 16, marginBottom: 4 }}>
           Expected output
         </p>
-        <pre style={outputBlock}>{`  Report written: examples/g4_quickstart/tag_report.json
+        <pre style={outputBlock}>{`  Provenance written: provenance.json
+  Report written: tag_report.json
 vikshep-recipe tag
-  feature_set       : aggregates
+  feature_set       : scattering
   lambda            : 1.0
-  AUC               : 0.9999
-  dCorr^2           : 0.2540  (lower = better decorrelation)
-  training_gradient : pearson_proxy
+  AUC               : 0.9743
+  dCorr^2           : 0.0182  (lower = better decorrelation)
+  training_gradient : exact_weighted
   reported_dcorr2   : exact_weighted
   n_events          : 1000`}</pre>
         <p style={{ ...note, marginTop: 16 }}>
-          <strong style={{ color: "var(--ink)" }}>dCorr² = 0.2540</strong>: on background
-          events the tagger score still depends on <code style={code}>true_energy</code>.
-          The Pearson-proxy gradient of this aggregates path barely decorrelates (0.2594
-          at <code style={code}>--lambda 0</code>). With the open core installed, the same
-          command trains on scattering features with the exact weighted gradient: AUC
-          0.9743 and dCorr² 0.0182 (0.0374 at <code style={code}>--lambda 0</code>). The
-          sample is synthetic; see <code style={code}>examples/g4_quickstart/README.md</code>.
+          <strong style={{ color: "var(--ink)" }}>dCorr² = 0.0182</strong>: the weighted
+          distance correlation between the tagger score and <code style={code}>true_energy</code>{" "}
+          on background events, down from 0.0374 at <code style={code}>--lambda 0</code> (AUC
+          0.9781); <code style={code}>--lambda 10</code> gives 0.0084 at AUC 0.8734. Without the
+          open core the recipes use aggregates and a Pearson-proxy gradient, which barely
+          decorrelates (0.2540). The sample is synthetic; see the{" "}
+          <a href="https://github.com/samvardhan03/Vikshep/tree/main/examples/g4_quickstart" target="_blank" rel="noopener noreferrer" style={{ color: "var(--ink)" }}>quickstart folder</a>.
         </p>
       </section>
 
@@ -248,7 +258,7 @@ vikshep-recipe tag
             </thead>
             <tbody>
               {[
-                ["vikshep-ingest g4", "Geant4 CSV", "manifest.json — OIDs + 32 scalars/event"],
+                ["vikshep-ingest g4", "Geant4 CSV", "manifest.json — OIDs, 32 scalars and the event columns per event"],
                 ["vikshep-recipe calibrate", "manifest.json", "calibrate_report.json — R² + residual std"],
                 ["vikshep-recipe tag", "manifest.json", "tag_report.json — AUC + dCorr² + method fields"],
               ].map(([cmd, input, output], i) => (
@@ -267,16 +277,15 @@ vikshep-recipe tag
       <section style={{ borderBottom: "1px solid var(--rule)", paddingBottom: 32 }}>
         <h2 style={h2Style}>Time to first value</h2>
         <p style={prose}>
-          Measured on Apple M-series (macOS 22.6, Python 3.11, no GPU), fresh
-          install, sample.csv (10 events):
+          Measured 2026-11-07 on an Intel Mac (x86_64), macOS 13, Python 3.12, no GPU, fresh
+          virtual environment, the 1000-event sample:
         </p>
         <ul style={{ listStyle: "none", padding: 0, marginTop: 12, display: "flex", flexDirection: "column", gap: 8 }}>
           {[
-            ["pip install -e backend/ingest", "~20 s (first install; cached ≈ 3 s)"],
-            ["vikshep-ingest g4", "~7 s"],
-            ["vikshep-recipe calibrate", "< 1 s"],
-            ["vikshep-recipe tag", "~15 s (sklearn fit)"],
-            ["End-to-end from git clone to tag_report.json", "< 45 s"],
+            ["pip install vikshep-ingest (all dependencies)", "~93 s"],
+            ["vikshep-ingest g4", "2.4 s"],
+            ["vikshep-recipe calibrate (computes the scattering features)", "~140 s"],
+            ["vikshep-recipe tag (reuses them)", "4.5 s"],
           ].map(([cmd, time]) => (
             <li key={cmd as string} style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 16, padding: "8px 0", borderBottom: "1px solid var(--rule)", fontSize: 13 }}>
               <code style={{ fontFamily: "var(--font-jetbrains), monospace", color: "var(--ink)" }}>{cmd}</code>
@@ -284,6 +293,10 @@ vikshep-recipe tag
             </li>
           ))}
         </ul>
+        <p style={note}>
+          The first command after a fresh install can take longer on macOS while the new
+          native libraries load for the first time (measured once here: about 3 minutes).
+        </p>
       </section>
 
       {/* Next steps */}

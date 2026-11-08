@@ -360,9 +360,11 @@ export default function DeterminismPage() {
           <p style={{ ...mono, fontSize: 11, textTransform: "uppercase", letterSpacing: "0.14em", color: "var(--ink-mute)", marginBottom: 4 }}>
             Install the verifier
           </p>
-          <pre style={codeBlock}>{`git clone https://github.com/samvardhan03/vikshep-compute.git
-cd vikshep-compute
-cargo build --release -p vikshep-conformance`}</pre>
+          <pre style={codeBlock}>{`# prebuilt, from https://github.com/samvardhan03/vikshep-compute/releases
+tar -xzf vikshep-compute-0.1.0-<platform>.tar.gz
+export PATH=$PWD/vikshep-compute-0.1.0-<platform>/bin:$PATH
+
+# or in Python: pip install vikshep-compute (vikshep_compute.verify_certificate)`}</pre>
 
           <p style={{ ...mono, fontSize: 11, textTransform: "uppercase", letterSpacing: "0.14em", color: "var(--ink-mute)", marginBottom: 4, marginTop: 20 }}>
             Verify a certificate
@@ -370,15 +372,16 @@ cargo build --release -p vikshep-conformance`}</pre>
           <pre style={codeBlock}>{`vikshep-conformance verify result.certificate.json --inputs ./inputs/
 
 # Output:
-# VERIFIED  output OIDs match (12 / 12)
-# Tier-1 computations: 12  backend: cpu-rust  numerics_version: 3
-# Certificate signed by: vsk_key_<id>  (Ed25519 — key not in trust store; signature valid)`}</pre>
+#   output coefficients: f4fa73ec81863e857a287b8e00e9 OK
+#   manifest_hash: OK
+# VERIFIED`}</pre>
           <p style={aside}>
             The verifier prints VERIFIED if every output OID in the certificate
             matches the OID produced by re-running the computation, or MISMATCH
-            with a per-OID diff table if any output differs. A valid signature
-            identifies the installation; the reviewer need not trust the
-            installation to trust the OID match.
+            with the expected and recomputed OID of each output that differs. It
+            checks the computation, not who ran it: a signature on a certificate
+            identifies the installation that issued it, and the OID match does not
+            depend on trusting that installation.
           </p>
 
           <p style={{ ...mono, fontSize: 11, textTransform: "uppercase", letterSpacing: "0.14em", color: "var(--ink-mute)", marginBottom: 4, marginTop: 20 }}>

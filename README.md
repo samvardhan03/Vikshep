@@ -37,8 +37,8 @@ properties of the transform, not empirical claims about a trained model.
 - **Available now** — the `vikshep-ingest` / `vikshep-recipe` CLI in `backend/ingest`:
   Geant4 CSV ingest, per-event 2-D rasterization (phi × theta, 64 × 64, OID-named POSIX shm),
   wavelet scattering transform (S0/S1/S2) and r2 ratios via the open core
-  ([`samvardhan03/vikshep-compute`](https://github.com/samvardhan03/vikshep-compute) — requires
-  a Rust toolchain; install with `pip install -e "backend/ingest[scattering]"`), DisCo-penalised
+  ([`samvardhan03/vikshep-compute`](https://github.com/samvardhan03/vikshep-compute), a prebuilt
+  wheel installed with `pip install vikshep-ingest`), DisCo-penalised
   tagging and calibration with the exact weighted dCorr² gradient, and the benchmark harness.
   Cross-platform bit identity: proven on Linux x86_64 and macOS arm64 by CI (see the
   [vikshep-compute conformance workflow](https://github.com/samvardhan03/vikshep-compute/actions)).
@@ -139,31 +139,26 @@ GPU backends, which are in development.
 
 ## Install
 
-**Geant4 Direct Interface** (repo-local install):
+**Geant4 Direct Interface, recipes and the open core:**
 ```bash
-git clone https://github.com/samvardhan03/Vikshep.git
-pip install -e Vikshep/backend/ingest
+pip install vikshep-ingest            # add [sim] to read vikshep-sim runs: pip install "vikshep-ingest[sim]"
 ```
 
-**With scattering features** (requires a Rust toolchain):
+On Linux (x86_64, aarch64), macOS and Windows (x86_64) this installs the open core
+`vikshep-compute` 0.1.0 as a prebuilt wheel. Elsewhere the recipes fall back to per-event
+aggregates and say so; build the core from source there (`pip install maturin`, then
+`pip install ./crates/vikshep-py` in a [vikshep-compute](https://github.com/samvardhan03/vikshep-compute)
+clone, with a Rust toolchain). For development: `pip install -e "backend/ingest[sim]"` in a
+clone of this repository.
+
+**The open core on its own:** `pip install vikshep-compute` (Python), `cargo add vikshep`
+(Rust 1.97 or newer), or the C/C++ archives (headers, static and shared C API library, `vikshep-mcp`,
+`vikshep-conformance`) on the [vikshep-compute releases page](https://github.com/samvardhan03/vikshep-compute/releases).
+
+**MCP data plane** (`vikshep-mcp`): from the release archive for your platform:
 ```bash
-# Install Rust (if not already present)
-curl -sSf https://sh.rustup.rs | sh -s -- -y && source "$HOME/.cargo/env"
-
-pip install maturin
-pip install -e "Vikshep/backend/ingest[scattering]"
-```
-
-The `[scattering]` extra builds `vikshep_compute` from the open core at a pinned
-commit (`b55468b`).  Building the Rust crates takes 2–4 minutes on first install;
-subsequent installs use the cargo cache.
-
-**MCP data plane** (`vikshep-mcp`): build from the open core:
-```bash
-git clone https://github.com/samvardhan03/vikshep-compute.git
-cd vikshep-compute
-cargo build --release -p vikshep-mcp
-export VIKSHEP_MCP_BIN=$PWD/target/release/vikshep-mcp
+tar -xzf vikshep-compute-0.1.0-<platform>.tar.gz
+export VIKSHEP_MCP_BIN=$PWD/vikshep-compute-0.1.0-<platform>/bin/vikshep-mcp
 ```
 
 ---
@@ -173,19 +168,18 @@ export VIKSHEP_MCP_BIN=$PWD/target/release/vikshep-mcp
 From Geant4 CSV output to physics answer in four commands:
 
 ```bash
-# 1. Install with scattering features (requires Rust — see Install above)
-git clone https://github.com/samvardhan03/Vikshep.git && cd Vikshep
-pip install maturin && pip install -e "backend/ingest[scattering]"
+# 1. Install, and get the sample
+pip install vikshep-ingest
+curl -LO https://raw.githubusercontent.com/samvardhan03/Vikshep/main/examples/g4_quickstart/sample.csv
 
 # 2. Ingest your Geant4 CSV
-vikshep-ingest g4 examples/g4_quickstart/sample.csv --schema komal_v1
+vikshep-ingest g4 sample.csv --schema komal_v1
 
 # 3. Calibrate: reconstruct the incident energy from the detector images
-vikshep-recipe calibrate --features examples/g4_quickstart/manifest.json \
-  --target true_energy
+vikshep-recipe calibrate --features manifest.json --target true_energy
 
 # 4. Tag particles, decorrelated from energy with DisCo (exact weighted dCorr² gradient)
-vikshep-recipe tag --features examples/g4_quickstart/manifest.json \
+vikshep-recipe tag --features manifest.json \
   --label is_signal --protect true_energy --weights weight --lambda 1.0
 ```
 
@@ -195,7 +189,7 @@ is kept the same way and is never used as a feature. Steps 3 and 4 run the wavel
 transform on the 64 × 64 (phi × theta) grids (J=3, Q=1, L=8, pad=[Circular, ZeroPad]) via the
 open core, compute S0/S1/S2 and r2 ratios, and train with the exact weighted dCorr² gradient:
 on the sample, calibrate reaches R² 0.56 and tag AUC 0.974 with dCorr² 0.018 at `--lambda 1`
-(0.037 at `--lambda 0`). Without `[scattering]`, the CLI falls back to per-event aggregates
+(0.037 at `--lambda 0`). Without the open core (platforms with no wheel), the CLI falls back to per-event aggregates
 and the Pearson-proxy gradient; the report states which path ran.
 
 See `examples/g4_quickstart/README.md` for the full walkthrough including TTFV measurements.
@@ -222,10 +216,11 @@ Python scripts installable from `backend/ingest`.
 
 | Loader | Format | Install |
 |---|---|---|
-| `g4` (Geant4 Direct Interface) | Geant4 CSV (`event_id, layer, phi, theta, momentum[, energy]`) | `pip install -e backend/ingest` (repo-local) |
-| `root-uproot` | `.root` (Geant4, CMS Open Data) | `pip install -e backend/ingest` |
-| `hdf5` | `.h5`, HDF5 | `pip install -e backend/ingest` |
-| `well` | The Well HDF5 (15TB physics simulations) | `pip install -e backend/ingest` (Stage 3) |
+| `g4` (Geant4 Direct Interface) | Geant4 CSV (`event_id, layer, phi, theta, momentum[, energy]`) | `pip install vikshep-ingest` |
+| `sim` (vikshep-sim) | vikshep-sim run folders (`hits.arrow`) | `pip install "vikshep-ingest[sim]"` |
+| `root-uproot` | `.root` (Geant4, CMS Open Data) | `pip install vikshep-ingest` |
+| `hdf5` | `.h5`, HDF5 | `pip install vikshep-ingest` |
+| `well` | The Well HDF5 (15TB physics simulations) | `pip install vikshep-ingest` |
 
 Loaders are discovered via entry points (`vikshep.loaders`). Each writes POSIX
 shared memory and returns a 28-hex OID.

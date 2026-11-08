@@ -94,7 +94,7 @@ const SCHEMAS = [
     name: "root_uproot",
     format: "ROOT TTree",
     cols: "ATLAS analysis framework output; via uproot",
-    note: "Requires uproot extra: pip install -e 'backend/ingest[uproot]'",
+    note: "uproot is installed with vikshep-ingest",
   },
 ];
 
@@ -194,7 +194,7 @@ export default function SimulateDocsPage() {
           Build it as its README describes (a conda environment with Geant4 and its data
           sets), then ingest one or more run folders. Each run&apos;s OID is checked
           against its <code style={mono}>run_summary.json</code>; needs{" "}
-          <code style={mono}>pip install -e &quot;backend/ingest[sim]&quot;</code> (pyarrow).
+          <code style={mono}>pip install &quot;vikshep-ingest[sim]&quot;</code> (pyarrow).
         </p>
         <pre style={codeBlock}>{`# electron and pion showers at three energies (specs from vikshep-sim/docs/examples)
 mkdir -p runs

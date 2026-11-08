@@ -79,7 +79,7 @@ export default function InstallPage() {
         <ul style={{ listStyle: "none", padding: 0, display: "flex", flexDirection: "column", gap: 8 }}>
           {[
             "Python 3.10 or later",
-            "Git",
+            "Git, only to build from source",
             "No GPU required for the Geant4 Direct Interface or any loader",
           ].map((item) => (
             <li key={item} style={{ display: "flex", gap: 8, fontSize: 14, color: "var(--ink-mute)", lineHeight: 1.5 }}>
@@ -90,70 +90,75 @@ export default function InstallPage() {
         </ul>
       </section>
 
-      {/* Path 1 — loaders */}
+      {/* Path 1 — pip */}
       <section style={{ borderBottom: "1px solid var(--rule)", paddingBottom: 32 }}>
-        <h2 style={{ ...h2Style }}>Path 1 — Loaders (repo-local, no account)</h2>
+        <h2 style={{ ...h2Style }}>Path 1 — pip (no account, no build)</h2>
         <p style={prose}>
-          Clone the public repo and install the ingest package in editable mode.
-          This gives you all data loaders, the DisCo recipes, and the benchmark
-          harness. No engine binary is required.
+          Installs the Geant4 Direct Interface, the loaders, the calibrate and DisCo tag
+          recipes and, on Linux (x86_64, aarch64), macOS and Windows (x86_64), the open
+          deterministic core <code style={code}>vikshep-compute</code> as a prebuilt wheel.
+          On other platforms the recipes fall back to per-event aggregates and say so.
         </p>
-        <pre style={codeBlock}>{`git clone https://github.com/samvardhan03/Vikshep.git
-cd Vikshep
-pip install -e backend/ingest`}</pre>
-        <p style={note}>
-          <code style={code}>vikshep-ingest</code> is not yet on PyPI — install
-          from the repo clone only.
-        </p>
+        <pre style={codeBlock}>{`pip install vikshep-ingest
+
+# reading vikshep-sim run folders (hits.arrow) as well
+pip install "vikshep-ingest[sim]"`}</pre>
 
         <h2 style={h2Style}>Verify the install</h2>
         <pre style={codeBlock}>{`vikshep-ingest --help
-vikshep-recipe --help`}</pre>
-        <p style={prose}>Both commands should print usage without errors.</p>
+vikshep-recipe --help
+python -c "import vikshep_compute as vc; print(vc.conformance_selftest('quick')['failed'])"   # 0`}</pre>
+        <p style={prose}>
+          The sample used by the quickstart is in the repository:{" "}
+          <code style={code}>curl -LO https://raw.githubusercontent.com/samvardhan03/Vikshep/main/examples/g4_quickstart/sample.csv</code>
+        </p>
       </section>
 
-      {/* Path 2 — scattering features */}
+      {/* Path 2 — from source */}
       <section style={{ borderBottom: "1px solid var(--rule)", paddingBottom: 32 }}>
-        <h2 style={h2Style}>Path 2 — Scattering features (requires Rust)</h2>
+        <h2 style={h2Style}>Path 2 — From source (other platforms, development)</h2>
         <p style={prose}>
-          To use the wavelet scattering transform, install the open core from
-          source. A Rust toolchain is required for the build step.
+          Install the ingest package from a clone, and build the open core where no wheel
+          exists (a Rust toolchain is required for that step).
         </p>
-        <pre style={codeBlock}>{`# Install Rust (skip if already present)
-curl -sSf https://sh.rustup.rs | sh -s -- -y && source "$HOME/.cargo/env"
+        <pre style={codeBlock}>{`git clone https://github.com/samvardhan03/Vikshep.git
+pip install -e "Vikshep/backend/ingest[sim]"
 
-pip install maturin
-pip install -e "backend/ingest[scattering]"`}</pre>
-        <p style={note}>
-          The <code style={code}>[scattering]</code> extra builds{" "}
-          <code style={code}>vikshep_compute</code> from the open core (
+# the open core from source (only where no wheel exists)
+curl -sSf https://sh.rustup.rs | sh -s -- -y && source "$HOME/.cargo/env"
+git clone https://github.com/samvardhan03/vikshep-compute.git
+pip install maturin && pip install ./vikshep-compute/crates/vikshep-py`}</pre>
+
+        <h2 style={h2Style}>Rust, C and C++</h2>
+        <p style={prose}>
+          The same core is on crates.io (<code style={code}>cargo add vikshep</code>, Rust 1.97
+          or newer) and,
+          for C and C++, as prebuilt archives on the{" "}
           <a
-            href="https://github.com/samvardhan03/vikshep-compute"
+            href="https://github.com/samvardhan03/vikshep-compute/releases"
             target="_blank"
             rel="noopener noreferrer"
             style={{ color: "var(--ink)" }}
           >
-            samvardhan03/vikshep-compute
+            vikshep-compute releases page
           </a>
-          ) at a pinned commit. First build takes 2–4 minutes; subsequent builds
-          use the cargo cache. Without it, the CLI falls back to per-event
-          aggregates; the report states which path ran.
+          : headers, the static and shared C API library, the conformance runner and
+          certificate verifier, and the conformance vectors.
         </p>
 
         <h2 style={h2Style}>MCP data plane (<code style={{ ...code, fontSize: 18 }}>vikshep-mcp</code>)</h2>
         <p style={prose}>
-          Build the MCP data plane binary from the open core and set{" "}
-          <code style={code}>VIKSHEP_MCP_BIN</code>:
+          The agent talks to the data plane binary named by{" "}
+          <code style={code}>VIKSHEP_MCP_BIN</code>. It is in the release archive for your
+          platform (<code style={code}>bin/vikshep-mcp</code>):
         </p>
-        <pre style={codeBlock}>{`git clone https://github.com/samvardhan03/vikshep-compute.git
-cd vikshep-compute
-cargo build --release -p vikshep-mcp
-export VIKSHEP_MCP_BIN=$PWD/target/release/vikshep-mcp`}</pre>
+        <pre style={codeBlock}>{`tar -xzf vikshep-compute-0.1.0-<platform>.tar.gz
+export VIKSHEP_MCP_BIN=$PWD/vikshep-compute-0.1.0-<platform>/bin/vikshep-mcp`}</pre>
         <p style={note}>
           Add the export to your shell profile (<code style={code}>~/.zshrc</code>,{" "}
           <code style={code}>~/.bashrc</code>). The agent reads{" "}
           <code style={code}>VIKSHEP_MCP_BIN</code> on every invocation; if it is
-          absent the agent fails with build instructions. GPU backends are in
+          absent the agent fails with instructions. GPU backends are in
           development and not yet released.
         </p>
       </section>
@@ -172,7 +177,7 @@ export VIKSHEP_MCP_BIN=$PWD/target/release/vikshep-mcp`}</pre>
           >
             <thead>
               <tr style={{ borderBottom: "1px solid var(--rule)" }}>
-                {["Platform", "Loaders", "Engine (GPU)"].map((h) => (
+                {["Platform", "Loaders", "Open core wheel", "Engine (GPU)"].map((h) => (
                   <th
                     key={h}
                     style={{ textAlign: "left", padding: "8px 12px", color: "var(--ink)", fontWeight: "normal" }}
@@ -184,14 +189,16 @@ export VIKSHEP_MCP_BIN=$PWD/target/release/vikshep-mcp`}</pre>
             </thead>
             <tbody>
               {[
-                ["macOS 13+ (Apple Silicon)", "Yes", "Planned (Metal)"],
-                ["macOS 13+ (Intel)", "Yes", "No"],
-                ["Linux x86_64 (CUDA 12+)", "Yes", "Yes (pilot)"],
-                ["Windows", "Untested", "No"],
-              ].map(([platform, loaders, gpu], i) => (
+                ["macOS 13+ (Apple Silicon)", "Yes", "Yes", "Planned (Metal)"],
+                ["macOS 13+ (Intel)", "Yes", "Yes", "No"],
+                ["Linux x86_64 (CUDA 12+)", "Yes", "Yes", "Yes (pilot)"],
+                ["Linux aarch64", "Yes", "Yes", "No"],
+                ["Windows x86_64", "Untested", "Yes", "No"],
+              ].map(([platform, loaders, wheel, gpu], i) => (
                 <tr key={i} style={{ borderBottom: "1px solid var(--rule)" }}>
                   <td style={{ padding: "8px 12px", color: "var(--ink)" }}>{platform}</td>
                   <td style={{ padding: "8px 12px", color: "var(--ink-mute)" }}>{loaders}</td>
+                  <td style={{ padding: "8px 12px", color: "var(--ink-mute)" }}>{wheel}</td>
                   <td style={{ padding: "8px 12px", color: "var(--ink-mute)" }}>{gpu}</td>
                 </tr>
               ))}
@@ -207,11 +214,11 @@ export VIKSHEP_MCP_BIN=$PWD/target/release/vikshep-mcp`}</pre>
           {[
             {
               q: "vikshep-ingest: command not found",
-              a: "Run pip install -e backend/ingest from the repo root. Ensure the active Python environment is the same one you installed into (check which pip).",
+              a: "Run pip install vikshep-ingest in the active Python environment (check which pip and which python3 point to the same one).",
             },
             {
               q: "VIKSHEP_MCP_BIN not set — agent MCP calls will fail",
-              a: "Build vikshep-mcp from the open core (cargo build --release -p vikshep-mcp in samvardhan03/vikshep-compute) and export VIKSHEP_MCP_BIN=/path/to/vikshep-mcp. The variable is read at agent startup, not at import time.",
+              a: "Take bin/vikshep-mcp from the vikshep-compute release archive for your platform (or build it with cargo build --release -p vikshep-mcp in a vikshep-compute clone) and export VIKSHEP_MCP_BIN=/path/to/vikshep-mcp. The variable is read at agent startup, not at import time.",
             },
             {
               q: "ImportError: No module named 'vikshep_ingest'",

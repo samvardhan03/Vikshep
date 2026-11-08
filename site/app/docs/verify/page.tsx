@@ -162,14 +162,20 @@ export default function VerifyDocsPage() {
       <section style={{ borderBottom: "1px solid var(--rule)", paddingBottom: 32 }}>
         <h2 style={h2Style}>Installing the free verifier</h2>
         <p style={{ ...prose, marginBottom: 8 }}>
-          The verifier is part of the open vikshep-compute repository. Build it from source
-          with a Rust toolchain:
+          The verifier is part of the open vikshep-compute core. Each release ships it
+          prebuilt in the archive for your platform, with the conformance vectors:
         </p>
-        <pre style={codeBlock}>{`git clone https://github.com/samvardhan03/vikshep-compute.git
-cd vikshep-compute
-cargo build --release -p vikshep-conformance`}</pre>
+        <pre style={codeBlock}>{`# from https://github.com/samvardhan03/vikshep-compute/releases
+tar -xzf vikshep-compute-0.1.0-<platform>.tar.gz
+cd vikshep-compute-0.1.0-<platform>
+bin/vikshep-conformance run --vectors conformance/vectors/v3   # self-test: 434 cases
+
+# or from source, with a Rust toolchain
+git clone https://github.com/samvardhan03/vikshep-compute.git
+cd vikshep-compute && cargo build --release -p vikshep-conformance`}</pre>
         <p style={note}>
-          The binary is at <code style={mono}>target/release/vikshep-conformance</code>.
+          The binary is <code style={mono}>bin/vikshep-conformance</code> in the archive, or{" "}
+          <code style={mono}>target/release/vikshep-conformance</code> after a source build.
           Add it to your PATH or use it with a full path. No account or internet connection
           is required after build.
         </p>
@@ -177,11 +183,12 @@ cargo build --release -p vikshep-conformance`}</pre>
         <p style={{ ...prose, marginBottom: 8 }}>
           The verifier is also exposed in the Python package for use in analysis pipelines:
         </p>
-        <pre style={codeBlock}>{`pip install -e "backend/ingest[scattering]"
+        <pre style={codeBlock}>{`pip install vikshep-compute
 
+from pathlib import Path
 from vikshep_compute import verify_certificate
-result = verify_certificate("result.certificate.json", inputs_dir="./inputs/")
-print(result.status)  # "VERIFIED" or "MISMATCH"`}</pre>
+report = verify_certificate(Path("result.certificate.json").read_text(), "./inputs/")
+print(report["verified"])   # True when every output OID and the manifest hash match`}</pre>
       </section>
 
       {/* Run the verifier */}
@@ -194,24 +201,27 @@ print(result.status)  # "VERIFIED" or "MISMATCH"`}</pre>
         <p style={{ ...mono, fontSize: 11, textTransform: "uppercase", letterSpacing: "0.14em", color: "var(--ink-mute)", marginTop: 20, marginBottom: 4 }}>
           Successful output
         </p>
-        <pre style={codeBlock}>{`VERIFIED  output OIDs match (12 / 12)
-Tier-1 computations: 12  backend: cpu-rust  numerics_version: 3
-Certificate signed by: vsk_key_abc123  (Ed25519 — key not in trust store; signature valid)`}</pre>
+        <pre style={codeBlock}>{`  output coefficients: f4fa73ec81863e857a287b8e00e9 OK
+  manifest_hash: OK
+VERIFIED`}</pre>
         <p style={{ ...mono, fontSize: 11, textTransform: "uppercase", letterSpacing: "0.14em", color: "var(--ink-mute)", marginTop: 20, marginBottom: 4 }}>
           Mismatch output (tampered or different version)
         </p>
-        <pre style={codeBlock}>{`MISMATCH  1 of 12 output OIDs differ
-
-OID     expected                      got
-s1_0    a3f9c2b1d4e5f6a7b8c9d0e1f2a3  7b2c4e6f8a0b2d4e6f8a0b2d4e6f8a0b
-
-Tier-1 computations: 12  backend: cpu-rust  numerics_version: 3`}</pre>
+        <pre style={codeBlock}>{`  output coefficients: expected f4fa73ec81863e857a287b8e00e9 got <28 hex>  MISMATCH
+  manifest_hash: OK
+MISMATCH`}</pre>
+        <p style={note}>
+          The exit code is 0 for VERIFIED and 1 for MISMATCH. An input file whose content
+          does not have the OID the certificate records is reported before any comparison
+          (<code style={mono}>verify: input OID mismatch: ...</code>, exit 1).
+        </p>
         <p style={note}>
           A MISMATCH does not necessarily mean fraud — it may indicate a different engine
           version or a different numerics version. Check the{" "}
           <code style={mono}>numerics_version</code> field in the certificate against the
-          version the verifier reports. If the versions match and you still get a MISMATCH,
-          contact the result author.
+          verifier&apos;s (<code style={mono}>vikshep_compute.NUMERICS_VERSION</code>, or the
+          vikshep-compute release it came from). If the versions match and you still get a
+          MISMATCH, contact the result author.
         </p>
       </section>
 

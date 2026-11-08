@@ -256,8 +256,8 @@ export default function DownloadPage() {
           <p style={{ ...prose, marginBottom: 24 }}>
             The open-source CLI (<code style={mono}>vikshep-ingest</code>,{" "}
             <code style={mono}>vikshep-recipe</code>) and the open deterministic core
-            (vikshep-compute) are available today from GitHub under AGPL-3.0 and MIT
-            respectively. No GPU required. No account needed.
+            (vikshep-compute) are on PyPI, both under AGPL-3.0. No GPU required. No
+            account needed.
           </p>
           <div style={{
             padding: "20px 24px",
@@ -266,9 +266,8 @@ export default function DownloadPage() {
             maxWidth: 580,
             marginBottom: 24,
           }}>
-            <pre style={{ ...mono, lineHeight: 1.7, color: "var(--ink)", margin: 0 }}>{`git clone https://github.com/samvardhan03/Vikshep.git
-cd Vikshep
-pip install -e backend/ingest`}</pre>
+            <pre style={{ ...mono, lineHeight: 1.7, color: "var(--ink)", margin: 0 }}>{`pip install vikshep-ingest
+# with the vikshep-sim reader: pip install "vikshep-ingest[sim]"`}</pre>
           </div>
           <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
             <a

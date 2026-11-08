@@ -184,8 +184,7 @@ export default function BriefPage() {
             color: "var(--ink)",
             overflowX: "auto",
             marginBottom: 16,
-          }}>{`git clone https://github.com/samvardhan03/Vikshep && cd Vikshep
-pip install -e backend/ingest
+          }}>{`pip install vikshep-ingest
 
 vikshep-ingest g4 your_output.csv --schema komal_v1
 vikshep-recipe tag --features manifest.json --label is_signal --protect mass --lambda 1.0`}</pre>
