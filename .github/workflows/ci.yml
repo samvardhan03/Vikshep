@@ -24,21 +24,6 @@ jobs:
         working-directory: agent
         run: bunx tsc --noEmit
 
-  site:
-    name: Site build (bun run build)
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
-      - name: Install dependencies
-        working-directory: site
-        run: bun install --frozen-lockfile
-      - name: Build site
-        working-directory: site
-        run: bun run build
-
   python:
     name: Python tests without the open core (aggregates fallback)
     runs-on: ubuntu-latest

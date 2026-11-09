@@ -13,12 +13,13 @@ answer.
 - `agent/` — TypeScript/Bun MCP orchestrator and declarative recipes.
 - `contract/` — the frozen seam (OID, MCP schemas, WS preview).
 - `bench/` — benchmark harness.
-- `site/` — Next.js site; `web/` — preview dashboard.
+- `web/` — preview dashboard. (The website, vikshep.vercel.app, lives in a
+  separate repository.)
 - `examples/` — quickstart and sample data.
 
-The scattering transform itself is not in this repository. It is being built
-in the open deterministic core (`samvardhan03/vikshep-compute`, in
-development); see "Engine status" in the README.
+The scattering transform itself is not in this repository. It is computed by
+the open deterministic core, `samvardhan03/vikshep-compute`, which
+`pip install vikshep-ingest` installs from PyPI.
 
 ## Development setup
 
