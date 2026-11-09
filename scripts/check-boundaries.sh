@@ -80,7 +80,7 @@ ATTR_HITS=$(
        --exclude-dir=__pycache__ \
        --exclude-dir=target \
        --exclude-dir=.git \
-       agent backend contract scripts site web 2>/dev/null \
+       agent backend contract scripts web 2>/dev/null \
   || true
 )
 if [ -n "$ATTR_HITS" ]; then
@@ -106,7 +106,7 @@ LEAKAGE_HITS=$(
        --exclude="*.lock" \
        --exclude="*.map" \
        --exclude="check-boundaries.sh" \
-       agent backend contract site web bench examples 2>/dev/null \
+       agent backend contract web bench examples 2>/dev/null \
   || true
 )
 if [ -n "$LEAKAGE_HITS" ]; then
@@ -138,7 +138,7 @@ echo "[check] 7. No omnipulse-mcp in install instructions…"
 # docs/ is a private untracked directory (strategy docs); excluded from this check.
 OMNI_HITS=$(
   grep -RnE 'omnipulse-mcp' \
-       README.md examples/ site/ \
+       README.md examples/ \
        --include="*.md" --include="*.html" --include="*.tsx" --include="*.ts" \
        --exclude-dir=node_modules --exclude-dir=.next \
        2>/dev/null | grep -v '^Binary: ' || true
@@ -158,7 +158,7 @@ fi
 echo "[check] 8. No GPU performance numbers in docs…"
 GPU_HITS=$(
   grep -RniE 'GPU[^a-zA-Z].{0,60}[0-9]+\s*(ms|s|FPS|tok|M[Bb]/s|GB/s|TFLOP)' \
-       README.md examples/ site/ \
+       README.md examples/ \
        --include="*.md" --include="*.html" --include="*.tsx" \
        --exclude-dir=node_modules --exclude-dir=.next \
        2>/dev/null || true

@@ -2,7 +2,7 @@
 
 **Deterministic feature extraction for physics. Nothing learned, nothing leaked.**
 
-[![PyPI — vikshep](https://img.shields.io/pypi/v/vikshep.svg?label=vikshep&color=1B1B1F)](https://pypi.org/project/vikshep/)
+[![PyPI — vikshep-ingest](https://img.shields.io/pypi/v/vikshep-ingest.svg?label=vikshep-ingest&color=1B1B1F)](https://pypi.org/project/vikshep-ingest/)
 [![License: AGPL-3.0 + Commercial](https://img.shields.io/badge/license-AGPL--3.0%2BCommercial-1B1B1F.svg)](LICENSING.md)
 [![Built with](https://img.shields.io/badge/built%20with-TypeScript%20%7C%20Rust%20%7C%20C%2B%2B%2FCUDA-1B1B1F.svg)]()
 [![Site](https://img.shields.io/badge/site-vikshep.vercel.app-1B1B1F.svg)](https://vikshep.vercel.app)
@@ -95,7 +95,6 @@ binaries; no engine binary has been released yet.
 | `backend/ingest/` — G4 and Well data loaders | MCP data plane binary (`vikshep-mcp`) | Wheel packaging (`vikshep`) |
 | `bench/` — benchmark harness | Provenance manifests (VDS-1) | Pilot data |
 | `examples/` — quickstart and sample data | Conformance suite (VDS-1) | |
-| `site/` — marketing site | | |
 
 See [LICENSING.md](LICENSING.md) for terms.
 
@@ -111,7 +110,6 @@ See [LICENSING.md](LICENSING.md) for terms.
 │  web/            React preview dashboard                       │
 │  contract/       frozen seam: OID · MCP · WS preview          │
 │  backend/ingest/ Python G4 loader + CLI recipes               │
-│  site/           Next.js marketing site                        │
 │                                                                │
 └───────────────────────┬────────────────────────────────────────┘
                         │  28-hex shm OID  ·  JSON-RPC 2.0

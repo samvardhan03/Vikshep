@@ -7,7 +7,6 @@
 - [ ] `pytest backend/ingest` passes (g4, disco, well, bench suites)
 - [ ] `bun test` in `agent/` passes
 - [ ] `bunx tsc --noEmit` in `agent/` passes
-- [ ] `bun run build` in `site/` passes
 - [ ] `bash scripts/check-boundaries.sh` passes (including leakage checks 5 and 6)
 
 ## Boundary checklist
