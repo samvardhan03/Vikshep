@@ -1,4 +1,4 @@
-export const metadata = { title: "Determinism — Vikshep" };
+export const metadata = { title: "Determinism" };
 
 const wrap: React.CSSProperties = {
   maxWidth: 1280,

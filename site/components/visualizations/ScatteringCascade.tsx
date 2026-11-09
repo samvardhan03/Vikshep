@@ -122,6 +122,9 @@ export default function ScatteringCascade() {
     <div style={{ overflowX: "auto" }}>
       <div
         style={{
+          // Contains the absolutely positioned arrows, so they scroll with the
+          // panels instead of widening the page.
+          position: "relative",
           display: "flex",
           alignItems: "flex-end",
           gap: 24,

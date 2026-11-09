@@ -63,6 +63,7 @@ const FOUNDERS = [
     focus: "Concurrent systems, optimal transport, real-time indexing logic.",
     sectionLabel: "Maintains" as const,
     items: [
+      { label: "vikshep-sim", note: "Geant4 simulation runner (open)", href: "https://github.com/elli0t-yash/vikshep-sim" },
       { label: "vector-index", note: "Concurrent HNSW", href: "https://crates.io/crates/vector-index" },
       { label: "sliced-wasserstein", note: "SW₁ distance metric for HNSW", href: "https://crates.io/crates/sliced-wasserstein" },
     ],
@@ -100,6 +101,19 @@ vikshep-recipe calibrate --features manifest.json --target true_energy
 # 4. Tag particles, decorrelated from energy (DisCo)
 vikshep-recipe tag --features manifest.json \\
   --label is_signal --protect true_energy --weights weight --lambda 1.0`;
+
+// Printed by steps 3 and 4 of QUICKSTART with vikshep-ingest 0.4.0 from PyPI,
+// on the 1000-event synthetic sample (examples/g4_quickstart).
+const QUICKSTART_OUTPUT = `vikshep-recipe calibrate
+  feature_set  : scattering
+  target       : true_energy
+  R^2          : 0.5589
+
+vikshep-recipe tag
+  feature_set       : scattering
+  AUC               : 0.9743
+  dCorr^2           : 0.0182  (lower = better decorrelation)
+  training_gradient : exact_weighted`;
 
 // ─────────────────────────────────────────────────────────────────
 export default function Home() {
@@ -191,7 +205,7 @@ export default function Home() {
             Deterministic features. Closed-form decorrelation. Reusable across every scientific domain.
           </h2>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(280px,1fr))", gap: 1, backgroundColor: "var(--rule)" }}>
-            <div style={{ padding: 28, backgroundColor: "var(--bg)", display: "flex", flexDirection: "column", gap: 12 }}>
+            <div style={{ padding: 28, backgroundColor: "var(--bg)", display: "flex", flexDirection: "column", gap: 12, minWidth: 0 }}>
               <span style={{ fontSize: 28, color: "var(--accent)", fontFamily: "var(--font-serif), Georgia, serif" }}>ψ</span>
               <h3 style={{ fontFamily: "var(--font-serif), Georgia, serif", fontWeight: 300, fontSize: 20, color: "var(--ink)", lineHeight: 1.25 }}>
                 Deterministic feature extraction
@@ -202,7 +216,7 @@ export default function Home() {
               </p>
               <ScatteringCascade />
             </div>
-            <div style={{ padding: 28, backgroundColor: "var(--bg)", display: "flex", flexDirection: "column", gap: 12 }}>
+            <div style={{ padding: 28, backgroundColor: "var(--bg)", display: "flex", flexDirection: "column", gap: 12, minWidth: 0 }}>
               <span style={{ fontSize: 28, color: "var(--accent)", fontFamily: "var(--font-serif), Georgia, serif" }}>⟂</span>
               <h3 style={{ fontFamily: "var(--font-serif), Georgia, serif", fontWeight: 300, fontSize: 20, color: "var(--ink)", lineHeight: 1.25 }}>
                 Mathematical decorrelation
@@ -214,7 +228,7 @@ export default function Home() {
               </p>
               <R2Invariance />
             </div>
-            <div style={{ padding: 28, backgroundColor: "var(--bg)", display: "flex", flexDirection: "column", gap: 12 }}>
+            <div style={{ padding: 28, backgroundColor: "var(--bg)", display: "flex", flexDirection: "column", gap: 12, minWidth: 0 }}>
               <span style={{ fontSize: 28, color: "var(--accent)", fontFamily: "var(--font-serif), Georgia, serif" }}>⊗</span>
               <h3 style={{ fontFamily: "var(--font-serif), Georgia, serif", fontWeight: 300, fontSize: 20, color: "var(--ink)", lineHeight: 1.25 }}>
                 One engine, every dimension
@@ -266,8 +280,11 @@ export default function Home() {
           <p style={{ ...eyebrow, marginBottom: 16 }}>Three recipes, one engine</p>
           <h2 style={{ ...sectionH2, marginBottom: 12 }}>Drop in a pipeline. Or write your own.</h2>
           <p style={{ fontSize: 15, lineHeight: 1.6, color: "var(--ink-mute)", maxWidth: 640, marginBottom: 40 }}>
-            The scattering steps in these recipes run on the open deterministic core, which is in development.
-            Available today: Geant4 ingest, calibration, and DisCo-penalised tagging on per-event aggregates.{" "}
+            HEP tagging runs today from the command line:{" "}
+            <code style={{ fontFamily: "var(--font-jetbrains), monospace" }}>vikshep-recipe tag</code> computes
+            scattering features with the open core and trains the classifier with the exact weighted DisCo gradient.
+            The anomaly and feature-extraction recipes are agent pipelines; their scattering and anomaly tools ship
+            in vikshep-mcp, and the agent that chains them is not packaged yet.{" "}
             <a href="/docs#engine-status" style={{ color: "var(--ink)" }}>Engine status →</a>
           </p>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(280px,1fr))", gap: 16 }}>
@@ -275,8 +292,8 @@ export default function Home() {
               number="01"
               title="HEP Tagging (DisCo)"
               tagline="Mass-decorrelated boosted-object tagging."
-              body="Ingest jet constituents or calorimeter images, extract r₂ substructure features via 2-D oriented scattering, train the classifier under a distance-correlation penalty on the resonance mass. Background shape preserved; tagging efficiency competitive with the best learned taggers."
-              command={`bun run main.ts process --request "tag jets, decorrelate mass"`}
+              body="Ingest jet constituents or calorimeter images, extract r₂ substructure features via 2-D oriented scattering, train the classifier under a distance-correlation penalty on the resonance mass. The benchmark harness reports AUC and mass sculpting (JSD) against your own baseline."
+              command={`vikshep-recipe tag --features manifest.json --label is_signal --protect m_jj`}
               href="/recipes/hep-tagging"
             />
             <RecipeCard
@@ -299,9 +316,9 @@ export default function Home() {
             <RecipeCard
               number="04"
               title="Fast-Sim Validation"
-              tagline="Preview · Q3 2026"
+              tagline="Preview"
               body="A principled fidelity metric for ML-generated Geant4 surrogates — Wasserstein distance between scattering distributions of generated vs full-simulation showers. Decomposable by scale and orientation."
-              command="Coming Q3 — Talk to founders →"
+              command="Interested? Talk to founders →"
               href="mailto:shekhawatsamvardhan@gmail.com?subject=Fast-sim%20validation"
               preview
             />
@@ -326,7 +343,8 @@ export default function Home() {
             maxWidth: 520,
           }}>
             The agent, contract, loaders, recipes, and site are open under AGPL-3.0 (this repo).
-            The GPU engine ships as binaries — free for research; commercial use requires a license.
+            So is the CPU core, vikshep-compute. The GPU engine is proprietary and not yet released; it will
+            ship in Studio and the hosted Lab plan.
             {" "}<a href="https://github.com/samvardhan03/Vikshep/blob/main/LICENSING.md" style={{ color: "var(--ink)", textDecoration: "underline" }}>LICENSING.md</a>
           </p>
         </div>
@@ -357,12 +375,12 @@ export default function Home() {
               {
                 category: "Cosmology & astrophysics",
                 body: "Rotation-invariant features for weak-lensing maps, CMB patches, and 3-D density fields. Second-order coefficients capture non-Gaussian structure the power spectrum misses.",
-                footer: "SE(2) and SO(3) invariance · GPU-accelerated",
+                footer: "SE(2) and SO(3) invariance",
               },
               {
                 category: "Simulation science",
                 body: "Solid-harmonic scattering for SO(3)-covariant features of plasma, nuclear, and hydrodynamics fields. Runtime (Dim, Group) config — no rebuild per domain.",
-                footer: "ROOT, HDF5, VTK loaders · no model retraining",
+                footer: "ROOT, HDF5 and The Well loaders · no model retraining",
               },
             ].map((c) => (
               <div key={c.category} style={{ padding: "24px 20px", backgroundColor: "var(--bg)", display: "flex", flexDirection: "column", gap: 10 }}>
@@ -422,7 +440,8 @@ export default function Home() {
             In partnership with a nuclear-physics researcher at the University of Edinburgh, Vikshep is
             running on Geant4-simulated ATLAS data, replacing a neural-network tagger trained on eight
             high-level kinematic variables. Two numbers will be reported: the significance gain (Δσ) over
-            the NN baseline, and the reduction in background mass-shape distortion (ΔJSD). Results: Q1 2026.
+            the NN baseline, and the reduction in background mass-shape distortion (ΔJSD). They will be posted on
+            the pilot page when the analysis is complete.
           </p>
           <a href="/pilot" style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 13, color: "var(--ink)", textDecoration: "none" }}>
             Pilot details →
@@ -436,8 +455,11 @@ export default function Home() {
           <p style={{ ...eyebrow, marginBottom: 16 }}>Get started</p>
           <h2 style={{ ...sectionH2, maxWidth: 640, marginBottom: 16 }}>From Geant4 output to physics answer.</h2>
           <p style={{ fontSize: 15, lineHeight: 1.6, color: "var(--ink-mute)", maxWidth: 580, marginBottom: 32 }}>
-            Four commands from a Geant4 CSV export to calibrated, mass-decorrelated tagger features.
-            No GPU required: <code style={{ fontFamily: "var(--font-jetbrains), monospace" }}>pip install vikshep-ingest</code>.
+            Four commands from a Geant4 CSV export to calibrated, mass-decorrelated tagger features. No GPU
+            and no Rust toolchain: <code style={{ fontFamily: "var(--font-jetbrains), monospace" }}>pip install vikshep-ingest</code>{" "}
+            brings the open core as a prebuilt wheel (Python 3.10+, Linux and macOS; Windows through WSL2).
+            No Geant4 output yet?{" "}
+            <a href="/docs/simulate" style={{ color: "var(--ink)" }}>Simulate events with vikshep-sim →</a>
           </p>
 
           {/* Loaders table */}
@@ -458,9 +480,10 @@ export default function Home() {
               <tbody>
                 {[
                   ["Geant4 CSV", "vikshep-ingest g4", "komal_v1 · generic (--column-map)"],
-                  ["Well HDF5", "vikshep-ingest well slice", "t0/t1/t2 fields · periodic/wall BCs"],
-                  ["ROOT TTree", "pilot harness (C++/CUDA)", "ATLAS analysis framework output"],
-                  ["NumPy / HDF5", "python (direct)", "pre-extracted arrays"],
+                  ["vikshep-sim runs", "vikshep-ingest sim", "hits.arrow · pip install \"vikshep-ingest[sim]\""],
+                  ["The Well HDF5", "Python: WellAdapter", "periodic / wall boundary conditions"],
+                  ["ROOT TTree", "Python: root-uproot loader", ".root files through uproot"],
+                  ["HDF5 / NumPy", "Python: hdf5 loader", "pre-extracted arrays"],
                 ].map(([fmt, loader, notes], i) => (
                   <tr key={i} style={{ borderBottom: "1px solid var(--rule)" }}>
                     <td style={{ padding: "10px 14px", color: "var(--ink)", fontWeight: 600 }}>{fmt}</td>
@@ -476,6 +499,18 @@ export default function Home() {
               {QUICKSTART}
             </pre>
           </div>
+          <p style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 11, textTransform: "uppercase", letterSpacing: "0.14em", color: "var(--ink-mute)", marginBottom: 12 }}>
+            What you will see
+          </p>
+          <div style={{ maxWidth: 640, padding: 24, backgroundColor: "var(--bg)", border: "1px solid var(--rule)", marginBottom: 12 }}>
+            <pre style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 13, lineHeight: 1.7, color: "var(--ink-mute)", overflowX: "auto", margin: 0 }}>
+              {QUICKSTART_OUTPUT}
+            </pre>
+          </div>
+          <p style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 11, color: "var(--ink-mute)", lineHeight: 1.6, maxWidth: 640, marginBottom: 24 }}>
+            Measured with vikshep-ingest 0.4.0 from PyPI on the 1000-event synthetic sample. The same inputs give
+            the same bytes on Linux and macOS; CI compares the hashes.
+          </p>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 16 }}>
             <a
               href="https://github.com/samvardhan03/Vikshep"
@@ -503,7 +538,7 @@ export default function Home() {
             <div style={{ padding: "40px 32px", backgroundColor: "var(--bg)", display: "flex", flexDirection: "column", gap: 16 }}>
               <h3 style={{ fontFamily: "var(--font-serif), Georgia, serif", fontWeight: 300, fontSize: 22, color: "var(--ink)", lineHeight: 1.2 }}>Run it yourself</h3>
               <p style={{ fontSize: 14, lineHeight: 1.6, color: "var(--ink-mute)" }}>
-                AGPL-3.0. Open-source. GPU-accelerated binary wheels on PyPI. Works on your hardware, in your facility.
+                AGPL-3.0. Open-source. Prebuilt wheels on PyPI; no GPU needed. Works on your hardware, in your facility.
               </p>
               <a
                 href="https://github.com/samvardhan03/Vikshep"

@@ -67,22 +67,24 @@ export default function RecipesPage() {
         Recipes are declarative pipelines — a fixed sequence of ingest, feature,
         and (optionally) classify steps. CLI recipes are executable Python
         scripts installed as console scripts and are available now; they train on
-        the per-event aggregates in the manifest. Agent recipes are MCP tool
-        sequences whose scatter and reduce steps run on the open deterministic
-        scattering core, which is in development.
+        wavelet scattering features computed by the open core (or on the per-event
+        aggregates in the manifest, with --feature-set aggregates). Agent recipes are
+        MCP tool sequences; their scatter, reduce and anomaly tools ship in
+        vikshep-mcp, and the agent that chains them is not packaged yet.
       </p>
 
       {/* CLI recipes */}
       <section style={{ borderBottom: "1px solid var(--rule)", paddingBottom: 32, marginBottom: 0 }}>
         <h2 style={{ ...h2Style, marginTop: 0 }}>vikshep-recipe calibrate</h2>
         <p style={prose}>
-          Fits a ridge-regularised linear regression from aggregate features to a
-          target scalar.
+          Fits a ridge-regularised linear regression from scattering (or aggregate)
+          features to a target scalar.
           Useful for detector calibration and response correction.
         </p>
         <pre style={codeBlock}>{`vikshep-recipe calibrate \\
   --features <manifest.json>   # required: path to the ingest manifest
   --target   <column_name>     # required: aggregate or event column to predict
+  --feature-set <set>          # optional: auto | scattering | aggregates | both
   --out      <dir>             # optional: default = manifest directory`}</pre>
         <div style={{ overflowX: "auto", marginTop: 16 }}>
           <table style={{ width: "100%", borderCollapse: "collapse", fontFamily: "var(--font-jetbrains), monospace", fontSize: 13 }}>
@@ -97,6 +99,7 @@ export default function RecipesPage() {
               {[
                 ["--features", "Yes", "Path to manifest.json from vikshep-ingest"],
                 ["--target", "Yes", "Aggregate or event column to regress against (never a feature)"],
+                ["--feature-set", "No", "auto (default: scattering when vikshep-compute is installed, else aggregates), scattering, aggregates or both"],
                 ["--out", "No", "Output directory for calibrate_report.json (default: manifest directory)"],
               ].map(([flag, req, desc], i) => (
                 <tr key={i} style={{ borderBottom: "1px solid var(--rule)" }}>
@@ -111,15 +114,16 @@ export default function RecipesPage() {
 
         <h2 style={h2Style}>vikshep-recipe tag</h2>
         <p style={prose}>
-          Trains a logistic classifier on aggregate features with a weighted DisCo
+          Trains a logistic classifier on scattering features with a weighted DisCo
           penalty on the dependence between the score and the{" "}
           <code style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 13 }}>--protect</code>{" "}
-          variable on background events, to suppress mass sculpting. Training uses
-          a Pearson-correlation proxy for the penalty gradient; the dCorr² in the
-          report is the exact weighted value, evaluated once after training. The
-          report records both as{" "}
-          <code style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 13 }}>training_gradient: &quot;pearson_proxy&quot;</code>{" "}
-          and{" "}
+          variable on background events, to suppress mass sculpting. With the open
+          core installed (the default), training uses the exact weighted dCorr²
+          gradient and the report records{" "}
+          <code style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 13 }}>training_gradient: &quot;exact_weighted&quot;</code>.
+          On the aggregates fallback it uses a Pearson-correlation proxy and records{" "}
+          <code style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 13 }}>&quot;pearson_proxy&quot;</code>.
+          Either way the reported dCorr² is the exact weighted value,{" "}
           <code style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 13 }}>reported_dcorr2: &quot;exact_weighted&quot;</code>.
         </p>
         <pre style={codeBlock}>{`vikshep-recipe tag \\
@@ -128,6 +132,7 @@ export default function RecipesPage() {
   --protect  <column_name>     # required: variable to decorrelate from
   --weights  <column_name>     # optional: per-event weights
   --lambda   <float>           # optional: DisCo penalty (default 1.0)
+  --feature-set <set>          # optional: auto | scattering | aggregates | both
   --out      <dir>             # optional: default = manifest directory`}</pre>
         <div style={{ overflowX: "auto", marginTop: 16 }}>
           <table style={{ width: "100%", borderCollapse: "collapse", fontFamily: "var(--font-jetbrains), monospace", fontSize: 13 }}>
@@ -145,6 +150,7 @@ export default function RecipesPage() {
                 ["--protect", "Yes", "Column whose dependence on the score is penalised"],
                 ["--weights", "No", "Per-event weight column (default: uniform)"],
                 ["--lambda", "No", "DisCo penalty weight (0 = off, default 1.0, >1 = stricter)"],
+                ["--feature-set", "No", "auto (default: scattering when vikshep-compute is installed, else aggregates), scattering, aggregates or both"],
                 ["--out", "No", "Output directory for tag_report.json (default: manifest directory)"],
               ].map(([flag, req, desc], i) => (
                 <tr key={i} style={{ borderBottom: "1px solid var(--rule)" }}>
@@ -210,8 +216,9 @@ export default function RecipesPage() {
           Agent recipes are declarative MCP tool sequences defined in{" "}
           <code style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 13 }}>agent/src/recipes/</code>.
           They run through the TypeScript/Bun MCP orchestrator (async streaming,
-          provenance logging) and call the scatter and reduce tools, so they need
-          the open deterministic scattering core, which is in development.
+          provenance logging) and call the scatter and reduce tools of vikshep-mcp,
+          the open data-plane binary in the vikshep-compute release archives. The
+          agent itself is not packaged yet; it lives in agent/ in this repository.
         </p>
         <div style={{ overflowX: "auto", marginTop: 16 }}>
           <table style={{ width: "100%", borderCollapse: "collapse", fontFamily: "var(--font-jetbrains), monospace", fontSize: 13 }}>

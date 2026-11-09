@@ -110,7 +110,7 @@ vikshep-recipe --help
 python -c "import vikshep_compute as vc; print(vc.conformance_selftest('quick')['failed'])"   # 0`}</pre>
         <p style={prose}>
           The sample used by the quickstart is in the repository:{" "}
-          <code style={code}>curl -LO https://raw.githubusercontent.com/samvardhan03/Vikshep/main/examples/g4_quickstart/sample.csv</code>
+          <code style={{ ...code, overflowWrap: "anywhere" }}>curl -LO https://raw.githubusercontent.com/samvardhan03/Vikshep/main/examples/g4_quickstart/sample.csv</code>
         </p>
       </section>
 

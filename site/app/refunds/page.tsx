@@ -1,4 +1,4 @@
-export const metadata = { title: "Refund Policy — Vikshep" };
+export const metadata = { title: "Refund Policy" };
 
 const eyebrow: React.CSSProperties = {
   fontFamily: "var(--font-jetbrains), monospace",

@@ -1,4 +1,4 @@
-export const metadata = { title: "Studio — Vikshep" };
+export const metadata = { title: "Studio" };
 
 const wrap: React.CSSProperties = {
   maxWidth: 1280,

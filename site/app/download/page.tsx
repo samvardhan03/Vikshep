@@ -1,4 +1,4 @@
-export const metadata = { title: "Download — Vikshep" };
+export const metadata = { title: "Download" };
 
 const APP_BASE = process.env.NEXT_PUBLIC_VIKSHEP_API_BASE ?? null;
 
@@ -266,7 +266,7 @@ export default function DownloadPage() {
             maxWidth: 580,
             marginBottom: 24,
           }}>
-            <pre style={{ ...mono, lineHeight: 1.7, color: "var(--ink)", margin: 0 }}>{`pip install vikshep-ingest
+            <pre style={{ ...mono, lineHeight: 1.7, color: "var(--ink)", margin: 0, overflowX: "auto" }}>{`pip install vikshep-ingest
 # with the vikshep-sim reader: pip install "vikshep-ingest[sim]"`}</pre>
           </div>
           <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
