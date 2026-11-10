@@ -13,6 +13,14 @@ NOTE on significance path: Asimov significance is S/sqrt(B+1) after a score
 cut.  This is NOT the Wilks delta-chi-squared likelihood-ratio significance.
 All Delta-sigma values in the report are labeled "Asimov proxy significance".
 
+Held-out scores: every metric (AUC, dCorr^2, Asimov significance, JSD) is
+computed on out-of-fold scores from seeded K-fold cross-validation stratified
+by label (default 5 folds; vikshep_ingest.heldout, scheme vikshep.kfold/1):
+each event is scored by a model that never saw it, as VDS-1 section 17.7
+requires of the benchmark ("train on the training set, score the evaluation
+set").  The frontier also lists the training (in-sample) AUC and dCorr^2,
+labelled as such, to show the gap.
+
 Statistics backend: when vikshep_compute is installed (see
 backend/ingest[scattering]), the harness uses vc.dcorr2_w (exact weighted
 dCorr^2) and vc.train_tag (Adam, exact gradient) for all metrics.  When it
@@ -31,6 +39,8 @@ from pathlib import Path
 
 import numpy as np
 from scipy.spatial.distance import jensenshannon
+
+from vikshep_ingest import heldout
 
 try:
     import vikshep_compute as vc
@@ -66,55 +76,6 @@ def _jsd_bins(a: np.ndarray, b: np.ndarray, n_bins: int = 30) -> float:
     return float(jensenshannon(ha, hb))
 
 
-def _dcorr2(scores: np.ndarray, protect: np.ndarray, weights: np.ndarray) -> float:
-    """Exact weighted dCorr^2 via vikshep_compute when available, else disco."""
-    if _VC_AVAILABLE:
-        return float(vc.dcorr2_w(
-            scores.astype(np.float64),
-            protect.astype(np.float64),
-            weights.astype(np.float64),
-        ))
-    from vikshep_ingest.disco import weighted_dcorr2
-    return weighted_dcorr2(scores, protect, weights)
-
-
-def _train_tag_fn(X, labels, protect, weights, lam, seed=42):
-    """Train a tag head; uses vikshep_compute (exact gradient) when available."""
-    if _VC_AVAILABLE:
-        bin_labels = labels.astype(np.float64)
-        if not np.all(np.isin(np.unique(labels), [0, 1, 0.0, 1.0])):
-            bin_labels = (labels != 0).astype(np.float64)
-        model = vc.train_tag(
-            X.astype(np.float64),
-            bin_labels,
-            w=weights.astype(np.float64),
-            m=protect.astype(np.float64),
-            lam=lam,
-            gradient="exact",
-            seed=seed,
-        )
-        scores = model.predict(X.astype(np.float64))
-        bkg = labels == 0
-        dc2 = 0.0
-        if bkg.sum() >= 4:
-            dc2 = _dcorr2(scores[bkg], protect[bkg], weights[bkg])
-        try:
-            from sklearn.metrics import roc_auc_score
-            auc = float(roc_auc_score(bin_labels.astype(int), scores))
-        except Exception:
-            auc = float("nan")
-        predict = lambda Xnew: model.predict(np.asarray(Xnew, dtype=np.float64))
-        return {"auc": auc, "dcorr2_final": dc2, "predict": predict}
-    from vikshep_ingest.cli._train import train_tag
-    return train_tag(
-        X.astype(np.float32),
-        labels.astype(np.float32),
-        protect.astype(np.float32),
-        weights.astype(np.float32),
-        lam=lam,
-    )
-
-
 # ---------------------------------------------------------------------------
 # Main harness
 # ---------------------------------------------------------------------------
@@ -128,6 +89,7 @@ def run(
     threshold:   float = 0.5,
     seed:        int   = 42,
     out_dir:     str | Path | None = None,
+    folds:       int   = heldout.DEFAULT_FOLDS,
 ) -> dict:
     """Run the full benchmark harness on a manifest.
 
@@ -139,8 +101,9 @@ def run(
     weights_col   : aggregate column name for event weights (optional).
     lambdas       : DisCo lambda grid (default [0.0, 0.1, 1.0, 10.0]).
     threshold     : score cut for significance and JSD metrics.
-    seed          : random seed for reproducibility.
+    seed          : seed of the fold assignment and of training.
     out_dir       : write report.json + report.md here.
+    folds         : cross-validation folds for the held-out scores.
 
     Returns
     -------
@@ -148,8 +111,6 @@ def run(
     """
     if lambdas is None:
         lambdas = [0.0, 0.1, 1.0, 10.0]
-
-    rng = np.random.default_rng(seed)
 
     manifest = _load_manifest(manifest_path)
     aggregates = manifest.get("aggregates", [])
@@ -178,21 +139,29 @@ def run(
     protect = _col(protect_col)
     weights = _col(weights_col) if weights_col else np.ones(N, dtype=np.float32)
 
-    # Baseline: lambda = 0 (no decorrelation)
-    res0 = _train_tag_fn(X, labels, protect, weights, lam=0.0, seed=seed)
-    sc0  = res0["predict"](X)
-    sigma_baseline = _asimov_sigma(sc0, labels, threshold)
+    backend = "core" if _VC_AVAILABLE else "python"
+    fits: dict[float, dict] = {}
+
+    def _fit(lam: float) -> dict:
+        if lam not in fits:
+            fits[lam] = heldout.tag(X, labels, protect, weights, lam=lam, backend=backend,
+                                    folds=folds, seed=seed)
+        return fits[lam]
 
     bkg = labels == 0
     bkg_protect = protect[bkg]
+
+    # Baseline: lambda = 0 (no decorrelation), out-of-fold scores
+    sc0 = _fit(0.0)["heldout"]["scores"]
+    sigma_baseline = _asimov_sigma(sc0, labels, threshold)
     jsd_baseline = _jsd_bins(bkg_protect, bkg_protect[sc0[bkg] > threshold]) \
         if (sc0[bkg] > threshold).sum() >= 2 else float("nan")
 
     # Sweep lambda
     frontier: list[dict] = []
     for lam in lambdas:
-        res = _train_tag_fn(X, labels, protect, weights, lam=lam, seed=seed)
-        sc  = res["predict"](X)
+        res = _fit(lam)
+        sc  = res["heldout"]["scores"]
         sigma = _asimov_sigma(sc, labels, threshold)
         jsd_after = _jsd_bins(bkg_protect, bkg_protect[sc[bkg] > threshold]) \
             if (sc[bkg] > threshold).sum() >= 2 else float("nan")
@@ -201,17 +170,18 @@ def run(
         delta_jsd   = (jsd_baseline - jsd_after) if not np.isnan(jsd_after) else float("nan")
 
         frontier.append({
-            "lambda":       lam,
-            "auc":          res["auc"],
-            "dcorr2":       res["dcorr2_final"],
-            "sigma_asimov": sigma,
-            "jsd":          jsd_after,
-            "delta_sigma":  delta_sigma,
-            "delta_jsd":    delta_jsd,
+            "lambda":         lam,
+            "auc_heldout":    res["heldout"]["auc"],
+            "dcorr2_heldout": res["heldout"]["dcorr2"],
+            "auc_train":      res["train"]["auc"],
+            "dcorr2_train":   res["train"]["dcorr2"],
+            "sigma_asimov":   sigma,
+            "jsd":            jsd_after,
+            "delta_sigma":    delta_sigma,
+            "delta_jsd":      delta_jsd,
         })
 
-    # Best entry by lambda=0 definition
-    baseline_entry = frontier[0]
+    n_train_min = min(r["n_train_min"] for r in fits.values())
 
     result = {
         "manifest":          str(manifest_path),
@@ -221,6 +191,15 @@ def run(
         "seed":              seed,
         "threshold":         threshold,
         "n_events":          N,
+        "n_features":        int(X.shape[1]),
+        "evaluation":        {
+            "method":        "k-fold cross-validation; every metric on pooled out-of-fold scores",
+            "split":         heldout.SPLIT_SCHEME,
+            "folds":         folds,
+            "seed":          seed,
+            "stratified_by": label_col,
+        },
+        "warnings":          heldout.size_warnings(n_train_min, X.shape[1]),
         "sigma_baseline_asimov": sigma_baseline,
         "jsd_baseline":      jsd_baseline,
         "significance_method": "Asimov proxy S/sqrt(B+1) [NOT-WILKS]",
@@ -315,8 +294,15 @@ def _render_md(r: dict) -> str:
         "",
         f"**Manifest**: `{r['manifest']}`",
         f"**Label**: `{r['label_col']}` | **Protected variable**: `{r['protect_col']}`",
-        f"**Events**: {r['n_events']}",
+        f"**Events**: {r['n_events']} | **Features**: {r['n_features']}",
         f"**Significance method**: {r['significance_method']}",
+        f"**Evaluation**: {r['evaluation']['folds']}-fold cross-validation stratified by "
+        f"`{r['evaluation']['stratified_by']}`, seed {r['evaluation']['seed']} "
+        f"({r['evaluation']['split']}); every metric is on out-of-fold scores.",
+        "",
+    ]
+    lines += [f"> WARNING: {w}" for w in r["warnings"]]
+    lines += [
         "",
         "## Baseline (lambda=0, no DisCo)",
         "",
@@ -325,13 +311,13 @@ def _render_md(r: dict) -> str:
         "",
         "## Lambda frontier",
         "",
-        "| lambda | AUC | dCorr^2 | sigma (Asimov) | JSD | Delta-sigma | Delta-JSD |",
-        "|--------|-----|---------|---------------|-----|-------------|-----------|",
+        "| lambda | AUC held-out | dCorr^2 held-out | AUC training | sigma (Asimov) | JSD | Delta-sigma | Delta-JSD |",
+        "|--------|--------------|------------------|--------------|----------------|-----|-------------|-----------|",
     ]
     for e in r["frontier"]:
         lines.append(
-            f"| {e['lambda']:.1f} | {e['auc']:.4f} | {e['dcorr2']:.4f} | "
-            f"{e['sigma_asimov']:.4f} | {_fmt(e['jsd'])} | "
+            f"| {e['lambda']:.1f} | {_fmt(e['auc_heldout'])} | {_fmt(e['dcorr2_heldout'])} | "
+            f"{_fmt(e['auc_train'])} | {e['sigma_asimov']:.4f} | {_fmt(e['jsd'])} | "
             f"{e['delta_sigma']:+.4f} | {_fmt(e['delta_jsd'], sign=True)} |"
         )
     lines += [

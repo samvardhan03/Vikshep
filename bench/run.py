@@ -4,7 +4,10 @@ bench/run.py — CLI entry point for the benchmark harness.
 Usage
 -----
     python -m bench.run --manifest manifest.json --label <col> --protect <col>
-                        [--weights <col>] [--lambdas 0,0.1,1,10] [--seed 42] [--out dir]
+                        [--weights <col>] [--lambdas 0,0.1,1,10] [--seed 42] [--folds 5]
+                        [--out dir]
+
+Every metric is computed on out-of-fold scores (K-fold cross-validation).
 
 Or call the harness programmatically:
     from bench.harness import run
@@ -32,7 +35,10 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--lambdas",   default="0,0.1,1,10",
                    help="Comma-separated lambda grid (default: 0,0.1,1,10).")
     p.add_argument("--threshold", type=float, default=0.5, help="Score cut (default: 0.5).")
-    p.add_argument("--seed",      type=int,   default=42,  help="Random seed (default: 42).")
+    p.add_argument("--seed",      type=int,   default=42,
+                   help="Seed of the fold assignment and of training (default: 42).")
+    p.add_argument("--folds",     type=int,   default=5,
+                   help="Cross-validation folds for the held-out scores (default: 5).")
     p.add_argument("--out",       default=None, help="Output directory for reports.")
 
     args = p.parse_args(argv)
@@ -49,6 +55,7 @@ def main(argv: list[str] | None = None) -> int:
         threshold     = args.threshold,
         seed          = args.seed,
         out_dir       = out_dir,
+        folds         = args.folds,
     )
 
     wc = result["win_condition"]
@@ -56,11 +63,13 @@ def main(argv: list[str] | None = None) -> int:
     print("=" * 56)
     print("  Vikshep Benchmark — results")
     print("=" * 56)
-    print(f"  Events            : {result['n_events']}")
+    print(f"  Events            : {result['n_events']}  ({result['evaluation']['folds']}-fold, out-of-fold scores)")
     print(f"  Baseline sigma    : {result['sigma_baseline_asimov']:.4f}  (Asimov proxy)")
     print(f"  Win condition     : {'YES' if wc['result'] else 'NO'}")
     print(f"  {wc['note']}")
     print("=" * 56)
+    for w in result["warnings"]:
+        print(f"WARNING: {w}", file=sys.stderr)
     return 0
 
 

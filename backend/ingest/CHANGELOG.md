@@ -1,5 +1,38 @@
 # Changelog — vikshep-ingest
 
+## 0.4.1
+
+- **Fix: the recipes reported training-set metrics.** `vikshep-recipe tag` and
+  `calibrate` fit on every event and scored the same events, so the reported
+  AUC, dCorr², R² and residual std measured memorisation. With 217 noise
+  features, a ridge fit to a noise target gives R² 1.0 on 120 events and
+  about 0.2 on 1000; a tagger on random labels gives AUC about 0.9 and 0.75.
+  On the 1000-event quickstart the 0.4.0 numbers were training values:
+  calibrate R² 0.5589 is −1.1343 held out; tag AUC 0.9743 and dCorr² 0.0182 at
+  `--lambda 1` are 0.9496 and 0.0102 held out.
+- **Held-out metrics** from seeded K-fold cross-validation (new
+  `vikshep_ingest.heldout`, fold scheme `vikshep.kfold/1`: events ordered by
+  SHA3-256 of the seed and their index, dealt round-robin into folds,
+  stratified by label for `tag`; no numpy random generator, so the folds are
+  the same on every platform). New options `--folds` (default 5) and `--seed`
+  (default 42, also the training seed, as before). Calibration predictions on
+  held-out events reproduce the core's arithmetic bit for bit, and metric sums
+  are exactly rounded, so the reports stay byte-identical across platforms.
+- **Report fields renamed** so no number can be mistaken for the other kind:
+  tag `auc` and `dcorr2` are now `auc_heldout`, `dcorr2_heldout`, `auc_train`
+  and `dcorr2_train`; calibrate `r2_score` and `residual_std` are now
+  `r2_heldout`, `residual_std_heldout`, `r2_train` and `residual_std_train`.
+  New fields: `evaluation` (method, fold scheme, folds, seed, stratification,
+  per-fold values), `n_features` and `warnings`.
+- **Small-sample warning:** the recipes warn, on stderr and in `warnings`,
+  when the training folds hold fewer than 10 events per feature, and more
+  strongly when they hold no more events than features.
+- An undefined dCorr² (fewer than 4 background events) is now `null`, not 0.
+- The benchmark harness (`python -m bench.run`, repository only) computes
+  AUC, dCorr², the Asimov proxy and JSD on out-of-fold scores, and gains
+  `--folds`.
+- Golden report hashes regenerated.
+
 ## 0.4.0
 
 - **First PyPI release** (`pip install vikshep-ingest`), published by

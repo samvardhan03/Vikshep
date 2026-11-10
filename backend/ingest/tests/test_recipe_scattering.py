@@ -70,8 +70,11 @@ def test_scattering_tag_report_fields():
     assert report["feature_set"]       == "scattering"
     assert report["training_gradient"] == "exact_weighted"
     assert report["reported_dcorr2"]   == "exact_weighted"
-    assert "auc" in report
-    assert "dcorr2" in report
+    for key in ("auc_heldout", "dcorr2_heldout", "auc_train", "dcorr2_train"):
+        assert key in report
+    assert report["evaluation"]["split"] == "vikshep.kfold/1"
+    # 20 events, 16 per training fold, for hundreds of scattering features
+    assert "fit the training events exactly" in report["warnings"][0]
 
 
 def test_scattering_tag_writes_provenance():
@@ -118,8 +121,9 @@ def test_scattering_calibrate_report_fields():
             report = json.load(f)
 
     assert report["feature_set"] == "scattering"
-    assert "r2_score" in report
-    assert "residual_std" in report
+    for key in ("r2_heldout", "residual_std_heldout", "r2_train", "residual_std_train"):
+        assert key in report
+    assert report["n_features"] > report["evaluation"]["per_fold"][0]["n_train"]
 
 
 def test_scattering_features_deterministic():
