@@ -40,6 +40,14 @@ vikshep-recipe tag --features run/manifest.json \
 Every run writes a report and a `provenance.json` (VDS-1 schema) next to its
 outputs, so a result can be reproduced bit for bit.
 
+The reported metrics are held out: `auc_heldout`, `dcorr2_heldout`,
+`r2_heldout` and `residual_std_heldout` come from seeded 5-fold
+cross-validation (`--folds`, `--seed`), so each event is scored by a model fit
+without it. The `*_train` values score a model on its own training events and
+are labelled as such; with many features and few events they approach 1 even
+on noise, and the recipes warn when the training folds hold fewer than 10
+events per feature.
+
 ## Input profiles
 
 | Profile | Rows |

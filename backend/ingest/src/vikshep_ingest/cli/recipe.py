@@ -5,9 +5,22 @@ Usage
 -----
     vikshep-recipe tag       --features manifest.json --label <col> --protect <col>
                               [--weights <col>] [--lambda <float>]
-                              [--feature-set {scattering,aggregates,both}] [--out dir]
+                              [--feature-set {scattering,aggregates,both}]
+                              [--folds K] [--seed S] [--out dir]
     vikshep-recipe calibrate --features manifest.json --target <col>
-                              [--feature-set {scattering,aggregates,both}] [--out dir]
+                              [--feature-set {scattering,aggregates,both}]
+                              [--folds K] [--seed S] [--out dir]
+
+Held-out metrics
+----------------
+The headline metrics (``auc_heldout``, ``dcorr2_heldout``, ``r2_heldout``,
+``residual_std_heldout``) come from seeded K-fold cross-validation (default
+5 folds, seed 42; tag folds are stratified by label): every event is scored
+by a model fit on the other folds.  The ``*_train`` values score a model on
+the events it was fit on and are reported only to show the gap; with many
+features and few events they approach 1 even on noise.  The report warns when
+the training folds hold fewer than 10 events per feature.  See
+vikshep_ingest.heldout for the fold scheme.
 
 Feature sets
 ------------
@@ -27,7 +40,8 @@ both
     Concatenates scattering features with aggregate scalars.
 
 The report always states which feature set and training gradient were used,
-in the `feature_set` and `training_gradient` fields.
+in the `feature_set` and `training_gradient` fields, and how the held-out
+metrics were made, in `evaluation`.
 """
 
 from __future__ import annotations
@@ -39,6 +53,7 @@ from pathlib import Path
 
 import numpy as np
 
+from vikshep_ingest import heldout
 from vikshep_ingest.scattering import scatter_available
 
 
@@ -112,32 +127,25 @@ def _cmd_tag(args: argparse.Namespace) -> int:
     prov_json: str | None = None
 
     if feature_set in ("scattering", "both"):
-        from vikshep_ingest.scattering import extract_scattering_features
         try:
-            s_features, _, prov_json = extract_scattering_features(
-                manifest, cache_dir=Path(args.features).parent
-            )
+            X, prov_json = _scattering_matrix(args.features, manifest, aggregates, feat_names, feature_set)
         except Exception as exc:
             print(f"ERROR loading scattering features: {exc}", file=sys.stderr)
             return 1
-        if feature_set == "both":
-            agg_X = np.array(
-                [[ev.get(k, 0.0) for k in feat_names] for ev in aggregates],
-                dtype=np.float64,
-            )
-            X = np.concatenate([s_features, agg_X], axis=1)
-        else:
-            X = s_features
         training_gradient = "exact_weighted"
-        result = _train_tag_core(X, labels, protect, weights, lam)
+        backend = "core"
     else:
-        X = np.array(
-            [[ev.get(k, 0.0) for k in feat_names] for ev in aggregates],
-            dtype=np.float32,
-        )
+        X = _aggregate_matrix(aggregates, feat_names, np.float32)
         training_gradient = "pearson_proxy"
-        from vikshep_ingest.cli._train import train_tag
-        result = train_tag(X, labels.astype(np.float32), protect, weights.astype(np.float32), lam=lam)
+        backend = "python"
+
+    try:
+        result = heldout.tag(X, labels, protect, weights, lam=lam, backend=backend,
+                             folds=args.folds, seed=args.seed)
+    except ValueError as exc:
+        print(f"ERROR: {exc}", file=sys.stderr)
+        return 1
+    warnings = heldout.size_warnings(result["n_train_min"], X.shape[1])
 
     if prov_json is not None:
         _write_file(out_dir / "provenance.json", prov_json)
@@ -146,11 +154,17 @@ def _cmd_tag(args: argparse.Namespace) -> int:
         "recipe":            "tag",
         "feature_set":       feature_set,
         "lambda":            lam,
-        "auc":               result["auc"],
-        "dcorr2":            result["dcorr2_final"],
+        "auc_heldout":       result["heldout"]["auc"],
+        "dcorr2_heldout":    result["heldout"]["dcorr2"],
+        "auc_train":         result["train"]["auc"],
+        "dcorr2_train":      result["train"]["dcorr2"],
         "training_gradient": training_gradient,
         "reported_dcorr2":   "exact_weighted",
+        "evaluation":        heldout.evaluation_record(args.folds, args.seed,
+                                                       result["heldout"]["folds"], args.label),
         "n_events":          N,
+        "n_features":        int(X.shape[1]),
+        "warnings":          warnings,
         "label_col":         args.label,
         "protect_col":       args.protect,
         "weights_col":       args.weights,
@@ -158,6 +172,7 @@ def _cmd_tag(args: argparse.Namespace) -> int:
     }
     _write_json(out_dir / "tag_report.json", report)
     _print_tag_report(report)
+    _print_warnings(warnings)
     return 0
 
 
@@ -185,94 +200,71 @@ def _cmd_calibrate(args: argparse.Namespace) -> int:
     prov_json: str | None = None
 
     if feature_set in ("scattering", "both"):
-        from vikshep_ingest.scattering import extract_scattering_features
         try:
-            s_features, _, prov_json = extract_scattering_features(
-                manifest, cache_dir=Path(args.features).parent
-            )
+            X, prov_json = _scattering_matrix(args.features, manifest, aggregates, feat_names, feature_set)
         except Exception as exc:
             print(f"ERROR loading scattering features: {exc}", file=sys.stderr)
             return 1
-        if feature_set == "both":
-            agg_X = np.array(
-                [[ev.get(k, 0.0) for k in feat_names] for ev in aggregates],
-                dtype=np.float64,
-            )
-            X = np.concatenate([s_features, agg_X], axis=1)
-        else:
-            X = s_features
-        result = _calibrate_core(X, target.astype(np.float64))
+        backend = "core"
     else:
-        X = np.array(
-            [[ev.get(k, 0.0) for k in feat_names] for ev in aggregates],
-            dtype=np.float32,
-        )
-        from vikshep_ingest.cli._train import train_calibrate
-        result = train_calibrate(X, target)
+        X = _aggregate_matrix(aggregates, feat_names, np.float32)
+        backend = "python"
+
+    try:
+        result = heldout.calibrate(X, target, backend=backend, folds=args.folds, seed=args.seed)
+    except ValueError as exc:
+        print(f"ERROR: {exc}", file=sys.stderr)
+        return 1
+    warnings = heldout.size_warnings(result["n_train_min"], X.shape[1])
 
     if prov_json is not None:
         _write_file(out_dir / "provenance.json", prov_json)
 
     report = {
-        "recipe":        "calibrate",
-        "feature_set":   feature_set,
-        "target_col":    args.target,
-        "r2_score":      result["r2_score"],
-        "residual_std":  result["residual_std"],
-        "n_events":      N,
-        "feature_names": feat_names if feature_set == "aggregates" else None,
+        "recipe":               "calibrate",
+        "feature_set":          feature_set,
+        "target_col":           args.target,
+        "r2_heldout":           result["heldout"]["r2"],
+        "residual_std_heldout": result["heldout"]["residual_std"],
+        "r2_train":             result["train"]["r2"],
+        "residual_std_train":   result["train"]["residual_std"],
+        "evaluation":           heldout.evaluation_record(args.folds, args.seed,
+                                                          result["heldout"]["folds"], None),
+        "n_events":             N,
+        "n_features":           int(X.shape[1]),
+        "warnings":             warnings,
+        "feature_names":        feat_names if feature_set == "aggregates" else None,
     }
     _write_json(out_dir / "calibrate_report.json", report)
     _print_calibrate_report(report)
+    _print_warnings(warnings)
     return 0
 
 
-# ── Core-backed training helpers ──────────────────────────────────────────────
+# ── Feature matrices ──────────────────────────────────────────────────────────
 
-def _train_tag_core(
-    X: np.ndarray,
-    labels: np.ndarray,
-    protect: np.ndarray,
-    weights: np.ndarray,
-    lam: float,
-) -> dict:
-    """Train tag head via vikshep_compute (exact weighted dCorr^2 gradient)."""
-    import vikshep_compute as vc
-    # vc.train_tag requires 0/1 labels; binarize if necessary (nonzero → 1).
-    bin_labels = labels.astype(np.float64)
-    if not np.all(np.isin(np.unique(labels), [0, 1, 0.0, 1.0])):
-        bin_labels = (labels != 0).astype(np.float64)
-    model = vc.train_tag(
-        X.astype(np.float64),
-        bin_labels,
-        w=weights.astype(np.float64),
-        m=protect.astype(np.float64),
-        lam=lam,
-        gradient="exact",
-        seed=42,
+def _aggregate_matrix(aggregates: list[dict], feat_names: list[str], dtype) -> np.ndarray:
+    return np.array([[ev.get(k, 0.0) for k in feat_names] for ev in aggregates], dtype=dtype)
+
+
+def _scattering_matrix(
+    features_path: str,
+    manifest: dict,
+    aggregates: list[dict],
+    feat_names: list[str],
+    feature_set: str,
+) -> tuple[np.ndarray, str]:
+    """Scattering features (plus the aggregates for --feature-set both) and the
+    provenance JSON of the scattering run."""
+    from vikshep_ingest.scattering import extract_scattering_features
+    s_features, _, prov_json = extract_scattering_features(
+        manifest, cache_dir=Path(features_path).parent
     )
-    scores = model.predict(X.astype(np.float64))
-    bkg = labels == 0
-    dc2 = 0.0
-    if bkg.sum() >= 4:
-        dc2 = float(vc.dcorr2_w(
-            scores[bkg].astype(np.float64),
-            protect[bkg].astype(np.float64),
-            weights[bkg].astype(np.float64),
-        ))
-    try:
-        from sklearn.metrics import roc_auc_score
-        auc = float(roc_auc_score(bin_labels.astype(int), scores))
-    except Exception:
-        auc = float("nan")
-    return {"auc": auc, "dcorr2_final": dc2}
-
-
-def _calibrate_core(X: np.ndarray, target: np.ndarray) -> dict:
-    """Calibrate via vikshep_compute ridge regression."""
-    import vikshep_compute as vc
-    result = vc.calibrate(X.astype(np.float64), target.astype(np.float64))
-    return {"r2_score": float(result["r2"]), "residual_std": float(result["residual_std"])}
+    if feature_set == "both":
+        X = np.concatenate([s_features, _aggregate_matrix(aggregates, feat_names, np.float64)], axis=1)
+    else:
+        X = s_features
+    return X, prov_json
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
@@ -313,27 +305,56 @@ def _write_file(path: Path, content: str) -> None:
     print(f"  Provenance written: {path}")
 
 
+def _fmt(v: float | None) -> str:
+    return "n/a" if v is None else f"{v:.4f}"
+
+
+def _evaluation_note(ev: dict) -> str:
+    strat = f", stratified by {ev['stratified_by']}" if ev["stratified_by"] else ""
+    return f"({ev['folds']}-fold cross-validation{strat}, seed {ev['seed']})"
+
+
 def _print_tag_report(r: dict) -> None:
     print("vikshep-recipe tag")
     print(f"  feature_set       : {r['feature_set']}")
     print(f"  lambda            : {r['lambda']}")
-    print(f"  AUC               : {r['auc']:.4f}")
-    print(f"  dCorr^2           : {r['dcorr2']:.4f}  (lower = better decorrelation)")
+    print(f"  AUC, held-out     : {_fmt(r['auc_heldout'])}  {_evaluation_note(r['evaluation'])}")
+    print(f"  dCorr^2, held-out : {_fmt(r['dcorr2_heldout'])}  (lower = better decorrelation)")
+    print(f"  AUC, training     : {_fmt(r['auc_train'])}  (in-sample: scored on the events it was fit on)")
+    print(f"  dCorr^2, training : {_fmt(r['dcorr2_train'])}")
     print(f"  training_gradient : {r['training_gradient']}")
     print(f"  reported_dcorr2   : {r['reported_dcorr2']}")
     print(f"  n_events          : {r['n_events']}")
+    print(f"  n_features        : {r['n_features']}")
 
 
 def _print_calibrate_report(r: dict) -> None:
     print("vikshep-recipe calibrate")
-    print(f"  feature_set  : {r['feature_set']}")
-    print(f"  target       : {r['target_col']}")
-    print(f"  R^2          : {r['r2_score']:.4f}")
-    print(f"  residual std : {r['residual_std']:.4f}")
-    print(f"  n_events     : {r['n_events']}")
+    print(f"  feature_set            : {r['feature_set']}")
+    print(f"  target                 : {r['target_col']}")
+    print(f"  R^2, held-out          : {_fmt(r['r2_heldout'])}  {_evaluation_note(r['evaluation'])}")
+    print(f"  residual std, held-out : {_fmt(r['residual_std_heldout'])}")
+    print(f"  R^2, training          : {_fmt(r['r2_train'])}  (in-sample: scored on the events it was fit on)")
+    print(f"  residual std, training : {_fmt(r['residual_std_train'])}")
+    print(f"  n_events               : {r['n_events']}")
+    print(f"  n_features             : {r['n_features']}")
+
+
+def _print_warnings(warnings: list[str]) -> None:
+    for w in warnings:
+        print(f"WARNING: {w}", file=sys.stderr)
 
 
 # ── Argument parsing ──────────────────────────────────────────────────────────
+
+def _add_eval_args(p: argparse.ArgumentParser) -> None:
+    p.add_argument("--folds", type=int, default=heldout.DEFAULT_FOLDS,
+                   help=f"Cross-validation folds for the held-out metrics "
+                        f"(default: {heldout.DEFAULT_FOLDS}, at least 2).")
+    p.add_argument("--seed", type=int, default=heldout.DEFAULT_SEED,
+                   help=f"Seed of the fold assignment and of training "
+                        f"(default: {heldout.DEFAULT_SEED}).")
+
 
 def _build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
@@ -355,6 +376,7 @@ def _build_parser() -> argparse.ArgumentParser:
                        dest="feature_set",
                        help="Feature set to train on (default: auto — scattering when "
                             "vikshep_compute is installed, else aggregates).")
+    _add_eval_args(tag_p)
     tag_p.add_argument("--out",          default=None, help="Output directory.")
 
     # calibrate
@@ -365,6 +387,7 @@ def _build_parser() -> argparse.ArgumentParser:
                        choices=["auto", "scattering", "aggregates", "both"],
                        dest="feature_set",
                        help="Feature set to train on (default: auto).")
+    _add_eval_args(cal_p)
     cal_p.add_argument("--out",         default=None, help="Output directory.")
 
     return p

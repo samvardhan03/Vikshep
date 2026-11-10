@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "vikshep-ingest"
-version = "0.4.0"
+version = "0.4.1"
 description = "Vikshep Geant4 Direct Interface: Geant4 CSV to deterministic scattering features, calibration and DisCo-decorrelated tagging"
 readme = "README.md"
 requires-python = ">=3.10"

@@ -68,29 +68,38 @@ vikshep-recipe tag \
 
 ## What you should see
 
-Scattering path (the default with the open core), measured 2026-11-07; results are
-bit-identical across platforms (see the `quickstart-golden` CI job):
+Scattering path (the default with the open core), vikshep-ingest 0.4.1, measured 2026-11-10;
+results are bit-identical across platforms (see the `quickstart-golden` CI job). Held-out
+values come from 5-fold cross-validation with seed 42 (`--folds`, `--seed`): each event is
+scored by a model fit on the other four folds. Training values score the model on the events
+it was fit on; they are printed only to show the gap.
 
-| Recipe | Result |
-|--------|--------|
-| `calibrate --target true_energy` | R² 0.5589, residual std 3.50 GeV |
-| `tag --lambda 0` | AUC 0.9781, dCorr² 0.0374 |
-| `tag --lambda 1` | AUC 0.9743, dCorr² 0.0182 |
-| `tag --lambda 10` | AUC 0.8734, dCorr² 0.0084 |
+| Recipe | Held-out (5-fold) | Training (in-sample) |
+|--------|-------------------|----------------------|
+| `calibrate --target true_energy` | R² −1.1343, residual std 7.70 GeV | R² 0.5589, residual std 3.50 GeV |
+| `tag --lambda 0` | AUC 0.9564, dCorr² 0.0331 | AUC 0.9781, dCorr² 0.0374 |
+| `tag --lambda 1` | AUC 0.9496, dCorr² 0.0102 | AUC 0.9743, dCorr² 0.0182 |
+| `tag --lambda 10` | AUC 0.7606, dCorr² 0.0081 | AUC 0.8734, dCorr² 0.0084 |
 
 dCorr² is the weighted distance correlation between the tagger score and `true_energy` on
-background events: raising `--lambda` trades a little AUC for independence from energy.
-Without the open core (aggregates path): calibrate R² 0.9865; tag at `--lambda 1` AUC 0.9999
-and dCorr² 0.2540. Its Pearson-proxy training gradient barely decorrelates; the exact
-gradient of the scattering path is what moves dCorr².
+background events: raising `--lambda` trades AUC for independence from energy. The
+calibration does not generalise: the scattering path has 281 features and each training fold
+800 events, so the ridge fit memorises the training events (R² 0.56) and predicts held-out
+events worse than their mean (R² below 0). Both recipes print a warning when the training
+folds hold fewer than 10 events per feature.
+
+Without the open core (aggregates path, 32 features): calibrate held-out R² 0.9845 (training
+0.9865); tag at `--lambda 1` held-out AUC 0.9999 and dCorr² 0.2357 (training 0.2540). Its
+Pearson-proxy training gradient barely decorrelates; the exact gradient of the scattering
+path is what moves dCorr².
 
 ## What each command does
 
 | Command | Input | Output |
 |---------|-------|--------|
 | `vikshep-ingest g4` | Geant4 CSV | `manifest.json` with 28-char OIDs for 64×64 (phi×theta) grids in POSIX shm, per-event aggregate scalars, and `source_path` for shm-recovery fallback |
-| `vikshep-recipe calibrate` | manifest | `calibrate_report.json` with R² and residual std; `provenance.json` (VDS-1 schema) |
-| `vikshep-recipe tag` | manifest | `tag_report.json` with AUC, dCorr², `feature_set: "scattering"`, `training_gradient: "exact_weighted"`; `provenance.json` |
+| `vikshep-recipe calibrate` | manifest | `calibrate_report.json` with `r2_heldout` and `residual_std_heldout` (5-fold), the training values `r2_train` and `residual_std_train`, the fold scheme and per-fold values in `evaluation`, and `warnings`; `provenance.json` (VDS-1 schema) |
+| `vikshep-recipe tag` | manifest | `tag_report.json` with `auc_heldout` and `dcorr2_heldout` (5-fold, stratified by label), `auc_train` and `dcorr2_train`, `evaluation`, `warnings`, `feature_set: "scattering"`, `training_gradient: "exact_weighted"`; `provenance.json` |
 
 Steps 3 and 4 run the 2-D wavelet scattering transform on the rasterized grids via the open
 core and train with the exact weighted dCorr² gradient.  The scattering config for the G4
@@ -150,6 +159,8 @@ workflow run summary for the current CI runner times.
   python -m bench.run --manifest examples/g4_quickstart/manifest.json \
     --label is_signal --protect true_energy --weights weight --lambdas 0,0.1,1,10
   ```
-- The benchmark harness uses `vikshep_compute` (exact gradient and dCorr²) when installed.
-- Cross-platform bit identity: the `quickstart-golden` CI job verifies that `tag_report.json`
-  and `provenance.json` are byte-identical across Linux x86_64 and macOS arm64 runners.
+- The benchmark harness uses `vikshep_compute` (exact gradient and dCorr²) when installed,
+  and computes every metric on out-of-fold scores, as the recipes do.
+- Cross-platform bit identity: the `quickstart-golden` CI job verifies that `tag_report.json`,
+  `calibrate_report.json` and the provenance manifest hash are identical on Linux x86_64,
+  macOS arm64 and the committed macOS x86_64 hashes.

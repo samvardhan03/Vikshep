@@ -77,8 +77,9 @@ The table compares the method. What ships today is listed under [Engine status](
 
 Deterministic by design. The open core's conformance suite (VDS-1) proves bit identity on
 Linux x86_64, Linux AArch64, macOS arm64, and Windows x86_64.  The quickstart golden-hash CI
-job additionally verifies that `tag_report.json` and `provenance.json` are byte-identical across
-Linux and macOS runners on the same vikshep-compute commit.
+job additionally verifies that `tag_report.json`, `calibrate_report.json` and the provenance
+manifest hash are identical on Linux x86_64, macOS arm64 and a committed macOS x86_64 run with
+the same vikshep-compute version.
 
 ---
 
@@ -185,10 +186,15 @@ The sample is a synthetic 1000-event toy in the `komal_v1` shape with three per-
 columns (`is_signal`, `true_energy`, `weight`); any extra CSV column with one value per event
 is kept the same way and is never used as a feature. Steps 3 and 4 run the wavelet scattering
 transform on the 64 × 64 (phi × theta) grids (J=3, Q=1, L=8, pad=[Circular, ZeroPad]) via the
-open core, compute S0/S1/S2 and r2 ratios, and train with the exact weighted dCorr² gradient:
-on the sample, calibrate reaches R² 0.56 and tag AUC 0.974 with dCorr² 0.018 at `--lambda 1`
-(0.037 at `--lambda 0`). Without the open core (platforms with no wheel), the CLI falls back to per-event aggregates
-and the Pearson-proxy gradient; the report states which path ran.
+open core, compute S0/S1/S2 and r2 ratios, and train with the exact weighted dCorr² gradient.
+Both recipes report held-out metrics from seeded 5-fold cross-validation (every event scored
+by a model that never saw it), next to the training values, labelled as such. On the sample,
+tag reaches a held-out AUC of 0.950 with dCorr² 0.010 at `--lambda 1` (AUC 0.956, dCorr² 0.033
+at `--lambda 0`). Calibration from the 281 scattering features does not generalise on 1000
+events: held-out R² −1.13, against 0.56 on the training events, and the recipe warns that 800
+training events per fold are too few for that many features. Without the open core (platforms
+with no wheel), the CLI falls back to per-event aggregates and the Pearson-proxy gradient; the
+report states which path ran.
 
 See `examples/g4_quickstart/README.md` for the full walkthrough including TTFV measurements.
 
