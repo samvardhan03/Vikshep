@@ -166,8 +166,11 @@ def run(
         jsd_after = _jsd_bins(bkg_protect, bkg_protect[sc[bkg] > threshold]) \
             if (sc[bkg] > threshold).sum() >= 2 else float("nan")
 
+        # VDS-1 section 16.7: both deltas are (value at lambda) - (value at 0), so
+        # a cut that sculpts the protected variable less than the baseline has
+        # Delta-JSD < 0.  NaN when either JSD is undefined.
         delta_sigma = sigma - sigma_baseline
-        delta_jsd   = (jsd_baseline - jsd_after) if not np.isnan(jsd_after) else float("nan")
+        delta_jsd   = jsd_after - jsd_baseline
 
         frontier.append({
             "lambda":         lam,
@@ -217,9 +220,12 @@ def run(
 
 
 def _evaluate_win(frontier: list[dict]) -> dict:
-    """Win condition: Delta-sigma > 0 AND Delta-JSD <= 0.
+    """Win condition: Delta-sigma > 0 AND Delta-JSD <= 0 (VDS-1 section 16.7).
 
-    Evaluated at each lambda; report the best honest result.
+    Delta-sigma = sigma(lambda) - sigma(0) and Delta-JSD = JSD(lambda) - JSD(0):
+    a win is more significance with no more sculpting than the lambda=0 cut.
+    Evaluated at each lambda > 0; an undefined Delta-JSD never wins.  Report
+    the best honest result.
     """
     winners = [
         e for e in frontier
@@ -307,7 +313,8 @@ def _render_md(r: dict) -> str:
         "## Baseline (lambda=0, no DisCo)",
         "",
         f"- Asimov significance: {r['sigma_baseline_asimov']:.4f}",
-        f"- JSD(background mass, cut mass): {_fmt(r['jsd_baseline'])}",
+        f"- JSD(background `{r['protect_col']}` before the cut, after the cut): "
+        f"{_fmt(r['jsd_baseline'])}",
         "",
         "## Lambda frontier",
         "",
@@ -321,6 +328,10 @@ def _render_md(r: dict) -> str:
             f"{e['delta_sigma']:+.4f} | {_fmt(e['delta_jsd'], sign=True)} |"
         )
     lines += [
+        "",
+        "Delta-sigma = sigma(lambda) - sigma(0) and Delta-JSD = JSD(lambda) - JSD(0)",
+        "(VDS-1 section 16.7). A negative Delta-JSD means the cut sculpts the protected",
+        "variable less than the lambda=0 cut does.",
         "",
         "## Win condition: Delta-sigma > 0 AND Delta-JSD <= 0",
         "",
