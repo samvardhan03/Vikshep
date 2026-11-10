@@ -25,7 +25,9 @@ from vikshep_ingest import heldout
 
 N_SIG = 100
 N_BKG = 300
-PASS, FAIL = 0.9, 0.1   # either side of the harness's default 0.5 score cut
+# Signal sits at PASS, so the 50% signal-efficiency cut (VDS-1 16.4) lands at
+# score PASS and the events at PASS are exactly those that pass.
+PASS, FAIL = 0.9, 0.1
 
 
 def _write_manifest(tmp: Path) -> Path:
@@ -54,8 +56,7 @@ def _constructed_scores(labels: np.ndarray, protect: np.ndarray, lam: float) -> 
           significance rises).
     1.0 : every ninth event in mass order passes, 34 again, spread over the
           whole range: sculpts less than the baseline, same significance as
-          0.1.  (Not every tenth: that matches the full histogram bin for bin,
-          where the harness's JSD is NaN rather than 0.)
+          0.1.
     10.0: every third event passes and only half the signal does (sculpts less
           than the baseline, but significance falls).
     """
